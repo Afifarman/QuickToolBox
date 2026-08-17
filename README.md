@@ -12,3 +12,6 @@ The `app` directory is at the project root and the project has no required envir
 
 ## Included
 Age Calculator, Date Calculator, Currency Converter, Unit Converter, PDF Tools, Word Counter, Password Generator, QR Code Generator, Image Compressor, Percentage Calculator.
+
+## Production deployment
+Latest production source is the `main` branch. This line intentionally triggers the connected Vercel deployment after production source fixes.
