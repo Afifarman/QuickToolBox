@@ -1,0 +1,41 @@
+name: Auto AI Fix
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Report
+        if: failure()
+        run: echo "Build failed. Automatic AI repair requires an OPENAI_API_KEY secret and a protected repair workflow."
+
+  ai-repair:
+    if: failure()
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Guardrail
+        run: |
+          echo "AI repair is intentionally gated."
+          echo "Create a PR for AI-generated changes instead of modifying production directly."
+          exit 1
