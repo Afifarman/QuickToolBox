@@ -1,5 +1,5 @@
 {
-  "name": "quicktoolbox",
+  "name": "quicktoolbox-29-tools",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -7,15 +7,15 @@
     "build": "next build",
     "start": "next start"
   },
-  "engines": {
-    "node": ">=20.9.0"
-  },
   "dependencies": {
-    "@vercel/analytics": "^2.0.1",
     "next": "16.3.1",
-    "pdf-lib": "1.17.1",
-    "qrcode": "1.5.4",
     "react": "19.2.0",
     "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0"
   }
 }
