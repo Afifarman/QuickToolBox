@@ -15,3 +15,6 @@ Age Calculator, Date Calculator, Currency Converter, Unit Converter, PDF Tools, 
 
 ## Production deployment
 Latest production source is the `main` branch. This line intentionally triggers the connected Vercel deployment after production source fixes.
+
+## Production sync
+Production deployment must match the latest `main` commit before release verification.
