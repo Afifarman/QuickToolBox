@@ -1,0 +1,3 @@
+'use client';
+import { useEffect,useState } from 'react';
+const KEY='qtb_favorites';export default function Favorites(){const [items,setItems]=useState([]);useEffect(()=>{try{setItems(JSON.parse(localStorage.getItem(KEY)||'[]'))}catch{}} ,[]);function clear(){localStorage.removeItem(KEY);setItems([])}return <main style={{maxWidth:900,margin:'0 auto',padding:40}}><a href="/dashboard">← Dashboard</a><h1>⭐ Favorites</h1><p>Your favorite tools saved on this device.</p>{items.length?<><ul>{items.map(x=><li key={x}><a href={`/tools/${x}`}>{x}</a></li>)}</ul><button onClick={clear}>Clear favorites</button></>:<p>No favorites yet. Use the favorite button on supported tools.</p>}</main>}
