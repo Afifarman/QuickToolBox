@@ -1,50 +1,36 @@
-import { redirect } from 'next/navigation';
+name: Auto AI Fix
 
-// This line is the critical fix: It forces the page to be rendered on demand 
-// at request time, skipping the problematic build-time prerendering.
-export const dynamic = 'force-dynamic';
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
 
-export default async function ResetPasswordPage({ searchParams }) {
-  // 1. Get the code from the URL (searchParams)
-  // Accessing searchParams triggers dynamic rendering, 
-  // which is why the build was failing without 'force-dynamic'
-  const { code } = await searchParams;
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
 
-  // 2. If there's no code, redirect back to login
-  if (!code) {
-    redirect('/login');
-  }
+jobs:
+  auto-ai-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded shadow-md">
-        <h1 className="text-2xl font-bold text-center">Reset Your Password</h1>
-        <p className="text-sm text-gray-600 text-center">
-          Please enter your new password below.
-        </p>
-        
-        <form action="/auth/confirm-reset" method="POST" className="space-y-4">
-          <input type="hidden" name="code" value={code} />
-          
-          <div>
-            <label className="block text-sm font-medium">New Password</label>
-            <input
-              name="password"
-              type="password"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-            />
-          </div>
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-          <button
-            type="submit"
-            className="w-full py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Update Password
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run AI Fix Script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: node .github/scripts/auto-fix.js
+
+      - name: Commit AI Changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "fix: automated AI code correction"
