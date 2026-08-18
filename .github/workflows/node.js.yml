@@ -3,17 +3,13 @@ name: Deploy Next.js site to Pages
 on:
   push:
     branches: ["main"]
-
-  # GitHub-এর Actions ট্যাব থেকে ম্যানুয়ালি রান করার অনুমতি দেয়
   workflow_dispatch:
 
-# Simultaneous deployments বন্ধ করতে concurrency সেট করা
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Build Job
   build:
     runs-on: ubuntu-latest
     steps:
@@ -60,7 +56,6 @@ jobs:
         with:
           path: ./out
 
-  # Deployment Job
   deploy:
     environment:
       name: github-pages
