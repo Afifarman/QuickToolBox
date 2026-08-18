@@ -1,0 +1,45 @@
+name: Production Backup
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: production-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify production build before backup
+        run: npm run build
+
+      - name: Create immutable production backup tag
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          TAG="production-${SHA:0:12}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Backup tag $TAG already exists."
+            exit 0
+          fi
+          git tag -a "$TAG" "$SHA" -m "Production backup for $SHA"
+          git push origin "$TAG"
