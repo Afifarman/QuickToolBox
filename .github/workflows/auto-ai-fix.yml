@@ -1,41 +1,50 @@
-name: Auto AI Fix
+import { redirect } from 'next/navigation';
 
-on:
-  workflow_dispatch:
-  push:
-    branches: [main]
+// This line is the critical fix: It forces the page to be rendered on demand 
+// at request time, skipping the problematic build-time prerendering.
+export const dynamic = 'force-dynamic';
 
-permissions:
-  contents: write
-  pull-requests: write
-  issues: write
+export default async function ResetPasswordPage({ searchParams }) {
+  // 1. Get the code from the URL (searchParams)
+  // Accessing searchParams triggers dynamic rendering, 
+  // which is why the build was failing without 'force-dynamic'
+  const { code } = await searchParams;
 
-jobs:
-  verify:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Install
-        run: npm ci
-      - name: Build
-        run: npm run build
-      - name: Report
-        if: failure()
-        run: echo "Build failed. Automatic AI repair requires an OPENAI_API_KEY secret and a protected repair workflow."
+  // 2. If there's no code, redirect back to login
+  if (!code) {
+    redirect('/login');
+  }
 
-  ai-repair:
-    if: failure()
-    needs: verify
-    runs-on: ubuntu-latest
-    steps:
-      - name: Guardrail
-        run: |
-          echo "AI repair is intentionally gated."
-          echo "Create a PR for AI-generated changes instead of modifying production directly."
-          exit 1
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen py-2">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded shadow-md">
+        <h1 className="text-2xl font-bold text-center">Reset Your Password</h1>
+        <p className="text-sm text-gray-600 text-center">
+          Please enter your new password below.
+        </p>
+        
+        <form action="/auth/confirm-reset" method="POST" className="space-y-4">
+          <input type="hidden" name="code" value={code} />
+          
+          <div>
+            <label className="block text-sm font-medium">New Password</label>
+            <input
+              name="password"
+              type="password"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Update Password
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
