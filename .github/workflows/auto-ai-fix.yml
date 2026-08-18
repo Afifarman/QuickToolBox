@@ -11,26 +11,21 @@ permissions:
   issues: write
 
 jobs:
-  auto-ai-fix:
+  build-and-test:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Run AI Fix Script
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: node .github/scripts/auto-fix.js
-
-      - name: Commit AI Changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "fix: automated AI code correction"
+      - name: Build project
+        run: npm run build
