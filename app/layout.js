@@ -1,5 +1,6 @@
 import './globals.css';
 import Script from 'next/script';
+import ThemeScript from './ThemeScript';
 
 export const metadata = {
   title: 'QuickToolBox | Free Online Tools',
@@ -14,7 +15,8 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head><ThemeScript /></head>
       <body>
         {children}
         <Script
