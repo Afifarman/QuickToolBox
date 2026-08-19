@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useState} from 'react';
 import {createClient} from '../../lib/supabase/client';
+import {getPasswordResetUrl} from '../../lib/supabase/auth-redirect';
 
 export default function ResetPassword(){
   const [email,setEmail]=useState('');
@@ -24,7 +25,7 @@ export default function ResetPassword(){
 
   async function send(e){
     e.preventDefault();setBusy(true);setMsg('');
-    const {error}=await createClient().auth.resetPasswordForEmail(email,{redirectTo:`${location.origin}/reset-password`});
+    const {error}=await createClient().auth.resetPasswordForEmail(email,{redirectTo:getPasswordResetUrl()});
     setMsg(error?.message||'Reset email sent. Check your inbox.');
     if(!error)setSent(true);
     setBusy(false);

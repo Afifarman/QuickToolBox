@@ -1,11 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createClient } from '../../lib/supabase/client';
+import { getAuthCallbackUrl } from '../../lib/supabase/auth-redirect';
 
 function getErrorMessage(error) {
   if (!error) return '';
-  return error.message || 'Authentication failed. Please try again.';
+  const message = error.message || error;
+  const text = typeof message === 'string' ? message : 'Authentication failed. Please try again.';
+  const lower = text.toLowerCase();
+
+  if (
+    lower.includes('redirect') ||
+    lower.includes('allowlist') ||
+    lower.includes('not allowed') ||
+    lower.includes('redirect_uri')
+  ) {
+    return 'Google login is blocked because this site callback URL is not allowlisted in Supabase. Add the production /auth/callback URL under Authentication → URL Configuration → Redirect URLs.';
+  }
+
+  if (text === 'missing_oauth_code') {
+    return 'Google sign-in did not return an auth code. Confirm the Supabase Redirect URLs allowlist includes this site’s /auth/callback.';
+  }
+
+  if (text === 'supabase_not_configured') {
+    return 'Supabase is not configured on this deployment.';
+  }
+
+  return text;
 }
 
 export default function LoginPage() {
@@ -14,6 +36,12 @@ export default function LoginPage() {
   const [mode, setMode] = useState('login');
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get('error');
+    if (error) setMsg(getErrorMessage(error));
+  }, []);
 
   async function submit(e) {
     e.preventDefault();
@@ -29,7 +57,7 @@ export default function LoginPage() {
           email: normalizedEmail,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+            emailRedirectTo: getAuthCallbackUrl(),
           },
         });
 
@@ -67,7 +95,8 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          // Must match a Supabase Redirect URLs allowlist entry exactly.
+          redirectTo: getAuthCallbackUrl(),
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
