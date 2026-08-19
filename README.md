@@ -14,6 +14,13 @@ Set these Vercel environment variables (Production + Preview):
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`)
 - `NEXT_PUBLIC_SITE_URL` = `https://quick-tool-box-gamma.vercel.app`
 
+Optional AI provider keys. The `/ai` assistant always returns an answer. If one of these is set, that cloud model is used first:
+
+- `OPENAI_API_KEY`
+- `GROQ_API_KEY`
+- `GEMINI_API_KEY`
+- `OPENROUTER_API_KEY`
+
 ## Google login (production)
 
 Google OAuth only works if the **app callback URL** is on the Supabase Redirect URLs allowlist. The app always sends users back to `/auth/callback` with **no extra query string**, so the allowlist can match exactly.
