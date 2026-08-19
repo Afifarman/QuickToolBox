@@ -13,12 +13,19 @@ export default function LoginPage() {
     e.preventDefault();
     setBusy(true);
     setMsg('');
-    const s = createClient();
-    const result = mode === 'login'
-      ? await s.auth.signInWithPassword({ email, password })
-      : await s.auth.signUp({ email, password });
-    if (result.error) setMsg(result.error.message);
-    else setMsg(mode === 'login' ? 'Logged in successfully.' : 'Registration successful. Check your email if confirmation is enabled.');
+    try {
+      const s = createClient();
+      const result = mode === 'login'
+        ? await s.auth.signInWithPassword({ email, password })
+        : await s.auth.signUp({ email, password });
+      if (result.error) setMsg(result.error.message);
+      else {
+        setMsg(mode === 'login' ? 'Logged in successfully.' : 'Registration successful. Check your email if confirmation is enabled.');
+        if (mode === 'login') location.href = '/dashboard';
+      }
+    } catch {
+      setMsg('Login service is not configured. You can still use all tools without an account.');
+    }
     setBusy(false);
   }
 

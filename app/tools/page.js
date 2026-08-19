@@ -19,7 +19,16 @@ const tools = [
   ['meta-tag-generator','Meta Tag Generator'],
   ['sitemap-generator','Sitemap Generator'],
   ['password-strength-checker','Password Strength Checker'],
-  ['world-clock','World Clock / Timezone Converter']
+  ['world-clock','World Clock / Timezone Converter'],
+  ['qr-generator','QR Code Generator'],
+  ['password-generator','Password Generator'],
+  ['word-counter','Word Counter'],
+  ['age-calculator','Age Calculator'],
+  ['date-calculator','Date Calculator'],
+  ['unit-converter','Unit Converter'],
+  ['percentage-calculator','Percentage Calculator'],
+  ['image-compressor','Image Compressor'],
+  ['currency-converter','Currency Converter']
 ];
 
 export default function ToolsPage() {
