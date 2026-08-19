@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect,useMemo,useState} from 'react';
+import {use,useEffect,useMemo,useState} from 'react';
 
 const META={
 'gpa-cgpa-calculator':['🎓','GPA / CGPA Calculator','Enter course credits and grade points, one course per line.'],
@@ -16,7 +16,7 @@ const META={
 'essay-outline-generator':['✍️','Essay Outline Generator','Create a clear essay structure from your topic.'],
 'flashcard-generator':['🧠','Flashcard Generator','Create editable Q&A flashcards from notes.'],
 'quiz-generator':['❓','Quiz Generator','Create practice questions from notes.'],
-'ai-study-assistant':['🤖','AI Study Assistant','Send a study question to the site AI endpoint when configured.'],
+'ai-study-assistant':['🤖','AI Study Assistant','Ask a study question and get a clear explanation.'],
 'notes-summarizer':['📄','Notes Summarizer','Make a concise local summary from notes.'],
 'grammar-checker':['🔤','Grammar Checker','Detect common spacing, capitalization and punctuation issues.'],
 'student-translator':['🌐','Student Translator','Use the browser translation API when supported, or copy text for translation.'],
@@ -33,7 +33,7 @@ function Card({children}){return <section style={{padding:22,border:'1px solid #
 const btn={padding:'10px 14px',border:0,borderRadius:10,cursor:'pointer'};
 
 export default function StudentTool({params}){
- const slug=params?.slug||''; const [value,setValue]=useState(''); const [result,setResult]=useState(''); const [items,setItems]=useState([]); const [seconds,setSeconds]=useState(1500);
+ const resolvedParams=use(params); const slug=resolvedParams?.slug||''; const [value,setValue]=useState(''); const [result,setResult]=useState(''); const [items,setItems]=useState([]); const [seconds,setSeconds]=useState(1500);
  const [name,setName]=useState(''); const [deadline,setDeadline]=useState(''); const [task,setTask]=useState(''); const [notes,setNotes]=useState('');
  const meta=META[slug]||['🎓','Student Tool','Useful student utility.'];
  useEffect(()=>{try{const k='qt-'+slug; const saved=JSON.parse(localStorage.getItem(k)||'[]'); if(Array.isArray(saved))setItems(saved)}catch{}},[slug]);
@@ -57,7 +57,7 @@ export default function StudentTool({params}){
  const flashcards=()=>save(notes.split(/\n/).filter(Boolean).map((x,i)=>{const [q,a]=x.split(/\s*::\s*/);return{id:i,text:q||x,answer:a||'Add answer'}}));
  const quiz=()=>setResult(notes.split(/\n/).filter(Boolean).slice(0,10).map((x,i)=>`${i+1}. Explain: ${x.replace(/[?!.]+$/,'')}?`).join('\n'));
  const grammar=()=>{let s=notes.replace(/\s+/g,' ').replace(/\s+([,.!?])/g,'$1').replace(/(^|[.!?]\s+)([a-z])/g,(_,a,b)=>a+b.toUpperCase());setResult(s)};
- const ai=async()=>{setResult('Thinking…');try{const r=await fetch('/api/ai',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({prompt:notes||value||'Explain this topic for a student in simple language.'})});const j=await r.json();setResult(j.text||j.error||'AI response unavailable.')}catch{setResult('AI is not configured or unavailable.')}};
+ const ai=async()=>{setResult('Thinking…');try{const r=await fetch('/api/ai',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({prompt:notes||value||'Explain this topic for a student in simple language.'})});const j=await r.json();setResult(j.text||j.error||'AI response unavailable.')}catch{setResult('AI request failed. Try again.')}};
  const wordStats=()=>{const s=notes||value;setResult(`Words: ${(s.trim().match(/\S+/g)||[]).length}\nCharacters: ${s.length}\nLines: ${s?s.split('\n').length:0}\nReading time: ${Math.max(1,Math.ceil((s.trim().match(/\S+/g)||[]).length/200))} min`)};
  const countdown=()=>{const d=new Date(value); if(Number.isNaN(d.getTime()))return setResult('Enter a valid exam date/time.'); const diff=d-Date.now();setResult(diff<=0?'Exam time has arrived.':`${Math.floor(diff/86400000)} days, ${Math.floor(diff%86400000/3600000)} hours, ${Math.floor(diff%3600000/60000)} minutes remaining.`)};
  const genericAction=slug==='notes-summarizer'?summarize:slug==='essay-outline-generator'?outline:slug==='citation-generator'?citation:slug==='flashcard-generator'?flashcards:slug==='quiz-generator'?quiz:slug==='grammar-checker'?grammar:slug==='ai-study-assistant'?ai:slug==='word-character-counter'?wordStats:slug==='exam-countdown'?countdown:calculate;
