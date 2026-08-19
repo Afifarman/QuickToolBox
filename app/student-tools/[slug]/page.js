@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect,useMemo,useState} from 'react';
+import {use,useEffect,useMemo,useState} from 'react';
 
 const META={
 'gpa-cgpa-calculator':['🎓','GPA / CGPA Calculator','Enter course credits and grade points, one course per line.'],
@@ -33,7 +33,7 @@ function Card({children}){return <section style={{padding:22,border:'1px solid #
 const btn={padding:'10px 14px',border:0,borderRadius:10,cursor:'pointer'};
 
 export default function StudentTool({params}){
- const slug=params?.slug||''; const [value,setValue]=useState(''); const [result,setResult]=useState(''); const [items,setItems]=useState([]); const [seconds,setSeconds]=useState(1500);
+ const slug=use(params)?.slug||''; const [value,setValue]=useState(''); const [result,setResult]=useState(''); const [items,setItems]=useState([]); const [seconds,setSeconds]=useState(1500);
  const [name,setName]=useState(''); const [deadline,setDeadline]=useState(''); const [task,setTask]=useState(''); const [notes,setNotes]=useState('');
  const meta=META[slug]||['🎓','Student Tool','Useful student utility.'];
  useEffect(()=>{try{const k='qt-'+slug; const saved=JSON.parse(localStorage.getItem(k)||'[]'); if(Array.isArray(saved))setItems(saved)}catch{}},[slug]);
