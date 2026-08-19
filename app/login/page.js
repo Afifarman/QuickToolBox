@@ -1,2 +1,55 @@
-'use client';import{useState}from'react';import{createClient}from'../../lib/supabase/client';
-export default function LoginPage(){const[email,setEmail]=useState('');const[password,setPassword]=useState('');const[mode,setMode]=useState('login');const[msg,setMsg]=useState('');const[busy,setBusy]=useState(false);async function submit(e){e.preventDefault();setBusy(true);setMsg('');const s=createClient();const result=mode==='login'?await s.auth.signInWithPassword({email,password}):await s.auth.signUp({email,password});if(result.error)setMsg(result.error.message);else setMsg(mode==='login'?'Logged in successfully.':'Registration successful. Check your email if confirmation is enabled.');setBusy(false)}async function google(){setMsg('');const{error}=await createClient().auth.signInWithOAuth({provider:'google',options:{redirectTo:`${location.origin}/dashboard`}});if(error)setMsg(error.message)}return <main className="auth-page"><div className="auth-card"><a href="/">← QuickToolBox</a><h1>{mode==='login'?'Welcome back':'Create account'}</h1><p>{mode==='login'?'Login to save tools, history and AI results.':'Create your free QuickToolBox account.'}</p><button onClick={google}>Continue with Google</button><div className="or">or</div><form onSubmit={submit}><input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} required/><input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} minLength={6} required/><button className="btn" disabled={busy}>{busy?'Please wait…':mode==='login'?'Login':'Register'}</button></form>{mode==='login'&&<a href="/reset-password">Forgot password?</a>}{msg&&<p>{msg}</p>}<button className="link-btn" onClick={()=>setMode(mode==='login'?'register':'login')}>{mode==='login'?"Don't have an account? Register":"Already have an account? Login"}</button></div></main>}
+'use client';
+import { useState } from 'react';
+import { createClient } from '../../lib/supabase/client';
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [mode, setMode] = useState('login');
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e) {
+    e.preventDefault();
+    setBusy(true);
+    setMsg('');
+    const s = createClient();
+    const result = mode === 'login'
+      ? await s.auth.signInWithPassword({ email, password })
+      : await s.auth.signUp({ email, password });
+    if (result.error) setMsg(result.error.message);
+    else setMsg(mode === 'login' ? 'Logged in successfully.' : 'Registration successful. Check your email if confirmation is enabled.');
+    setBusy(false);
+  }
+
+  async function google() {
+    setMsg('');
+    const { error } = await createClient().auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
+    });
+    if (error) setMsg(error.message);
+  }
+
+  return (
+    <main className="auth-page">
+      <div className="auth-card">
+        <a href="/">← QuickToolBox</a>
+        <h1>{mode === 'login' ? 'Welcome back' : 'Create account'}</h1>
+        <p>{mode === 'login' ? 'Login to save tools, history and AI results.' : 'Create your free QuickToolBox account.'}</p>
+        <button className="google-btn" onClick={google} disabled={busy}>Continue with Google</button>
+        <div className="or">or</div>
+        <form onSubmit={submit}>
+          <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
+          <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} minLength={6} required />
+          <button className="btn" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Login' : 'Register'}</button>
+        </form>
+        {mode === 'login' && <a href="/reset-password">Forgot password?</a>}
+        {msg && <p className="auth-message">{msg}</p>}
+        <button className="link-btn" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
+          {mode === 'login' ? "Don't have an account? Register" : 'Already have an account? Login'}
+        </button>
+      </div>
+    </main>
+  );
+}
