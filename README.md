@@ -43,6 +43,30 @@ In Google Cloud → Auth Platform → Clients (Web application):
 
 Without the production `/auth/callback` URL on the Supabase allowlist, Google login silently falls back to Site URL or fails with a redirect error.
 
+## Security architecture
+
+### Auth flow (PKCE)
+The app uses the **PKCE (Proof Key for Code Exchange)** OAuth flow — the most secure OAuth 2.0 authorisation flow for public clients. A cryptographic challenge is generated before the redirect, and the browser must present the matching verifier when exchanging the code for a session. This prevents interception attacks even without a client secret.
+
+1. User clicks **Continue with Google**.
+2. PKCE code verifier is stored in a cookie by `@supabase/ssr`.
+3. User authorises in Google.
+4. Google redirects to `https://<project>.supabase.co/auth/v1/callback`.
+5. Supabase validates the code verifier and redirects to `/auth/callback?code=<session_code>`.
+6. The callback route exchanges the code for session cookies.
+7. A **middleware** (`middleware.js`) refreshes the session on every navigated request, preventing silent expiration.
+
+### Middleware
+`middleware.js` runs on every request:
+
+- Refreshes the Supabase auth session, extending cookie lifetime.
+- Protects authenticated routes (`/dashboard`, `/profile`, `/favorites`, `/history`, `/saved`, `/settings`) — unauthenticated users are redirected to `/login`.
+- Sets secure cookie defaults (`SameSite=Lax`, `Secure` in production).
+
+### Safe redirects
+- The `safeNextPath()` helper prevents open-redirect attacks by only allowing same-origin paths.
+- The `getRequestOrigin()` function correctly resolves the origin behind Vercel's reverse proxy headers (`x-forwarded-host`, `x-forwarded-proto`).
+
 ## Included
 Age Calculator, Date Calculator, Currency Converter, Unit Converter, PDF Tools, Word Counter, Password Generator, QR Code Generator, Image Compressor, Percentage Calculator.
 
