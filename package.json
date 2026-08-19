@@ -2,7 +2,7 @@
   "name": "quicktoolbox",
   "version": "1.0.0",
   "private": true,
-  "scripts": {"dev":"next dev","build":"next build","start":"next start"},
+  "scripts": {"dev":"next dev","build":"next build","start":"next start","generate:key":"node scripts/generate-publishable-key.mjs","generate:key:json":"node scripts/generate-publishable-key.mjs --json"},
   "dependencies": {
     "@supabase/ssr":"^0.7.0",
     "@supabase/supabase-js":"^2.57.0",

@@ -11,8 +11,19 @@
 Set these Vercel environment variables (Production + Preview):
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`)
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (new format, starts `sb_publishable_…`; legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` still works)
 - `NEXT_PUBLIC_SITE_URL` = `https://quick-tool-box-gamma.vercel.app`
+- `NEXT_PUBLIC_QTB_PUBLISHABLE_KEY` = publishable API key for QuickToolBox (generate via `npm run generate:key` or `POST /api/publishable-key`)
+
+### Publishable API Keys
+
+QuickToolBox now has its own publishable key system (prefix `qpk_live_` / `qpk_test_`).
+
+- **Generate locally:** `node scripts/generate-publishable-key.mjs` or `npm run generate:key`
+- **Generate via API:** `curl -X POST /api/publishable-key -H "Content-Type: application/json" -d '{"env":"live"}'`
+- **Manage in UI:** `/dashboard/api-keys` (create, copy, revoke — stored in Supabase in prod, localStorage in demo)
+- **Validate:** `GET /api/publishable-key?key=qpk_live_...` or `validatePublishableKey()` in `lib/publishable-key.js`
+- **Supabase publishable key:** Create at `Supabase Dashboard → Settings → API → API Keys` → copy `sb_publishable_…` → set `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in Vercel.
 
 ## Google login (production)
 
