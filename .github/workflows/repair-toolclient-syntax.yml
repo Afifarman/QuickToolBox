@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - 'arena/**'
+  pull_request:
+    types: [synchronize]
 
 permissions:
   contents: write
