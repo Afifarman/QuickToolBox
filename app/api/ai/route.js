@@ -13,6 +13,7 @@ function configuredProviders() {
     groq: Boolean(process.env.GROQ_API_KEY),
     gemini: Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY),
     openrouter: Boolean(process.env.OPENROUTER_API_KEY),
+    alibaba: Boolean(process.env.DASHSCOPE_API_KEY),
   };
 }
 
@@ -37,6 +38,31 @@ async function fetchJson(url, options, timeoutMs = PROVIDER_TIMEOUT_MS) {
   }
 }
 
+async function openaiCompatibleChat({ key, baseUrl, model, source }, prompt) {
+  if (!key) return null;
+
+  const { response, data } = await fetchJson(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: AI_SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
+      ],
+      max_tokens: 900,
+      temperature: 0.6,
+    }),
+  });
+
+  const text = extractModelText(data);
+  if (response.ok && text) return { text, source, model };
+  return null;
+}
+
 async function openaiChat(prompt) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) return null;
@@ -50,40 +76,15 @@ async function openaiChat(prompt) {
   ]);
 
   for (const model of models) {
-    const { response, data } = await fetchJson('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${key}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: AI_SYSTEM_PROMPT },
-          { role: 'user', content: prompt },
-        ],
-        max_tokens: 900,
-        temperature: 0.6,
-      }),
-    });
-    const text = extractModelText(data);
-    if (response.ok && text) return { text, source: 'openai', model };
+    const result = await openaiCompatibleChat({
+      key,
+      baseUrl: 'https://api.openai.com/v1',
+      model,
+      source: 'openai',
+    }, prompt);
+    if (result) return result;
   }
 
-  const { response, data } = await fetchJson('https://api.openai.com/v1/responses', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${key}`,
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      input: `${AI_SYSTEM_PROMPT}\n\n${prompt}`,
-      max_output_tokens: 900,
-    }),
-  });
-  const text = extractModelText(data);
-  if (response.ok && text) return { text, source: 'openai', model: process.env.OPENAI_MODEL || 'gpt-4o-mini' };
   return null;
 }
 
@@ -99,24 +100,13 @@ async function groqChat(prompt) {
   ]);
 
   for (const model of models) {
-    const { response, data } = await fetchJson('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${key}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: AI_SYSTEM_PROMPT },
-          { role: 'user', content: prompt },
-        ],
-        max_tokens: 900,
-        temperature: 0.6,
-      }),
-    });
-    const text = extractModelText(data);
-    if (response.ok && text) return { text, source: 'groq', model };
+    const result = await openaiCompatibleChat({
+      key,
+      baseUrl: 'https://api.groq.com/openai/v1',
+      model,
+      source: 'groq',
+    }, prompt);
+    if (result) return result;
   }
   return null;
 }
@@ -155,25 +145,37 @@ async function openrouterChat(prompt) {
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) return null;
 
-  const { response, data } = await fetchJson('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${key}`,
-      'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://quick-tool-box-gamma.vercel.app',
-      'X-Title': 'QuickToolBox',
-    },
-    body: JSON.stringify({
-      model: process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini',
-      messages: [
-        { role: 'system', content: AI_SYSTEM_PROMPT },
-        { role: 'user', content: prompt },
-      ],
-      max_tokens: 900,
-    }),
-  });
-  const text = extractModelText(data);
-  if (response.ok && text) return { text, source: 'openrouter', model: process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini' };
+  return openaiCompatibleChat({
+    key,
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini',
+    source: 'openrouter',
+  }, prompt);
+}
+
+async function alibabaChat(prompt) {
+  const key = process.env.DASHSCOPE_API_KEY;
+  if (!key) return null;
+
+  // Alibaba Cloud Model Studio OpenAI-compatible endpoint.
+  // Override DASHSCOPE_BASE_URL when using another region/workspace endpoint.
+  const baseUrl = process.env.DASHSCOPE_BASE_URL || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
+  const models = unique([
+    process.env.DASHSCOPE_MODEL,
+    'qwen-plus',
+    'qwen-turbo',
+  ]);
+
+  for (const model of models) {
+    const result = await openaiCompatibleChat({
+      key,
+      baseUrl,
+      model,
+      source: 'alibaba',
+    }, prompt);
+    if (result) return result;
+  }
+
   return null;
 }
 
@@ -188,7 +190,7 @@ export async function POST(request) {
     if (!prompt) return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
 
     const clipped = prompt.slice(0, PROMPT_LIMIT);
-    const runners = [openaiChat, groqChat, geminiChat, openrouterChat];
+    const runners = [alibabaChat, openaiChat, groqChat, geminiChat, openrouterChat];
 
     for (const run of runners) {
       try {
