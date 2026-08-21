@@ -1,9 +1,36 @@
 import './globals.css';
 import Script from 'next/script';
 
+const siteUrl = 'https://quick-tool-box-gamma.vercel.app';
+
 export const metadata = {
-  title: 'QuickToolBox | Free Online Tools',
-  description: 'Fast, free online calculators, converters, PDF, QR, image, productivity and AI tools.',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'QuickToolBox | Free Online Tools',
+    template: '%s | QuickToolBox',
+  },
+  description: 'Free online PDF, image, calculator, student, productivity, SEO and AI tools. Fast, simple and mobile-friendly.',
+  applicationName: 'QuickToolBox',
+  keywords: ['free online tools','PDF tools','calculator','student tools','AI tools','SEO tools','image tools','QuickToolBox'],
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    url: siteUrl,
+    siteName: 'QuickToolBox',
+    title: 'QuickToolBox | Free Online Tools',
+    description: 'Free PDF, calculator, student, productivity, SEO and AI tools in one toolbox.',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'QuickToolBox | Free Online Tools',
+    description: 'Free PDF, calculator, student, productivity, SEO and AI tools.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 },
+  },
 };
 
 export const viewport = {
