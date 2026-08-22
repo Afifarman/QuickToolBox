@@ -1,4 +1,4 @@
-const baseUrl = 'https://quick-tool-box-gamma.vercel.app';
+const baseUrl = 'https://www.quick-tool-box-vercel.app';
 
 const paths = [
   '/', '/login', '/ai', '/cv-maker', '/tools', '/student-tools',
