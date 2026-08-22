@@ -1,7 +1,7 @@
 import './globals.css';
 import Script from 'next/script';
 
-const siteUrl = 'https://quick-tool-box-gamma.vercel.app';
+const siteUrl = 'https://www.quick-tool-box-vercel.app';
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
@@ -11,8 +11,8 @@ export const metadata = {
   },
   description: 'Free online PDF, image, calculator, student, productivity, SEO and AI tools. Fast, simple and mobile-friendly.',
   applicationName: 'QuickToolBox',
-  keywords: ['free online tools','PDF tools','calculator','student tools','AI tools','SEO tools','image tools','QuickToolBox'],
-  alternates: { canonical: '/' },
+  keywords: ['free online tools', 'PDF tools', 'calculator', 'student tools', 'AI tools', 'SEO tools', 'image tools', 'QuickToolBox'],
+  alternates: { canonical: siteUrl },
   openGraph: {
     type: 'website',
     url: siteUrl,
@@ -29,7 +29,13 @@ export const metadata = {
   robots: {
     index: true,
     follow: true,
-    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 },
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
   },
 };
 
