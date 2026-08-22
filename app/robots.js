@@ -1,4 +1,4 @@
-const baseUrl = 'https://quick-tool-box-gamma.vercel.app';
+const baseUrl = 'https://www.quick-tool-box-vercel.app';
 
 export default function robots() {
   return {
