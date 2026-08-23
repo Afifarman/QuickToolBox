@@ -37,6 +37,9 @@ export const metadata = {
       'max-video-preview': -1,
     },
   },
+  verification: {
+    google: 'cmHigTtC-Ea9xH7WZYPLXIUU_7WRBaov-wg5cT8Q8Do',
+  },
 };
 
 export const viewport = {
