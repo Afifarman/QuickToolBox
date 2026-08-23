@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useState} from 'react';
-import {createClient} from '../../lib/supabase/client';
+import {createClient, isSupabaseConfigured} from '../../lib/supabase/client';
 import {getPasswordResetUrl} from '../../lib/supabase/auth-redirect';
 
 export default function ResetPassword(){
@@ -12,6 +12,7 @@ export default function ResetPassword(){
   const [busy,setBusy]=useState(false);
 
   useEffect(()=>{
+    if(!isSupabaseConfigured()){setMsg('Supabase is not configured — password reset is unavailable in guest mode.');return}
     const supabase=createClient();
     let mounted=true;
     supabase.auth.getSession().then(({data})=>{

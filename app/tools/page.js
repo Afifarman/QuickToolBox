@@ -13,12 +13,21 @@ const tools = [
   ['invoice-generator','Invoice Generator'],
   ['cover-letter-builder','Cover Letter Builder'],
   ['qr-scanner','QR Scanner'],
+  ['qr-generator','QR Code Generator'],
   ['url-shortener','URL Shortener'],
   ['json-formatter','JSON Formatter'],
   ['favicon-generator','Favicon Generator'],
   ['meta-tag-generator','Meta Tag Generator'],
   ['sitemap-generator','Sitemap Generator'],
   ['password-strength-checker','Password Strength Checker'],
+  ['password-generator','Password Generator'],
+  ['word-counter','Word Counter'],
+  ['age-calculator','Age Calculator'],
+  ['date-calculator','Date Calculator'],
+  ['unit-converter','Unit Converter'],
+  ['percentage-calculator','Percentage Calculator'],
+  ['image-compressor','Image Compressor'],
+  ['currency-converter','Currency Converter'],
   ['world-clock','World Clock / Timezone Converter']
 ];
 

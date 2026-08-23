@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '../../lib/supabase/client';
+import { createClient, isSupabaseConfigured } from '../../lib/supabase/client';
 import { getAuthCallbackUrl } from '../../lib/supabase/auth-redirect';
 
 function getErrorMessage(error) {
@@ -36,6 +36,9 @@ export default function LoginPage() {
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
     const error = params.get('error') || hashParams.get('error_description') || hashParams.get('error');
     if (error) setMsg(getErrorMessage(error));
+    if (!isSupabaseConfigured()) {
+      setMsg((prev) => prev || 'Supabase is not configured on this deployment. Auth will run in guest mode. Add NEXT_PUBLIC_SUPABASE_URL and key in Vercel to enable login.');
+    }
   }, []);
 
   async function submit(e) {
