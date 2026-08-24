@@ -1,23 +1,83 @@
 import { NextResponse } from 'next/server';
+import { createGeminiStream, geminiConfigured } from '../../../lib/gemini';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
+function sseEvent(type, data) {
+  return `event: ${type}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    provider: 'gemini',
+    configured: geminiConfigured(),
+    model: process.env.GEMINI_MODEL || 'gemini-3.7-flash',
+    streaming: true,
+    urlContext: true,
+  });
+}
 
 export async function POST(request) {
   try {
-    const { prompt } = await request.json();
-    if (!prompt?.trim()) return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
-    const key = process.env.OPENAI_API_KEY;
-    if (!key) return NextResponse.json({ error: 'AI is not configured yet. Add OPENAI_API_KEY in Vercel Environment Variables.' }, { status: 503 });
+    const body = await request.json().catch(() => ({}));
+    const prompt = String(body?.prompt || '').trim();
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
+    }
 
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-      body: JSON.stringify({ model: 'gpt-5-mini', input: prompt, max_output_tokens: 800 })
+    if (!geminiConfigured()) {
+      return NextResponse.json(
+        { error: 'Gemini is not configured. Add GEMINI_API_KEY to Vercel Environment Variables.' },
+        { status: 503 }
+      );
+    }
+
+    const upstream = await createGeminiStream(prompt);
+    const encoder = new TextEncoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        controller.enqueue(encoder.encode(sseEvent('status', {
+          type: 'provider',
+          provider: 'gemini',
+          model: process.env.GEMINI_MODEL || 'gemini-3.7-flash',
+        })));
+
+        const reader = upstream.getReader();
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            controller.enqueue(value);
+          }
+          controller.enqueue(encoder.encode(sseEvent('status', { type: 'complete' })));
+          controller.close();
+        } catch (error) {
+          controller.enqueue(encoder.encode(sseEvent('error', {
+            message: error instanceof Error ? error.message : 'Gemini stream failed.',
+          })));
+          controller.close();
+        } finally {
+          reader.releaseLock();
+        }
+      },
     });
-    const data = await response.json();
-    if (!response.ok) return NextResponse.json({ error: data?.error?.message || 'AI request failed.' }, { status: response.status });
 
-    const text = data.output?.flatMap(item => item.content || []).filter(item => item.type === 'output_text').map(item => item.text).join('\n') || 'No response generated.';
-    return NextResponse.json({ text });
-  } catch {
-    return NextResponse.json({ error: 'Unable to process the AI request.' }, { status: 500 });
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      },
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unable to start Gemini.' },
+      { status: 502 }
+    );
   }
 }
