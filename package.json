@@ -8,7 +8,6 @@
     "start": "next start"
   },
   "dependencies": {
-    "@openai/agents": "latest",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.57.0",
     "@types/node": "^20.0.0",
@@ -20,7 +19,6 @@
     "qrcode": "1.5.4",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "typescript": "^5.0.0",
-    "zod": "^4.0.0"
+    "typescript": "^5.0.0"
   }
 }
