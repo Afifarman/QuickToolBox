@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { AI_SYSTEM_PROMPT, extractModelText, localAI } from '../../../lib/ai';
+import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -180,10 +181,18 @@ async function alibabaChat(prompt) {
 }
 
 export async function GET() {
-  return NextResponse.json({ ok: true, providers: configuredProviders() });
+  return NextResponse.json({ ok: true, available: Object.values(configuredProviders()).some(Boolean) });
 }
 
 export async function POST(request) {
+  const limit = rateLimit(getClientKey(request, 'ai'), { limit: 20, windowMs: 10 * 60 * 1000 });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many AI requests. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } },
+    );
+  }
+
   try {
     const body = await request.json().catch(() => ({}));
     const prompt = String(body?.prompt || '').trim();
