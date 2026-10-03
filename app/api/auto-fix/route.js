@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { inspectRepository } from '../../../lib/auto-fix/github';
+import { createClient } from '../../../lib/supabase/server';
+import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,6 +23,21 @@ function pathsForProblem(problem) {
 }
 
 export async function POST(request) {
+  const limit = rateLimit(getClientKey(request, 'auto-fix'), { limit: 5, windowMs: 10 * 60 * 1000 });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many auto-fix requests. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } },
+    );
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const admins = String(process.env.ADMIN_EMAILS || '').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean);
+  if (!user || !admins.includes(String(user.email || '').toLowerCase())) {
+    return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
+  }
+
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
       { error: 'OPENAI_API_KEY is not configured on the server.' },
