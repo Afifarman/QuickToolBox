@@ -1,7 +1,9 @@
+import { SITE_URL } from '../lib/site-config';
+
 const baseUrl = 'https://www.quick-tool-box-vercel.app';
 
 const paths = [
-  '/', '/login', '/ai', '/cv-maker', '/tools', '/student-tools',
+  '/', '/ai', '/cv-maker', '/tools', '/student-tools',
   '/tools/pdf-merge', '/tools/pdf-split', '/tools/pdf-compressor', '/tools/image-to-pdf',
   '/tools/passport-photo-maker', '/tools/gpa-calculator', '/tools/emi-calculator',
   '/tools/salary-calculator', '/tools/tax-vat-calculator', '/tools/invoice-generator',
@@ -19,7 +21,7 @@ const paths = [
 
 export default function sitemap() {
   return paths.map((path) => ({
-    url: `${baseUrl}${path}`,
+    url: `${SITE_URL}${path}`,
     lastModified: new Date(),
     changeFrequency: path === '/' ? 'daily' : 'weekly',
     priority: path === '/' ? 1 : path === '/ai' || path === '/cv-maker' ? 0.9 : 0.7,
