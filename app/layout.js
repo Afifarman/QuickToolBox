@@ -2,7 +2,9 @@ import './globals.css';
 import Script from 'next/script';
 
 // Currently working production Vercel domain.
-const siteUrl = 'https://quick-tool-box-gamma.vercel.app';
+import { SITE_URL } from '../lib/site-config';
+
+const siteUrl = SITE_URL;
 const googleVerification = 'cmHigTtC-Ea9xH7WZYPLXIUU_7WRBaov-wg5cT8Q8Do';
 
 export const metadata = {
@@ -54,9 +56,6 @@ export const metadata = {
       'max-snippet': -1,
       'max-video-preview': -1,
     },
-  },
-  verification: {
-    google: 'cmHigTtC-Ea9xH7WZYPLXIUU_7WRBaov-wg5cT8Q8Do',
   },
 };
 
