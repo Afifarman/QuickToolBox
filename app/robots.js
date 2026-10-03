@@ -1,9 +1,9 @@
-const baseUrl = 'https://www.quick-tool-box-vercel.app';
+import { SITE_URL } from '../lib/site-config';
 
 export default function robots() {
   return {
     rules: [{ userAgent: '*', allow: '/' }],
-    sitemap: `${baseUrl}/sitemap.xml`,
-    host: baseUrl,
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }
