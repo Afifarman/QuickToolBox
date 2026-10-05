@@ -1,7 +1,5 @@
 import { SITE_URL } from '../lib/site-config';
 
-const baseUrl = 'https://www.quick-tool-box-vercel.app';
-
 const paths = [
   '/', '/ai', '/cv-maker', '/tools', '/student-tools',
   '/tools/pdf-merge', '/tools/pdf-split', '/tools/pdf-compressor', '/tools/image-to-pdf',
