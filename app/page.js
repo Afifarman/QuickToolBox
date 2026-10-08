@@ -5,8 +5,12 @@ const tools = [
 ];
 
 const aiTools = [
-  ['ai','spark','AI Assistant','Generate, rewrite, summarize and improve text. Works with configured AI providers and local fallback.'],
-  ['cv-maker','document','AI CV Maker','Build a professional CV with AI-assisted content.']
+  ['/ai','spark','AI Assistant','Generate, rewrite, summarize and improve text. Works with configured AI providers and local fallback.'],
+  ['/ai/photo-editor','image','AI Photo Editor','One-click enhance, filters and background tools. Edits stay in your browser.'],
+  ['/ai/prompt-generator','pen','AI Prompt Generator','Build structured, powerful AI prompts for any task in seconds.'],
+  ['/ai/learning','brain','AI Learning','Explanations, lessons, quizzes, flashcards and study plans with AI.'],
+  ['/ai/student-kit','graduation','AI Student Toolkit','Homework help, essay drafts, math steps, citations and feedback.'],
+  ['/cv-maker','document','AI CV Maker','Build a professional CV with AI-assisted content.']
 ];
 
 const studentTools = [
@@ -57,7 +61,7 @@ function Icon({ name }) {
 
 function ToolGrid({ items, base }) {
   return <div className="grid">{items.map(([slug,icon,title,desc], i) => {
-    const href = base === 'ai' ? (slug === 'ai' ? '/ai' : '/cv-maker') : `/${base}/${slug}`;
+    const href = base === 'ai' ? slug : `/${base}/${slug}`;
     return <Link className="card" href={href} key={`${slug}-${i}`}><span className="icon-wrap"><Icon name={icon}/></span><div><h3>{title}</h3><p>{desc}</p></div><span className="card-arrow" aria-hidden="true">→</span></Link>;
   })}</div>;
 }
@@ -68,7 +72,7 @@ export default function Home() {
     <main>
       <section className="hero"><small>⚡ FREE • FAST • SIMPLE • AI</small><h1>One toolbox.<br/><span>Everything useful.</span></h1><p>Fast, privacy-friendly PDF, calculator, productivity, student and AI tools designed for phones, tablets and computers.</p><a className="btn" href="#tools">Explore tools →</a></section>
       <section id="tools"><small>TOOLBOX</small><h2>19 essential tools.</h2><ToolGrid items={tools} base="tools"/></section>
-      <section id="ai"><small>AI & CV</small><h2>AI tools that actually help.</h2><ToolGrid items={aiTools} base="ai"/></section>
+      <section id="ai"><small>AI & CV</small><h2>{aiTools.length} AI tools that actually help.</h2><ToolGrid items={aiTools} base="ai"/></section>
       <section id="student-tools"><small>STUDENT TOOLS</small><h2>{studentTools.length} useful tools for students.</h2><ToolGrid items={studentTools} base="student-tools"/></section>
       <section id="about" className="about"><small>WHY QUICKTOOLBOX?</small><h2>Fast, private and mobile-friendly.</h2><div className="features"><div>⚡ <b>Fast</b><p>Lightweight browser-first tools.</p></div><div>🔒 <b>Private</b><p>Local file tools process files in your browser.</p></div><div>📱 <b>Responsive</b><p>Designed for phones, tablets and computers.</p></div></div></section>
     </main>
