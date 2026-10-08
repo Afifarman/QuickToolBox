@@ -41,7 +41,7 @@ export default function AIPhotoEditor() {
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: { prompt: `Turn this photo editing request into a precise, safe image-editing instruction. Request: ${prompt}` }
+        body: JSON.stringify({ prompt: `Turn this photo editing request into a precise, safe image-editing instruction. Request: ${prompt}` }
       });
       const data = await res.json();
       setAiTip(data.text || 'Try natural lighting, realistic skin tones, sharper details and a clean background.');
