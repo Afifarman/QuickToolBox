@@ -24,7 +24,7 @@ export default function AIPrompts() {
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: `You are an expert prompt engineer. Category: ${category}. Goal: ${goal}. ${categories[category]} Return one polished copy-ready prompt followed by 3 short optional variations.` }) })
+        body: JSON.stringify({ prompt: `You are an expert prompt engineer. Category: ${category}. Goal: ${goal}. ${categories[category]} Return one polished copy-ready prompt followed by 3 short optional variations.` })
       });
       const data = await res.json();
       setResult(data.text || 'Could not generate a prompt.');
