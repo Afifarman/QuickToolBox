@@ -2,6 +2,7 @@ import { SITE_URL } from '../lib/site-config';
 
 const paths = [
   '/', '/ai', '/cv-maker', '/tools', '/student-tools',
+  '/ai/photo-editor', '/ai/prompt-generator', '/ai/learning', '/ai/student-kit',
   '/tools/pdf-merge', '/tools/pdf-split', '/tools/pdf-compressor', '/tools/image-to-pdf',
   '/tools/passport-photo-maker', '/tools/gpa-calculator', '/tools/emi-calculator',
   '/tools/salary-calculator', '/tools/tax-vat-calculator', '/tools/invoice-generator',
@@ -22,6 +23,6 @@ export default function sitemap() {
     url: `${SITE_URL}${path}`,
     lastModified: new Date(),
     changeFrequency: path === '/' ? 'daily' : 'weekly',
-    priority: path === '/' ? 1 : path === '/ai' || path === '/cv-maker' ? 0.9 : 0.7,
+    priority: path === '/' ? 1 : path === '/ai' || path === '/cv-maker' || path.startsWith('/ai/') ? 0.9 : 0.7,
   }));
 }

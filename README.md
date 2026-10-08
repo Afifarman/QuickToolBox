@@ -71,6 +71,8 @@ Without the production `/auth/callback` URL on the Supabase allowlist, Google lo
 ## Included
 Age Calculator, Date Calculator, Currency Converter, Unit Converter, PDF Tools, Word Counter, Password Generator, QR Code Generator, Image Compressor, Percentage Calculator.
 
+**AI tools:** AI Assistant (`/ai`), AI Photo Editor (`/ai/photo-editor` — one-click enhance, filters, background remove/blur, all in-browser), AI Prompt Generator (`/ai/prompt-generator`), AI Learning (`/ai/learning`), AI Student Toolkit (`/ai/student-kit`) and AI CV Maker (`/cv-maker`). The text AI tools use a configured cloud provider when a key is set and always fall back to the built-in assistant.
+
 ## Production deployment
 Latest production source is the `main` branch. This line intentionally triggers the connected Vercel deployment after production source fixes.
 

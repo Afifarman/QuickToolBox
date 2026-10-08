@@ -18,8 +18,16 @@ const SOURCE_LABEL = {
   groq: 'Groq',
   gemini: 'Gemini',
   openrouter: 'OpenRouter',
+  alibaba: 'Alibaba Qwen',
   local: 'On-device assistant',
 };
+
+const MORE_AI_TOOLS = [
+  ['/ai/photo-editor', '🖼️', 'AI Photo Editor', 'One-click enhance, filters and background tools — private, in your browser.'],
+  ['/ai/prompt-generator', '✨', 'AI Prompt Generator', 'Build structured, powerful AI prompts for image, writing, coding and more.'],
+  ['/ai/learning', '🎓', 'AI Learning', 'Explanations, lessons, quizzes, flashcards and study plans.'],
+  ['/ai/student-kit', '📚', 'AI Student Toolkit', 'Homework help, essay drafts, step-by-step math, citations and feedback.'],
+];
 
 export default function AIPage() {
   const [prompt, setPrompt] = useState('Write a professional CV summary for a software engineer.');
@@ -92,8 +100,9 @@ export default function AIPage() {
           <b>Q</b> QuickToolBox
         </Link>
         <nav>
+          <Link href="/ai/photo-editor">Photo Editor</Link>
+          <Link href="/ai/learning">AI Learning</Link>
           <Link href="/cv-maker">CV Maker</Link>
-          <Link href="/student-tools">Student tools</Link>
           <Link href="/">← All tools</Link>
         </nav>
       </header>
@@ -104,6 +113,22 @@ export default function AIPage() {
           Generate, rewrite, summarize and improve text. The assistant always answers — it uses a configured AI
           provider when available, and a built-in writer if no API key is set.
         </p>
+
+        <section className="ai-hub">
+          <h2>More AI tools</h2>
+          <div className="grid">
+            {MORE_AI_TOOLS.map(([href, icon, title, desc]) => (
+              <Link className="card" href={href} key={href}>
+                <span className="icon-wrap">{icon}</span>
+                <div>
+                  <h3>{title}</h3>
+                  <p>{desc}</p>
+                </div>
+                <span className="card-arrow" aria-hidden="true">→</span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <div className="ai-templates">
           {TEMPLATES.map(([label, value]) => (
