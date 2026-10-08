@@ -1,7 +1,7 @@
 import { SITE_URL } from '../lib/site-config';
 
 const paths = [
-  '/', '/ai', '/cv-maker', '/tools', '/student-tools',
+  '/', '/ai', '/cv-maker', '/ai-photo-editor', '/ai-prompts', '/ai-student', '/tools', '/student-tools',
   '/tools/pdf-merge', '/tools/pdf-split', '/tools/pdf-compressor', '/tools/image-to-pdf',
   '/tools/passport-photo-maker', '/tools/gpa-calculator', '/tools/emi-calculator',
   '/tools/salary-calculator', '/tools/tax-vat-calculator', '/tools/invoice-generator',
