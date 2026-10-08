@@ -6,7 +6,10 @@ const tools = [
 
 const aiTools = [
   ['ai','spark','AI Assistant','Generate, rewrite, summarize and improve text. Works with configured AI providers and local fallback.'],
-  ['cv-maker','document','AI CV Maker','Build a professional CV with AI-assisted content.']
+  ['cv-maker','document','AI CV Maker','Build a professional CV with AI-assisted content.'],
+  ['ai-photo-editor','image','AI Photo Editor','Edit photos with AI-assisted instructions and browser-based adjustments.'],
+  ['ai-prompts','spark','AI Prompt Generator','Create copy-ready prompts for image, study, coding, SEO and social media.'],
+  ['ai-student','graduation','AI Student Hub','AI study assistant, notes, quizzes, flashcards and essay tools in one place.']
 ];
 
 const studentTools = [
@@ -57,7 +60,7 @@ function Icon({ name }) {
 
 function ToolGrid({ items, base }) {
   return <div className="grid">{items.map(([slug,icon,title,desc], i) => {
-    const href = base === 'ai' ? (slug === 'ai' ? '/ai' : '/cv-maker') : `/${base}/${slug}`;
+    const href = base === 'ai' ? (slug === 'ai' ? '/ai' : slug === 'cv-maker' ? '/cv-maker' : `/${slug}`) : `/${base}/${slug}`;
     return <Link className="card" href={href} key={`${slug}-${i}`}><span className="icon-wrap"><Icon name={icon}/></span><div><h3>{title}</h3><p>{desc}</p></div><span className="card-arrow" aria-hidden="true">→</span></Link>;
   })}</div>;
 }
