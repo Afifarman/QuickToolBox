@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "example:ai": "tsx index.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
@@ -20,6 +21,10 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "typescript": "^5.0.0",
-    "ai": "^7.0.130"
+    "ai": "^7.0.130",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.6"
   }
 }
