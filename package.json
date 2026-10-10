@@ -19,6 +19,7 @@
     "qrcode": "1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "ai": "^7.0.130"
   }
 }
