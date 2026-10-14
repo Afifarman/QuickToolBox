@@ -18,7 +18,7 @@ Set these Vercel environment variables (Production + Preview):
 
 1. `VERCEL_PROJECT_PRODUCTION_URL` — the production domain of the Vercel project (its custom domain, or its `<project>.vercel.app` alias)
 2. `VERCEL_URL` — the URL of the current deployment
-3. `https://quick-tool-box-gfr1.vercel.app` — fallback for local builds
+3. `https://quicktoolbox-bd.vercel.app` — last-resort fallback
 
 So leaving it unset is safe: the generated URLs always match the host that actually serves the site.
 
@@ -28,8 +28,8 @@ So leaving it unset is safe: the generated URLs always match the host that actua
 
 If a custom domain is wanted, first register it and point it at the Vercel project (Vercel → Project → Settings → Domains → Add, then create the DNS records Vercel shows), and only afterwards set `NEXT_PUBLIC_SITE_URL` to it. Live hosts today:
 
-- `https://quick-tool-box-gfr1.vercel.app` (current production project)
-- `https://quick-tool-box-gamma.vercel.app` (older project, still serving)
+- `https://quicktoolbox-bd.vercel.app` (configured production canonical URL)
+- `https://quick-tool-box-gamma.vercel.app` (older project, still serving; confirm before using for auth)
 
 Optional AI provider keys. The `/ai` assistant always returns an answer. If one of these is set, that cloud model is used first:
 
