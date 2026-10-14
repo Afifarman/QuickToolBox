@@ -18,7 +18,7 @@ jobs:
           node-version: 22
           cache: npm
       - name: Upgrade Next.js safely
-        run: npm install next@16.3.6 --save-exact
+        run: npm install next@16.3.8 --save-exact
       - name: Audit dependencies
         run: npm audit --audit-level=high
       - name: Build
