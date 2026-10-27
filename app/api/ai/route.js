@@ -82,14 +82,11 @@ async function geminiChat(prompt) {
     return null;
   }
 
-  // Current Gemini Flash models first. GEMINI_MODEL can override the first attempt.
+  // Prefer widely available stable Flash models; GEMINI_MODEL may override the first attempt.
   const models = unique([
     process.env.GEMINI_MODEL,
-    'gemini-3.8-flash',
-    'gemini-3.6-flash',
-    'gemini-3.5-flash-lite',
-    'gemini-3.1-flash-lite',
     'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
   ]);
 
   for (const model of models) {
