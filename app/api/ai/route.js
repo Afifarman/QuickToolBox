@@ -43,7 +43,7 @@ async function fetchJson(url, options, timeoutMs = PROVIDER_TIMEOUT_MS) {
 async function openaiCompatibleChat({ key, baseUrl, model, source }, prompt) {
   if (!key) return null;
 
-  const { response, data } = await fetchJson(`${baseUrl.replace(/\\/$/, '')}/chat/completions`, {
+  const { response, data } = await fetchJson(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
