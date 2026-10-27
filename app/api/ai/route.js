@@ -43,11 +43,11 @@ async function fetchJson(url, options, timeoutMs = PROVIDER_TIMEOUT_MS) {
 async function openaiCompatibleChat({ key, baseUrl, model, source }, prompt) {
   if (!key) return null;
 
-  const { response, data } = await fetchJson(\`\${baseUrl.replace(/\\/$/, '')}/chat/completions\`, {
+  const { response, data } = await fetchJson(`${baseUrl.replace(/\\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: \`Bearer \${key}\`,
+      Authorization: `Bearer ${key}`,
     },
     body: JSON.stringify({
       model,
@@ -94,7 +94,7 @@ async function geminiChat(prompt) {
   for (const model of models) {
     try {
       const { response, data } = await fetchJson(
-        \`https://generativelanguage.googleapis.com/v1beta/models/\${encodeURIComponent(model)}:generateContent\`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
         {
           method: 'POST',
           headers: {
