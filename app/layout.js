@@ -68,10 +68,6 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
-        {/* Explicit Google verification tag for Search Console. */}
-        <meta name="google-site-verification" content={googleVerification} />
-      </head>
       <body>
         {children}
         <Script
