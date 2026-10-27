@@ -116,36 +116,57 @@ async function geminiChat(prompt) {
   const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!key) return null;
 
+  // Prefer a current Flash model; GEMINI_MODEL can override the order.
   const models = unique([
     process.env.GEMINI_MODEL,
-    'gemini-2.0-flash',
     'gemini-2.5-flash',
-    'gemini-1.5-flash',
+    'gemini-2.0-flash',
     'gemini-flash-latest',
+    'gemini-1.5-flash',
   ]);
 
   for (const model of models) {
-    const { response, data } = await fetchJson(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: `${AI_SYSTEM_PROMPT}\n\n${prompt}` }] }],
-          generationConfig: { maxOutputTokens: 900, temperature: 0.6 },
-        }),
-      }
-    );
-    const text = extractModelText(data);
-    if (response.ok && text) return { text, source: 'gemini', model };
+    try {
+      const { response, data } = await fetchJson(
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+        {
+          method: 'POST',
+          // Keep the key out of the URL, which may be recorded by infrastructure logs.
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': key,
+          },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: `${AI_SYSTEM_PROMPT}\n\n${prompt}` }] }],
+            generationConfig: { maxOutputTokens: 900, temperature: 0.6 },
+          }),
+        }
+      );
 
-    // Diagnostic only: never log the request URL, headers, or API key.
-    console.error('[AI] Gemini request failed:', {
-      model,
-      status: response.status,
-      message: String(data?.error?.message || (text ? 'Unexpected Gemini response' : 'No text returned')).slice(0, 300),
-    });
+      const text = extractModelText(data);
+      if (response.ok && text) return { text, source: 'gemini', model };
+
+      const providerMessage = String(
+        data?.error?.message || (text ? 'Unexpected Gemini response' : 'No text returned')
+      ).replaceAll(key, '[REDACTED]').slice(0, 300);
+
+      console.error('[AI] Gemini request failed:', {
+        model,
+        status: response.status,
+        message: providerMessage,
+      });
+    } catch (error) {
+      const message = String(error?.message || 'Gemini network request failed')
+        .replaceAll(key, '[REDACTED]')
+        .slice(0, 300);
+
+      console.error('[AI] Gemini request threw an error:', {
+        model,
+        message,
+      });
+    }
   }
+
   return null;
 }
 
