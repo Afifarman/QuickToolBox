@@ -138,6 +138,13 @@ async function geminiChat(prompt) {
     );
     const text = extractModelText(data);
     if (response.ok && text) return { text, source: 'gemini', model };
+
+    // Diagnostic only: never log the request URL, headers, or API key.
+    console.error('[AI] Gemini request failed:', {
+      model,
+      status: response.status,
+      message: String(data?.error?.message || (text ? 'Unexpected Gemini response' : 'No text returned')).slice(0, 300),
+    });
   }
   return null;
 }
@@ -205,8 +212,12 @@ export async function POST(request) {
       try {
         const result = await run(clipped);
         if (result?.text) return NextResponse.json(result);
-      } catch {
-        // Try the next provider. The local fallback always answers.
+      } catch (error) {
+        // Do not log provider request URLs or credentials.
+        console.error('[AI] Provider threw an error:', {
+          provider: run.name,
+          message: String(error?.message || 'Unknown error').slice(0, 300),
+        });
       }
     }
 
