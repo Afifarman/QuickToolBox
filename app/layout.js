@@ -1,5 +1,6 @@
 import './globals.css';
 import Script from 'next/script';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 // Currently working production Vercel domain.
 import { SITE_URL } from '../lib/site-config';
@@ -74,6 +75,7 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         {children}
+        <SpeedInsights />
         <Script
           async
           strategy="afterInteractive"
