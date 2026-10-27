@@ -87,7 +87,9 @@ async function geminiChat(prompt) {
     process.env.GEMINI_MODEL,
     'gemini-3.8-flash',
     'gemini-3.6-flash',
-    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
+    'gemini-2.5-flash',
   ]);
 
   for (const model of models) {
@@ -254,8 +256,8 @@ export async function POST(request) {
     }
 
     console.error('[AI] No configured provider returned a response; using local fallback.');
-    return NextResponse.json({ text: localAI(clipped), source: 'local' });
+    return NextResponse.json({ text: localAI(clipped), source: 'local', warning: 'Gemini and other configured AI providers did not return a usable response. Check the Preview environment variables and Vercel runtime logs.' });
   } catch {
-    return NextResponse.json({ text: localAI('Give a short helpful answer.'), source: 'local' });
+    return NextResponse.json({ text: localAI('Give a short helpful answer.'), source: 'local', warning: 'The AI request could not be completed. Check Vercel runtime logs for the provider error.' });
   }
 }
