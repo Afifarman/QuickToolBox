@@ -7,7 +7,7 @@ export const maxDuration = 30;
 
 const PROMPT_LIMIT = 8000;
 const PROVIDER_TIMEOUT_MS = 7000;
-const GEMINI_TIMEOUT_MS = 5000;
+const GEMINI_TIMEOUT_MS = 8000;
 
 function configuredProviders() {
   return {
@@ -88,7 +88,6 @@ async function geminiChat(prompt) {
     'gemini-3.8-flash',
     'gemini-3.6-flash',
     'gemini-3.5-flash',
-    'gemini-2.5-flash',
   ]);
 
   for (const model of models) {
@@ -127,7 +126,8 @@ async function geminiChat(prompt) {
       });
 
       // Authentication, permission, or quota failures will not be fixed by changing models.
-      if ([400, 401, 403, 429].includes(response.status)) break;
+      // A 400 can mean the configured model name or request format is unsupported, so try the next model.
+      if ([401, 403, 429].includes(response.status)) break;
     } catch (error) {
       const message = String(error?.message || 'Gemini network request failed')
         .replaceAll(key, '[REDACTED]')
