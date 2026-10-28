@@ -31,6 +31,8 @@ export default function AgentPage() {
   const [status, setStatus] = useState('idle');
   const [history, setHistory] = useState([]);
   const [error, setError] = useState('');
+  const [diagnostics, setDiagnostics] = useState([]);
+  const [checking, setChecking] = useState(false);
 
   function applyAppearanceFromGoal(text) {
     const value = text.toLowerCase();
@@ -78,6 +80,42 @@ export default function AgentPage() {
     }
   }
 
+  async function runDiagnostics() {
+    if (checking) return;
+    setChecking(true);
+    setDiagnostics([]);
+    const checks = [
+      { name: 'Homepage', path: '/' },
+      { name: 'AI Assistant page', path: '/ai' },
+      { name: 'AI Agent page', path: '/agent' },
+      { name: 'Tools page', path: '/tools' },
+      { name: 'AI API availability', path: '/api/ai' },
+      { name: 'Robots.txt', path: '/robots.txt' },
+      { name: 'Sitemap.xml', path: '/sitemap.xml' },
+    ];
+    const results = await Promise.all(checks.map(async check => {
+      try {
+        const response = await fetch(check.path, { cache: 'no-store' });
+        let detail = response.status + ' ' + response.statusText;
+        if (check.path === '/api/ai' && response.ok) {
+          const data = await response.json();
+          detail += data.available ? ' · provider key configured' : ' · no AI provider detected';
+        } else if (check.path === '/sitemap.xml' && response.ok) {
+          const body = await response.text();
+          detail += ' · ' + (body.match(/<url>/g) || []).length + ' URLs detected';
+        } else if (check.path === '/robots.txt' && response.ok) {
+          const body = await response.text();
+          detail += body.toLowerCase().includes('sitemap') ? ' · sitemap reference found' : ' · no sitemap reference found';
+        }
+        return { ...check, ok: response.ok, detail };
+      } catch {
+        return { ...check, ok: false, detail: 'Request failed in this browser' };
+      }
+    }));
+    setDiagnostics(results);
+    setChecking(false);
+  }
+
   function replan() {
     setGoal(current => current ? current + '\nRe-plan based on the previous result: identify the next safest useful step and how to verify it.' : '');
     setStatus('idle');
@@ -100,6 +138,11 @@ export default function AgentPage() {
           <div className="qt-panel-title"><div><span className="qt-agent-orb">✦</span><h2>Choose a free AI agent</h2></div><ThemeControls /></div>
           <div className="qt-agent-grid" role="list" aria-label="Available AI agents">
             {agents.map(agent => <button type="button" role="listitem" key={agent.id} className={selectedAgent === agent.id ? 'qt-agent-choice is-selected' : 'qt-agent-choice'} aria-pressed={selectedAgent === agent.id} onClick={() => setSelectedAgent(agent.id)}><span>{agent.emoji}</span><b>{agent.name}</b><small>{agent.description}</small></button>)}
+          </div>
+          <div className="qt-agent-diagnostics">
+            <div><h3>Live website check</h3><p>Runs real read-only checks against this website. It does not change production settings.</p></div>
+            <button className="btn" type="button" onClick={runDiagnostics} disabled={checking}>{checking ? 'Checking live site…' : 'Run live checks'}</button>
+            {diagnostics.length > 0 && <ul aria-live="polite">{diagnostics.map(item => <li key={item.path} className={item.ok ? 'qt-check-ok' : 'qt-check-fail'}><span>{item.ok ? '✓' : '✕'} {item.name}</span><small>{item.detail}</small></li>)}</ul>}
           </div>
           <form onSubmit={runAgent}>
             <label htmlFor="agent-goal">Your goal</label>
