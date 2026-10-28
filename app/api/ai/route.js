@@ -18,6 +18,18 @@ function configuredProviders() {
   };
 }
 
+// Log safe diagnostic metadata only. Never log API keys, headers, or prompts.
+function logProviderFailure(provider, details = {}) {
+  console.error('[QuickToolBox AI provider failure]', { provider, ...details });
+}
+
+function errorDetails(error) {
+  return {
+    errorName: error?.name || 'Error',
+    errorMessage: String(error?.message || 'Unknown provider error').slice(0, 200),
+  };
+}
+
 function unique(items) {
   return [...new Set(items.filter(Boolean))];
 }
@@ -61,52 +73,34 @@ async function openaiCompatibleChat({ key, baseUrl, model, source }, prompt) {
 
   const text = extractModelText(data);
   if (response.ok && text) return { text, source, model };
+
+  logProviderFailure(source, {
+    model,
+    status: response.status,
+    errorMessage: typeof data?.error?.message === 'string'
+      ? data.error.message.slice(0, 200)
+      : (text ? 'Provider returned an unexpected response format' : 'Provider returned no usable text'),
+  });
   return null;
 }
 
 async function openaiChat(prompt) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) return null;
-
-  const models = unique([
-    process.env.OPENAI_MODEL,
-    'gpt-4o-mini',
-    'gpt-4.1-mini',
-    'gpt-4o',
-    'gpt-5-mini',
-  ]);
-
+  const models = unique([process.env.OPENAI_MODEL, 'gpt-4o-mini', 'gpt-4.1-mini', 'gpt-4o', 'gpt-5-mini']);
   for (const model of models) {
-    const result = await openaiCompatibleChat({
-      key,
-      baseUrl: 'https://api.openai.com/v1',
-      model,
-      source: 'openai',
-    }, prompt);
+    const result = await openaiCompatibleChat({ key, baseUrl: 'https://api.openai.com/v1', model, source: 'openai' }, prompt);
     if (result) return result;
   }
-
   return null;
 }
 
 async function groqChat(prompt) {
   const key = process.env.GROQ_API_KEY;
   if (!key) return null;
-
-  const models = unique([
-    process.env.GROQ_MODEL,
-    'llama-3.3-70b-versatile',
-    'llama-3.1-8b-instant',
-    'llama-3.1-70b-versatile',
-  ]);
-
+  const models = unique([process.env.GROQ_MODEL, 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'llama-3.1-70b-versatile']);
   for (const model of models) {
-    const result = await openaiCompatibleChat({
-      key,
-      baseUrl: 'https://api.groq.com/openai/v1',
-      model,
-      source: 'groq',
-    }, prompt);
+    const result = await openaiCompatibleChat({ key, baseUrl: 'https://api.groq.com/openai/v1', model, source: 'groq' }, prompt);
     if (result) return result;
   }
   return null;
@@ -115,14 +109,7 @@ async function groqChat(prompt) {
 async function geminiChat(prompt) {
   const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!key) return null;
-
-  const models = unique([
-    process.env.GEMINI_MODEL,
-    'gemini-2.0-flash',
-    'gemini-2.5-flash',
-    'gemini-1.5-flash',
-    'gemini-flash-latest',
-  ]);
+  const models = unique([process.env.GEMINI_MODEL, 'gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-flash-latest']);
 
   for (const model of models) {
     const { response, data } = await fetchJson(
@@ -138,6 +125,14 @@ async function geminiChat(prompt) {
     );
     const text = extractModelText(data);
     if (response.ok && text) return { text, source: 'gemini', model };
+
+    logProviderFailure('gemini', {
+      model,
+      status: response.status,
+      errorMessage: typeof data?.error?.message === 'string'
+        ? data.error.message.slice(0, 200)
+        : (text ? 'Provider returned an unexpected response format' : 'Provider returned no usable text'),
+    });
   }
   return null;
 }
@@ -145,7 +140,6 @@ async function geminiChat(prompt) {
 async function openrouterChat(prompt) {
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) return null;
-
   return openaiCompatibleChat({
     key,
     baseUrl: 'https://openrouter.ai/api/v1',
@@ -157,26 +151,12 @@ async function openrouterChat(prompt) {
 async function alibabaChat(prompt) {
   const key = process.env.DASHSCOPE_API_KEY;
   if (!key) return null;
-
-  // Alibaba Cloud Model Studio OpenAI-compatible endpoint.
-  // Override DASHSCOPE_BASE_URL when using another region/workspace endpoint.
   const baseUrl = process.env.DASHSCOPE_BASE_URL || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
-  const models = unique([
-    process.env.DASHSCOPE_MODEL,
-    'qwen-plus',
-    'qwen-turbo',
-  ]);
-
+  const models = unique([process.env.DASHSCOPE_MODEL, 'qwen-plus', 'qwen-turbo']);
   for (const model of models) {
-    const result = await openaiCompatibleChat({
-      key,
-      baseUrl,
-      model,
-      source: 'alibaba',
-    }, prompt);
+    const result = await openaiCompatibleChat({ key, baseUrl, model, source: 'alibaba' }, prompt);
     if (result) return result;
   }
-
   return null;
 }
 
@@ -199,19 +179,29 @@ export async function POST(request) {
     if (!prompt) return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
 
     const clipped = prompt.slice(0, PROMPT_LIMIT);
-    const runners = [alibabaChat, openaiChat, groqChat, geminiChat, openrouterChat];
+    const runners = [
+      ['alibaba', alibabaChat],
+      ['openai', openaiChat],
+      ['groq', groqChat],
+      ['gemini', geminiChat],
+      ['openrouter', openrouterChat],
+    ];
 
-    for (const run of runners) {
+    for (const [provider, run] of runners) {
       try {
         const result = await run(clipped);
         if (result?.text) return NextResponse.json(result);
-      } catch {
-        // Try the next provider. The local fallback always answers.
+      } catch (error) {
+        logProviderFailure(provider, errorDetails(error));
       }
     }
 
+    console.warn('[QuickToolBox AI] All configured providers failed or returned no usable text; using local fallback.', {
+      configuredProviders: configuredProviders(),
+    });
     return NextResponse.json({ text: localAI(clipped), source: 'local' });
-  } catch {
+  } catch (error) {
+    logProviderFailure('request', errorDetails(error));
     return NextResponse.json({ text: localAI('Give a short helpful answer.'), source: 'local' });
   }
 }
