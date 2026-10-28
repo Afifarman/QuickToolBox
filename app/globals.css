@@ -252,3 +252,34 @@
 @media(max-width:1050px){.cv-studio-workspace{grid-template-columns:minmax(280px,340px) minmax(0,1fr)}.cv-template-list{grid-template-columns:repeat(4,minmax(0,1fr))}.cv-paper-stage{padding:24px 10px}.cv-paper-scale{transform:scale(min(var(--cv-zoom),.7));margin-bottom:-180px}}
 @media(max-width:760px){.cv-studio-header{padding:0 14px}.cv-studio-header-actions{gap:10px}.cv-save-status{display:none}.cv-export-btn{padding:10px;font-size:11px}.cv-studio{padding:22px 12px 38px}.cv-studio-title{align-items:stretch;flex-direction:column}.cv-progress{width:100%}.cv-studio-workspace{grid-template-columns:1fr;gap:14px}.cv-studio-tabs{grid-template-columns:repeat(4,minmax(0,1fr))}.cv-studio-panel{padding:16px}.cv-paper-stage{min-height:490px;padding:20px 0;justify-content:flex-start}.cv-paper-scale{transform:scale(.48);transform-origin:top left;margin-left:calc((100% - 210mm * .48)/2);margin-bottom:-360px}.cv-template-list{grid-template-columns:repeat(3,minmax(0,1fr))}.cv-drawer-heading{align-items:flex-start;flex-direction:column}.cv-studio-footnote{flex-direction:column}.cv-zoom-controls span{display:none}}
 @media print{body{background:white!important}.cv-studio-header,.cv-studio-title,.cv-studio-sidebar,.cv-preview-toolbar,.cv-template-drawer,.cv-studio-footnote,footer{display:none!important}.cv-studio{padding:0!important;margin:0!important;background:white!important}.cv-studio-workspace{display:block!important}.cv-studio-preview-area{display:block!important}.cv-paper-stage{padding:0!important;margin:0!important;display:block!important;background:white!important;border:0!important;overflow:visible!important;min-height:0!important}.cv-paper-scale{transform:none!important;width:210mm!important;margin:0!important}.cv-paper{box-shadow:none!important;margin:0!important;min-height:297mm!important;page-break-after:avoid!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:A4;margin:0}}
+
+
+/* Mobile reliability pass: prevent horizontal overflow and keep tool workspaces usable on phones. */
+@media (max-width: 600px) {
+  html, body { width: 100%; max-width: 100%; overflow-x: clip; }
+  img, video, canvas, iframe { max-width: 100%; }
+  input, select, textarea { max-width: 100%; min-width: 0; }
+  main, section, .tool, .box, .ai-page, .dashboard, .cv-studio,
+  .cv-studio-workspace, .cv-studio-title, .tool-discovery,
+  .tool-discovery-grid, .tool-card-wrap { min-width: 0; }
+  header { min-height: 64px; height: auto; padding: 10px 14px; gap: 10px; flex-wrap: wrap; }
+  nav { flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+  .hero { padding-left: 16px; padding-right: 16px; }
+  .hero h1 { font-size: clamp(38px, 11vw, 58px); overflow-wrap: anywhere; }
+  h2 { font-size: clamp(24px, 7vw, 34px); }
+  .grid, .features, .dash-grid, .tool-discovery-grid { grid-template-columns: minmax(0, 1fr); }
+  .tool-discovery-bar { width: 100%; }
+  .tool-search { width: 100%; }
+  .tool-card-wrap .card { grid-template-columns: 44px minmax(0, 1fr) 16px; gap: 10px; }
+  .tool-card-wrap .card h3, .tool-card-wrap .card p { overflow-wrap: anywhere; }
+  .cv-studio { padding: 18px 12px 40px; }
+  .cv-studio-header { height: auto; min-height: 64px; padding: 10px 14px; flex-wrap: wrap; }
+  .cv-studio-workspace { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .cv-studio-title { align-items: stretch; flex-direction: column; }
+  .auth-card { width: 100%; padding: 20px; }
+  .dash-head { min-width: 0; }
+  .ai-actions { align-items: stretch; }
+  .ai-actions .btn { justify-content: center; }
+  table { display: block; max-width: 100%; overflow-x: auto; }
+  button, .btn { min-height: 42px; }
+}
