@@ -116,7 +116,7 @@ async function groqChat(prompt) {
 async function geminiChat(prompt) {
   const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!key) return null;
-  const models = unique([process.env.GEMINI_MODEL, 'gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-flash-latest']);
+  const models = unique([process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash']);
 
   for (const model of models) {
     const { response, data } = await fetchJson(
