@@ -5,10 +5,27 @@ import Link from 'next/link';
 import ThemeControls from '../../components/ThemeControls';
 import { useSiteTheme } from '../providers';
 
-const examples = ['Make the website easier to use on mobile', 'Plan improvements for the AI tools', 'Switch to dark mode and use violet accents'];
+const agents = [
+  { id: 'general', name: 'General Planner', emoji: '🧭', description: 'Break any goal into practical steps.' },
+  { id: 'study', name: 'Study Agent', emoji: '📚', description: 'Notes, revision plans, quizzes and study schedules.' },
+  { id: 'seo', name: 'SEO Agent', emoji: '🔎', description: 'Technical SEO, page titles, sitemap and content ideas.' },
+  { id: 'coding', name: 'Coding Helper', emoji: '💻', description: 'Debugging plans, code explanations and safe test steps.' },
+  { id: 'content', name: 'Content Agent', emoji: '✍️', description: 'Draft posts, descriptions, scripts and ideas.' },
+  { id: 'research', name: 'Research Agent', emoji: '🧪', description: 'Compare options, summarize evidence and plan research.' },
+];
+const agentInstructions = {
+  general: 'Act as a general-purpose planning assistant. Prioritize tasks and adapt the plan when something fails.',
+  study: 'Act as a student study coach. Explain simply, create concise notes, a realistic study schedule, active-recall questions and an answer key. Do not invent facts.',
+  seo: 'Act as an SEO assistant. Prioritize crawlability, unique metadata, useful content, canonical URLs, sitemap/robots, performance and verification. Do not claim Google rankings or indexing are guaranteed.',
+  coding: 'Act as a coding helper. Explain the likely cause, propose minimal safe changes, tests and rollback steps. Never claim code was changed or tested unless tools actually did that.',
+  content: 'Act as a content creator. Produce useful, original drafts suited to the requested platform and audience; label assumptions and avoid fabricated claims.',
+  research: 'Act as a research planner. Separate established facts, uncertainty and next checks; suggest credible sources and a comparison framework.',
+};
+const examples = ['Make the website easier to use on mobile', 'Create a 7-day study plan for my exam', 'Improve QuickToolBox SEO safely', 'Switch to dark mode and use violet accents'];
 
 export default function AgentPage() {
   const { mode, accent, setMode, setAccent, themes } = useSiteTheme();
+  const [selectedAgent, setSelectedAgent] = useState('general');
   const [goal, setGoal] = useState('');
   const [plan, setPlan] = useState('');
   const [status, setStatus] = useState('idle');
@@ -34,11 +51,12 @@ export default function AgentPage() {
     const changes = applyAppearanceFromGoal(task);
     const previous = history.slice(-3).map(item => item.goal + ': ' + item.result).join('\n');
     const prompt = [
-      'You are the QuickToolBox planning agent. Create a practical, safe, adaptive plan for the user.',
+      'You are the QuickToolBox free multi-agent workspace. ' + agentInstructions[selectedAgent],
       'Do not claim to have changed website source code, deployed code, tested APIs, or accessed external systems.',
       'You may only directly apply website appearance preferences when requested. For all other work, provide clear steps and explain which access or approval is needed.',
       'Return a short plan with: Goal, prioritized steps (numbered), first action, verification, and how to re-plan if a step fails.',
       'Previous task context (may be empty): ' + (previous || 'None'),
+      'Selected agent: ' + agents.find(item => item.id === selectedAgent)?.name + '.',
       'Current user goal: ' + task,
       'Current appearance: mode=' + mode + ', accent=' + accent + '.'
     ].join('\n\n');
@@ -73,13 +91,16 @@ export default function AgentPage() {
         <ThemeControls compact />
       </header>
       <section className="qt-agent-hero">
-        <span className="qt-agent-eyebrow">AUTONOMOUS PLANNING · USER-CONTROLLED THEMES</span>
-        <h1>Meet your <span>QuickToolBox Agent</span></h1>
-        <p>Give it a goal. It creates a plan, adapts its next steps from the conversation, and can change the site's appearance when you ask.</p>
+        <span className="qt-agent-eyebrow">FREE MULTI-AGENT WORKSPACE · USER-CONTROLLED THEMES</span>
+        <h1>Meet your <span>Free AI Agents</span></h1>
+        <p>Choose a specialist for studying, SEO, coding, content or research. Agents use the site's existing AI API and can change the local theme when you ask.</p>
       </section>
       <section className="qt-agent-layout">
         <div className="qt-agent-panel">
-          <div className="qt-panel-title"><div><span className="qt-agent-orb">✦</span><h2>What should I work on?</h2></div><ThemeControls /></div>
+          <div className="qt-panel-title"><div><span className="qt-agent-orb">✦</span><h2>Choose a free AI agent</h2></div><ThemeControls /></div>
+          <div className="qt-agent-grid" role="list" aria-label="Available AI agents">
+            {agents.map(agent => <button type="button" role="listitem" key={agent.id} className={selectedAgent === agent.id ? 'qt-agent-choice is-selected' : 'qt-agent-choice'} aria-pressed={selectedAgent === agent.id} onClick={() => setSelectedAgent(agent.id)}><span>{agent.emoji}</span><b>{agent.name}</b><small>{agent.description}</small></button>)}
+          </div>
           <form onSubmit={runAgent}>
             <label htmlFor="agent-goal">Your goal</label>
             <textarea id="agent-goal" rows={5} maxLength={4000} value={goal} onChange={event => setGoal(event.target.value)} placeholder="Example: Plan the next improvements for QuickToolBox, then switch to dark mode and violet accents." required />
