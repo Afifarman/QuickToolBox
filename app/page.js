@@ -67,7 +67,7 @@ function ToolGrid({ items, base }) {
 
 export default function Home() {
   return <>
-    <header><Link className="brand" href="/"><b>Q</b> QuickToolBox</Link><nav><a href="#tools">Tools</a><a href="#ai">AI & CV</a><a href="#student-tools">Student</a><Link href="/login">Login / Register</Link><Link href="/dashboard">Dashboard</Link></nav></header>
+    <header><Link className="brand" href="/"><b>Q</b> QuickToolBox</Link><nav><a href="#tools">Tools</a><a href="#ai">AI & CV</a><a href="#student-tools">Student</a><Link href="/login">Login / Register</Link><Link href="/dashboard">Dashboard</Link><Link href="/agent">AI Agent</Link></nav></header>
     <main>
       <section className="hero"><small>⚡ FREE • FAST • SIMPLE • AI</small><h1>One toolbox.<br/><span>Everything useful.</span></h1><p>Fast, privacy-friendly PDF, calculator, productivity, student and AI tools designed for phones, tablets and computers.</p><a className="btn" href="#tools">Explore tools →</a></section>
       <section id="tools"><small>TOOLBOX</small><h2>19 essential tools.</h2><ToolGrid items={tools} base="tools"/></section>
