@@ -24,16 +24,13 @@ export default function ToolDiscovery({ tools = [], aiTools = [], studentTools =
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [favorites, setFavorites] = useState([]);
-  const [recent, setRecent] = useState([]);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     try {
       const savedFavorites = JSON.parse(localStorage.getItem('qt-tool-favorites') || '[]');
-      const savedRecent = JSON.parse(localStorage.getItem('qt-tool-recent') || '[]');
       if (Array.isArray(savedFavorites)) setFavorites(savedFavorites);
-      if (Array.isArray(savedRecent)) setRecent(savedRecent);
     } catch {}
     setReady(true);
   }, []);
@@ -56,16 +53,6 @@ export default function ToolDiscovery({ tools = [], aiTools = [], studentTools =
     });
   };
 
-  const markRecent = (slug) => {
-    setRecent(current => {
-      const next = [slug, ...current.filter(item => item !== slug)].slice(0, 6);
-      try { localStorage.setItem('qt-tool-recent', JSON.stringify(next)); } catch {}
-      return next;
-    });
-  };
-
-  const recentTools = recent.map(slug => allTools.find(tool => tool.slug === slug)).filter(Boolean);
-
   return (
     <section className="tool-discovery" id="tools">
       <div className="tool-discovery-heading">
@@ -79,11 +66,10 @@ export default function ToolDiscovery({ tools = [], aiTools = [], studentTools =
       <div className="tool-category-filters" aria-label="Filter tool category">
         {CATEGORIES.map(item => <button id={item.id === 'ai' || item.id === 'student-tools' ? item.id : undefined} key={item.id} type="button" className={category === item.id ? 'tool-category is-active' : 'tool-category'} onClick={() => setCategory(item.id)} aria-pressed={category === item.id}>{item.label}</button>)}
       </div>
-      {ready && recentTools.length > 0 && !query && category === 'all' && !favoritesOnly && <div className="recent-tools"><div className="recent-heading"><b>Recently used</b><span>On this device</span></div><div className="recent-links">{recentTools.map(tool => <Link key={tool.slug} href={getHref(tool.slug, tool.category)} onClick={() => markRecent(tool.slug)}>{tool.title} <span aria-hidden="true">↗</span></Link>)}</div></div>}
       <div className="tool-results-meta"><span>{visibleTools.length} {visibleTools.length === 1 ? 'tool' : 'tools'} found</span>{query && <button type="button" onClick={() => setQuery('')}>Clear search</button>}</div>
       <div className="grid tool-discovery-grid">
         {visibleTools.map(tool => <div className="tool-card-wrap" key={`${tool.category}-${tool.slug}`}>
-          <Link className="card" href={getHref(tool.slug, tool.category)} onClick={() => markRecent(tool.slug)}>
+          <Link className="card" href={getHref(tool.slug, tool.category)}>
             <span className="icon-wrap" aria-hidden="true">{tool.icon === 'spark' ? '✦' : tool.icon === 'graduation' ? '🎓' : tool.icon === 'image' ? '▧' : tool.icon === 'file' ? '▤' : tool.icon === 'calculator' ? '⌗' : '✧'}</span>
             <div><h3>{tool.title}</h3><p>{tool.desc}</p><span className="tool-category-label">{tool.categoryLabel}</span></div><span className="card-arrow" aria-hidden="true">→</span>
           </Link>
