@@ -1,4 +1,5 @@
 import './globals.css';
+import SiteProviders from './providers';
 import Script from 'next/script';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
@@ -74,7 +75,7 @@ export default function RootLayout({ children }) {
         <meta name="google-site-verification" content={googleVerification} />
       </head>
       <body>
-        {children}
+        <SiteProviders>{children}</SiteProviders>
         <SpeedInsights />
         <Script
           async

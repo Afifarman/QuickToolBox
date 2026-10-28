@@ -50,6 +50,12 @@ export default function AIPage() {
   async function generate() {
     const value = prompt.trim();
     if (!value || busy) return;
+    // Prevent the empty Study template from being sent as if it were a real topic.
+    if (/^explain\\s+this topic simply for a student:\\s*$/i.test(value)) {
+      setAnswer('Please type the topic you want explained after the colon.\\n\\nExample: Explain this topic simply for a student: how solar panels generate electricity.\\n\\nI can then explain it in simple words, give a real-life example, and add two review questions.');
+      setSource('local');
+      return;
+    }
     setBusy(true);
     setAnswer('');
     setSource('');
