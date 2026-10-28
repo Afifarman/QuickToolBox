@@ -20,7 +20,6 @@ const paths = [
 export default function sitemap() {
   return paths.map((path) => ({
     url: `${SITE_URL}${path}`,
-    lastModified: new Date(),
     changeFrequency: path === '/' ? 'daily' : 'weekly',
     priority: path === '/' ? 1 : path === '/ai' || path === '/cv-maker' ? 0.9 : 0.7,
   }));
