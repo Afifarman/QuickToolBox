@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { AI_SYSTEM_PROMPT, extractModelText, localAI } from '../../../lib/ai';
 import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
+import { classifyProviderError, logProviderFailure as logSafeProviderFailure } from '../../../lib/ai/provider-diagnostics';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -18,9 +19,15 @@ function configuredProviders() {
   };
 }
 
-// Log safe diagnostic metadata only. Never log API keys, headers, or prompts.
+// Emit only provider name, HTTP status, and a coarse category. Never log prompts,
+// credentials, headers, raw provider messages, or response bodies.
 function logProviderFailure(provider, details = {}) {
-  console.error('[QuickToolBox AI provider failure]', { provider, ...details });
+  const error = details.error || (details.errorName ? { name: details.errorName } : undefined);
+  const timedOut = details.timedOut === true || details.errorName === 'AbortError' || /timeout|timed out|abort/i.test(String(details.errorMessage || ''));
+  logSafeProviderFailure(provider, {
+    status: details.status,
+    category: classifyProviderError({ status: details.status, error, timedOut }),
+  });
 }
 
 function errorDetails(error) {
