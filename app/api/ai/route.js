@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { AI_SYSTEM_PROMPT, extractModelText, localAI } from '../../../lib/ai';
+import { AI_SYSTEM_PROMPT, extractModelText } from '../../../lib/ai';
 import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
 import { classifyProviderError, logProviderFailure as logSafeProviderFailure } from '../../../lib/ai/provider-diagnostics';
 
@@ -15,7 +15,6 @@ function configuredProviders() {
     groq: Boolean(process.env.GROQ_API_KEY),
     gemini: Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY),
     openrouter: Boolean(process.env.OPENROUTER_API_KEY),
-    alibaba: Boolean(process.env.DASHSCOPE_API_KEY),
   };
 }
 
@@ -116,7 +115,7 @@ async function groqChat(prompt) {
 async function geminiChat(prompt) {
   const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!key) return null;
-  const models = unique([process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash']);
+  const models = unique([process.env.GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-2.5-flash-lite']);
 
   for (const model of models) {
     const { response, data } = await fetchJson(
@@ -155,17 +154,6 @@ async function openrouterChat(prompt) {
   }, prompt);
 }
 
-async function alibabaChat(prompt) {
-  const key = process.env.DASHSCOPE_API_KEY;
-  if (!key) return null;
-  const baseUrl = process.env.DASHSCOPE_BASE_URL || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
-  const models = unique([process.env.DASHSCOPE_MODEL, 'qwen-plus', 'qwen-turbo']);
-  for (const model of models) {
-    const result = await openaiCompatibleChat({ key, baseUrl, model, source: 'alibaba' }, prompt);
-    if (result) return result;
-  }
-  return null;
-}
 
 export async function GET() {
   return NextResponse.json({ ok: true, available: Object.values(configuredProviders()).some(Boolean) });
@@ -187,11 +175,10 @@ export async function POST(request) {
 
     const clipped = prompt.slice(0, PROMPT_LIMIT);
     const runners = [
-      ['alibaba', alibabaChat],
-      ['openai', openaiChat],
-      ['groq', groqChat],
       ['gemini', geminiChat],
+      ['groq', groqChat],
       ['openrouter', openrouterChat],
+      ['openai', openaiChat],
     ];
 
     for (const [provider, run] of runners) {
@@ -203,12 +190,14 @@ export async function POST(request) {
       }
     }
 
-    console.warn('[QuickToolBox AI] All configured providers failed or returned no usable text; using local fallback.', {
-      configuredProviders: configuredProviders(),
-    });
-    return NextResponse.json({ text: localAI(clipped), source: 'local' });
+    const available = Object.entries(configuredProviders()).filter(([, configured]) => configured).map(([provider]) => provider);
+    console.warn('[QuickToolBox AI] No configured provider returned a usable response.', { configuredProviders: available });
+    return NextResponse.json(
+      { error: available.length ? 'Configured AI providers could not generate a response. Check API keys, model access, quota, and provider logs.' : 'No AI provider is configured. Add a valid provider API key in Vercel Environment Variables.' },
+      { status: available.length ? 502 : 503 },
+    );
   } catch (error) {
     logProviderFailure('request', errorDetails(error));
-    return NextResponse.json({ text: localAI('Give a short helpful answer.'), source: 'local' });
+    return NextResponse.json({ error: 'The AI request could not be completed. Please try again later.' }, { status: 500 });
   }
 }

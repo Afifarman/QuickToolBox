@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { localAI } from '../../lib/ai';
 
 const TEMPLATES = [
   ['Write', 'Write a professional CV summary for a software engineer.'],
@@ -18,7 +17,7 @@ const SOURCE_LABEL = {
   groq: 'Groq',
   gemini: 'Gemini',
   openrouter: 'OpenRouter',
-  local: 'On-device assistant',
+  error: 'AI unavailable',
 };
 
 export default function AIPage() {
@@ -50,12 +49,6 @@ export default function AIPage() {
   async function generate() {
     const value = prompt.trim();
     if (!value || busy) return;
-    // Prevent the empty Study template from being sent as if it were a real topic.
-    if (/^explain\\s+this topic simply for a student:\\s*$/i.test(value)) {
-      setAnswer('Please type the topic you want explained after the colon.\\n\\nExample: Explain this topic simply for a student: how solar panels generate electricity.\\n\\nI can then explain it in simple words, give a real-life example, and add two review questions.');
-      setSource('local');
-      return;
-    }
     setBusy(true);
     setAnswer('');
     setSource('');
@@ -67,16 +60,15 @@ export default function AIPage() {
         body: JSON.stringify({ prompt: value }),
       });
       const data = await res.json().catch(() => ({}));
-      const text = data.text || data.error || localAI(value);
-      const used = data.source || (data.error ? 'local' : 'local');
-      setAnswer(text);
-      setSource(used);
-      remember(value, text, used);
-    } catch {
-      const text = localAI(value);
-      setAnswer(text);
-      setSource('local');
-      remember(value, text, 'local');
+      if (!res.ok || !data.text || !data.source || data.source === 'local') {
+        throw new Error(data.error || 'AI provider did not return a real AI response. Please try again later.');
+      }
+      setAnswer(data.text);
+      setSource(data.source);
+      remember(value, data.text, data.source);
+    } catch (error) {
+      setAnswer(error?.message || 'AI is temporarily unavailable. Please try again later.');
+      setSource('error');
     } finally {
       setBusy(false);
     }
@@ -107,8 +99,7 @@ export default function AIPage() {
         <small>🤖 AI TOOLS</small>
         <h1>QuickToolBox AI Assistant</h1>
         <p>
-          Generate, rewrite, summarize and improve text. The assistant always answers — it uses a configured AI
-          provider when available, and a built-in writer if no API key is set.
+          Generate, rewrite, summarize and improve text using a configured AI provider. If no provider is available, the page will show an error instead of presenting a built-in template as an AI answer.
         </p>
 
         <div className="ai-templates">
