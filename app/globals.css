@@ -54,3 +54,14 @@
 .qt-history-row b{font-size:13px;line-height:1.45}
 .qt-agent-error{color:#dc2626;font-size:14px}
 @media(max-width:760px){.qt-agent-header{padding:0 14px}.qt-agent-header nav{gap:10px;margin:0 8px;font-size:12px}.qt-agent-layout{grid-template-columns:1fr;padding:8px 14px 45px}.qt-agent-hero{padding:40px 14px 18px}.qt-agent-panel{padding:17px}.qt-panel-title{align-items:flex-start;flex-direction:column}.qt-agent-header nav a:nth-child(-n+1){display:none}}
+
+
+/* Free specialist AI-agent selector */
+.qt-agent-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 22px}
+.qt-agent-choice{display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;padding:14px;border:1px solid var(--qt-border,#d8deea);border-radius:14px;background:var(--qt-surface,#fff);color:var(--qt-text,inherit);cursor:pointer;min-height:112px;transition:border-color .15s,transform .15s}
+.qt-agent-choice:hover{transform:translateY(-1px)}
+.qt-agent-choice.is-selected{border-color:var(--qt-accent,#3867e8);box-shadow:0 0 0 2px color-mix(in srgb,var(--qt-accent,#3867e8) 18%,transparent)}
+.qt-agent-choice>span{font-size:1.4rem}
+.qt-agent-choice b{font-size:.96rem}
+.qt-agent-choice small{font-size:.8rem;line-height:1.4;opacity:.78}
+@media(max-width:560px){.qt-agent-grid{grid-template-columns:1fr}.qt-agent-choice{min-height:0}}
