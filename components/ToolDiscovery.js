@@ -77,7 +77,7 @@ export default function ToolDiscovery({ tools = [], aiTools = [], studentTools =
         <button className={favoritesOnly ? 'tool-filter-toggle is-active' : 'tool-filter-toggle'} type="button" onClick={() => setFavoritesOnly(value => !value)} aria-pressed={favoritesOnly}>☆ Favourites {favorites.length ? `(${favorites.length})` : ''}</button>
       </div>
       <div className="tool-category-filters" aria-label="Filter tool category">
-        {CATEGORIES.map(item => <button key={item.id} type="button" className={category === item.id ? 'tool-category is-active' : 'tool-category'} onClick={() => setCategory(item.id)} aria-pressed={category === item.id}>{item.label}</button>)}
+        {CATEGORIES.map(item => <button id={item.id === 'ai' || item.id === 'student-tools' ? item.id : undefined} key={item.id} type="button" className={category === item.id ? 'tool-category is-active' : 'tool-category'} onClick={() => setCategory(item.id)} aria-pressed={category === item.id}>{item.label}</button>)}
       </div>
       {ready && recentTools.length > 0 && !query && category === 'all' && !favoritesOnly && <div className="recent-tools"><div className="recent-heading"><b>Recently used</b><span>On this device</span></div><div className="recent-links">{recentTools.map(tool => <Link key={tool.slug} href={getHref(tool.slug, tool.category)} onClick={() => markRecent(tool.slug)}>{tool.title} <span aria-hidden="true">↗</span></Link>)}</div></div>}
       <div className="tool-results-meta"><span>{visibleTools.length} {visibleTools.length === 1 ? 'tool' : 'tools'} found</span>{query && <button type="button" onClick={() => setQuery('')}>Clear search</button>}</div>
