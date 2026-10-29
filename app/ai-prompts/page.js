@@ -17,19 +17,26 @@ export default function AIPrompts() {
   const [goal, setGoal] = useState('Edit my portrait for a premium social media profile.');
   const [result, setResult] = useState('');
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
 
   async function generate() {
     setBusy(true);
+    setError('');
+    setResult('');
+    if (!goal.trim()) { setError('আপনি কী ধরনের prompt চান তা লিখুন।'); setBusy(false); return; }
     try {
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: `You are an expert prompt engineer. Category: ${category}. Goal: ${goal}. ${categories[category]} Return one polished copy-ready prompt followed by 3 short optional variations.` })
       });
-      const data = await res.json();
-      setResult(data.text || 'Could not generate a prompt.');
-    } catch {
-      setResult(`Act as an expert in ${category}. Help me achieve this goal: ${goal}. Give clear, specific instructions, preserve important details, avoid unwanted changes, and return a high-quality result.`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || typeof data.text !== 'string' || !data.text.trim()) {
+        throw new Error(data.error || 'AI এখন prompt তৈরি করতে পারেনি। API key, quota ও deployment logs যাচাই করুন।');
+      }
+      setResult(data.text.trim());
+    } catch (err) {
+      setError(err?.message || 'AI API-তে সংযোগ করা যায়নি। আবার চেষ্টা করুন।');
     } finally {
       setBusy(false);
     }
@@ -51,7 +58,8 @@ export default function AIPrompts() {
             {Object.keys(categories).map(x=><option key={x}>{x}</option>)}
           </select>
           <textarea rows={7} value={goal} onChange={e=>setGoal(e.target.value)} placeholder="What do you want the AI to do?" />
-          <button className="btn" type="button" onClick={generate} disabled={busy}>{busy ? 'Creating…' : '✨ Generate Prompt'}</button>
+          <button className="btn" type="button" onClick={generate} disabled={busy || !goal.trim()}>{busy ? 'Creating…' : '✨ Generate Prompt'}</button>
+          {error && <p role="alert" style={{color:'#b42318',whiteSpace:'pre-wrap'}}>{error}</p>}
         </section>
         {result && <section className="result" style={{marginTop:20}}>
           <div className="ai-result-bar"><strong>Copy-ready prompt</strong><button className="btn light" onClick={()=>navigator.clipboard?.writeText(result)}>Copy</button></div>
