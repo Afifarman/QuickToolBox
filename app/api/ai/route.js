@@ -127,7 +127,7 @@ async function geminiChat(prompt) {
     if (listResponse.ok && Array.isArray(listData.models)) {
       availableModels = listData.models
         .filter(item => Array.isArray(item.supportedGenerationMethods) && item.supportedGenerationMethods.includes('generateContent'))
-        .map(item => String(item.name || '').replace(/^models\\//, ''))
+        .map(item => String(item.name || '').replace(/^models\//, ''))
         .filter(name => /flash/i.test(name) && !/audio|image|tts|embedding|robotics|computer-use|live/i.test(name));
     } else {
       logProviderFailure('gemini-model-list', { status: listResponse.status });
@@ -138,7 +138,7 @@ async function geminiChat(prompt) {
 
   const models = unique([
     process.env.GEMINI_MODEL,
-    ...availableModels.filter(name => /flash/i.test(name) && /latest|stable|2\\.5|2\\.0|3\\./i.test(name)),
+    ...availableModels.filter(name => /flash/i.test(name) && /latest|stable|2\.5|2\.0|3\./i.test(name)),
     ...availableModels,
   ]).slice(0, 4);
 
