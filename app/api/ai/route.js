@@ -115,7 +115,9 @@ async function groqChat(prompt) {
 async function geminiChat(prompt) {
   const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!key) return null;
-  const models = unique([process.env.GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+  // Try the model recommended by Google's live API error first, then older
+  // model IDs as compatibility fallbacks for projects where they remain enabled.
+  const models = unique([process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']);
 
   for (const model of models) {
     const { response, data } = await fetchJson(
@@ -153,7 +155,6 @@ async function openrouterChat(prompt) {
     source: 'openrouter',
   }, prompt);
 }
-
 
 export async function GET() {
   return NextResponse.json({ ok: true, available: Object.values(configuredProviders()).some(Boolean) });
