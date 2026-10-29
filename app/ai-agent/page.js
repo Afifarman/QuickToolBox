@@ -16,6 +16,18 @@ export default function AIAgentPage() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
   const [toolsUsed, setToolsUsed] = useState([]);
+  const [apiStatus, setApiStatus] = useState('checking');
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/ai-agent', { cache: 'no-store' })
+      .then(async (response) => ({ response, data: await response.json().catch(() => ({})) }))
+      .then(({ response, data }) => {
+        if (active) setApiStatus(response.ok && data.configured ? 'ready' : 'unavailable');
+      })
+      .catch(() => { if (active) setApiStatus('unavailable'); });
+    return () => { active = false; };
+  }, []);
 
   async function send(value = message) {
     const text = String(value || '').trim();
@@ -85,6 +97,8 @@ export default function AIAgentPage() {
               style={{ flex: 1, minWidth: 0, border: '1px solid #d0d5dd', borderRadius: 12, padding: 13, resize: 'vertical', background: '#fff' }} />
             <button className="btn" type="submit" disabled={busy || !message.trim()}>{busy ? 'Working…' : 'Send ↑'}</button>
           </form>
+          {apiStatus === 'checking' && <p role="status" style={{ color: '#475467', fontSize: 13 }}>Checking Gemini availability…</p>}
+          {apiStatus === 'unavailable' && <p role="alert" style={{ color: '#b42318', fontSize: 13 }}>Gemini is not configured or unavailable in this deployment. Add GEMINI_API_KEY to this Vercel environment and redeploy before using the AI Agent.</p>}
           {status && <p role="status" style={{ color: status.startsWith('AI Agent unavailable') ? '#b42318' : '#475467', fontSize: 13 }}>{status}</p>}
           {toolsUsed.length > 0 && <p style={{ color: '#667085', fontSize: 13 }}>Tools used: {toolsUsed.join(', ')}</p>}
           <p style={{ color: '#667085', fontSize: 12 }}>Privacy: the message is sent to Gemini to generate a response. Do not send passwords, API keys or other secrets.</p>
