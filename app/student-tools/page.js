@@ -36,7 +36,7 @@ export default function StudentToolsPage() {
           <Link href="/">← All tools</Link>
         </nav>
       </header>
-      <main style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 20px 80px' }}>
+      <main className="student-tools-directory" style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 20px 80px' }}>
         <small>STUDENT TOOLS</small>
         <h1>Useful tools for students.</h1>
         <p>GPA, planners, flashcards, study timers and an AI study assistant.</p>
