@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 const PROMPT_LIMIT = 8000;
-const PROVIDER_TIMEOUT_MS = 8000;
+const PROVIDER_TIMEOUT_MS = 12000;
 
 function configuredProviders() {
   return {
