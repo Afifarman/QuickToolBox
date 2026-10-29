@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 const studentTools = [
   ['grade-calculator', '📊', 'Grade & Percentage Calculator', 'Enter marks and total marks.'],
+  ['gpa-cgpa-calculator', '🎓', 'GPA / CGPA Calculator', 'Calculate credit-weighted GPA using grade points from 0 to 4.'],
   ['assignment-planner', '📝', 'Assignment Planner', 'Add assignments and deadlines. Saved locally.'],
   ['study-timetable', '📅', 'Study Timetable Generator', 'Enter subjects and available study hours.'],
   ['pomodoro-timer', '⏱️', 'Pomodoro Study Timer', 'Focus with a 25-minute study session and a 5-minute break.'],
