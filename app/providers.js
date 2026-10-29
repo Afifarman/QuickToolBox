@@ -17,7 +17,7 @@ export function useSiteTheme() {
 }
 
 export default function SiteProviders({ children }) {
-  const [mode, setMode] = useState('light');
+  const [mode, setMode] = useState('dark');
   const [accent, setAccent] = useState('blue');
   const [ready, setReady] = useState(false);
 
