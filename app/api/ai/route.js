@@ -115,9 +115,9 @@ async function groqChat(prompt) {
 async function geminiChat(prompt) {
   const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!key) return null;
-  // Try the model recommended by Google's live API error first, then older
-  // model IDs as compatibility fallbacks for projects where they remain enabled.
-  const models = unique([process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+  // Prefer stable, broadly available Gemini models. Keep the model list short so
+  // one provider outage cannot consume the entire serverless function duration.
+  const models = unique([process.env.GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-2.5-flash-lite']);
 
   for (const model of models) {
     const { response, data } = await fetchJson(
@@ -144,6 +144,10 @@ async function geminiChat(prompt) {
         ? data.error.message.slice(0, 200)
         : (text ? 'Provider returned an unexpected response format' : 'Provider returned no usable text'),
     });
+
+    // Retry another model only for likely model-specific configuration errors.
+    // On overload, quota errors, or server errors, move to the next provider.
+    if (response.status === 429 || response.status >= 500) return null;
   }
   return null;
 }
