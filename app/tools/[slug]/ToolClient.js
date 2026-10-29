@@ -3,6 +3,22 @@ import Link from 'next/link';
 import {useState,useRef,useEffect} from 'react';
 import QRCode from 'qrcode';
 import {PDFDocument} from 'pdf-lib';
+const TOOL_ICONS={
+'pdf-merge':'📚','pdf-split':'✂️','pdf-compressor':'🗜️','image-to-pdf':'🖼️','passport-photo-maker':'🪪',
+'gpa-calculator':'🎓','emi-calculator':'🏦','salary-calculator':'💵','tax-vat-calculator':'🧾','invoice-generator':'🧮',
+'cover-letter-builder':'✉️','qr-scanner':'▦','url-shortener':'🔗','json-formatter':'{ }','favicon-generator':'🎨',
+'meta-tag-generator':'🏷️','sitemap-generator':'🗺️','password-strength-checker':'🔐','world-clock':'🌐'
+};
+function getToolGroup(slug){
+ if(slug.startsWith('pdf-')) return 'pdf';
+ if(['image-to-pdf','passport-photo-maker','favicon-generator'].includes(slug)) return 'image';
+ if(['gpa-calculator','emi-calculator','salary-calculator','tax-vat-calculator'].includes(slug)) return 'calculator';
+ if(['json-formatter','meta-tag-generator','sitemap-generator'].includes(slug)) return 'developer';
+ if(['qr-scanner','url-shortener'].includes(slug)) return 'connect';
+ if(slug==='password-strength-checker') return 'security';
+ if(slug==='world-clock') return 'time';
+ return 'create';
+}
 const META={
 'pdf-merge':['PDF Merge','Merge multiple PDF files in your browser.'],'pdf-split':['PDF Split','Split a PDF into selected pages.'],'pdf-compressor':['PDF Compressor','Optimize and save a PDF locally.'],'image-to-pdf':['Image → PDF','Convert images to PDF.'],'passport-photo-maker':['Passport Photo Maker','Create a 2×2 inch passport photo.'],'gpa-calculator':['GPA/CGPA Calculator','Calculate GPA or CGPA.'],'emi-calculator':['EMI Calculator','Calculate monthly loan EMI.'],'salary-calculator':['Salary Calculator','Estimate net salary.'],'tax-vat-calculator':['Tax/VAT Calculator','Calculate VAT and simple tax estimates.'],'invoice-generator':['Invoice Generator','Create and print an invoice.'],'cover-letter-builder':['Cover Letter Builder','Create a professional cover letter.'],'qr-scanner':['QR Scanner','Scan QR codes with a supported camera.'],'url-shortener':['URL Shortener','Shorten a URL with a public service.'],'json-formatter':['JSON Formatter','Format, validate and minify JSON.'],'favicon-generator':['Favicon Generator','Create a favicon from an image.'],'meta-tag-generator':['Meta Tag Generator','Generate SEO meta tags.'],'sitemap-generator':['Sitemap Generator','Generate XML sitemap content.'],'password-strength-checker':['Password Strength Checker','Check password strength locally.'],'world-clock':['World Clock / Timezone','View current time across time zones.']};
 const Field=({label,...p})=><label className="field"><span>{label}</span><input {...p}/></label>;
@@ -29,4 +45,4 @@ function Strength(){const[p,setP]=useState(''),[r,setR]=useState('');function go
 function Clock(){const zones=['Asia/Dhaka','Asia/Kolkata','Asia/Dubai','Europe/London','Europe/Paris','America/New_York','America/Los_Angeles','Asia/Tokyo','Australia/Sydney'];const[t,setT]=useState(Date.now());useEffect(()=>{const i=setInterval(()=>setT(Date.now()),1000);return()=>clearInterval(i)},[]);return <div className="grid">{zones.map(z=><div className="card" key={z}><h3>{z}</h3><p>{new Intl.DateTimeFormat('en-US',{timeZone:z,dateStyle:'medium',timeStyle:'medium'}).format(t)}</p></div>)}</div>}
 function Upload({label,...p}){return <label className="upload">{label}<input type="file" {...p}/></label>}
 function Tool({slug}){const map={'pdf-merge':<PDFMerge/>,'pdf-split':<PDFSplit/>,'pdf-compressor':<PDFCompress/>,'image-to-pdf':<ImagePDF/>,'passport-photo-maker':<Passport/>,'gpa-calculator':<GPA/>,'emi-calculator':<EMI/>,'salary-calculator':<Salary/>,'tax-vat-calculator':<TaxVAT/>,'invoice-generator':<Invoice/>,'cover-letter-builder':<Cover/>,'qr-scanner':<QRScan/>,'url-shortener':<Shortener/>,'json-formatter':<JSONTool/>,'favicon-generator':<Favicon/>,'meta-tag-generator':<Meta/>,'sitemap-generator':<Sitemap/>,'password-strength-checker':<Strength/>,'world-clock':<Clock/>};return map[slug]||<p>Tool not found.</p>}
-export default function ToolClient({slug}){const m=META[slug]||['Tool not found',''];return <><header><Link className="brand" href="/"><b>Q</b> QuickToolBox</Link><Link href="/">← All tools</Link></header><main className="tool"><small>FREE ONLINE TOOL</small><h1>{m[0]}</h1><p>{m[1]}</p><div className="box"><Tool slug={slug}/></div></main><footer>© 2026 QuickToolBox</footer></>}
+export default function ToolClient({slug}){const m=META[slug]||['Tool not found',''];return <><header><Link className="brand" href="/"><b>Q</b> QuickToolBox</Link><Link href="/">← All tools</Link></header><main className={'tool tool-page tool-page-' + getToolGroup(slug) + ' tool-page-' + slug}><div className="tool-hero"><span className="tool-page-icon" aria-hidden="true">{TOOL_ICONS[slug]||'✦'}</span><div><small>QUICKTOOLBOX / {getToolGroup(slug).toUpperCase()} TOOL</small><h1>{m[0]}</h1><p>{m[1]}</p><span className="tool-private-note">✦ Simple, secure and designed for this task</span></div></div><div className="box tool-workspace"><Tool slug={slug}/></div></main><footer>© 2026 QuickToolBox</footer></>}

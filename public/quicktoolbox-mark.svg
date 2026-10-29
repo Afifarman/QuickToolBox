@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+<title>QuickToolBox</title>
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset=".55" stop-color="#4f46e5"/><stop offset="1" stop-color="#9333ea"/></linearGradient>
+ <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#dbeafe"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#080d18" flood-opacity=".35"/></filter>
+</defs>
+<rect x="2" y="2" width="60" height="60" rx="19" fill="#0b1220"/>
+<rect x="5" y="5" width="54" height="54" rx="16" fill="url(#bg)"/>
+<path d="M17 25.5 32 17l15 8.5v17L32 51l-15-8.5z" fill="none" stroke="url(#shine)" stroke-width="3.2" stroke-linejoin="round" filter="url(#shadow)"/>
+<path d="M17.5 25.5 32 34l14.5-8.5M32 34v16" fill="none" stroke="url(#shine)" stroke-width="3.2" stroke-linejoin="round"/>
+<path d="M40 13.5h10M45 8.5v10" stroke="#c4b5fd" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="48.5" cy="45.5" r="2" fill="#a5f3fc"/>
+</svg>

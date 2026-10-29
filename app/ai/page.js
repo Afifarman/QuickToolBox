@@ -95,7 +95,7 @@ export default function AIPage() {
           <Link href="/">← All tools</Link>
         </nav>
       </header>
-      <main className="ai-page">
+      <main className="ai-page ai-page-assistant">
         <small>🤖 AI TOOLS</small>
         <h1>QuickToolBox AI Assistant</h1>
         <p>

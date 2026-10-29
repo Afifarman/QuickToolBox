@@ -99,7 +99,7 @@ export default function LoginPage() {
   return (
     <main className="auth-page">
       <div className="auth-card">
-        <a href="/">← QuickToolBox</a>
+        <a className="auth-brand" href="/"><span className="auth-brand-mark" aria-hidden="true" />QuickToolBox</a>
         <h1>{mode === 'login' ? 'Welcome back' : 'Create account'}</h1>
         <p>{mode === 'login' ? 'Login to save tools, history and AI results.' : 'Create your free QuickToolBox account.'}</p>
 
