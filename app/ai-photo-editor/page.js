@@ -103,7 +103,7 @@ export default function AIPhotoEditor() {
       <main className="ai-page">
         <small>🖼️ AI PHOTO EDITOR</small>
         <h1>AI Photo Editor</h1>
-        <p>ছবি আপলোড করুন, কী পরিবর্তন চান লিখুন, তারপর AI দিয়ে ছবিটি সম্পাদনা করুন।
+        <p>ছবি আপলোড করুন, কী পরিবর্তন চান লিখুন, তারপর AI দিয়ে ছবিটি সম্পাদনা করুন।</p>
         <section className="result">
           <input type="file" accept="image/*" onChange={upload} />
           <textarea rows={4} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Describe how you want to edit the photo…" />
