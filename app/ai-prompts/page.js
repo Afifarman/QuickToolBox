@@ -41,7 +41,7 @@ export default function AIPrompts() {
         <Link className="brand" href="/"><b>Q</b> QuickToolBox</Link>
         <nav><Link href="/ai">AI Assistant</Link><Link href="/ai-photo-editor">AI Photo Editor</Link><Link href="/">← All tools</Link></nav>
       </header>
-      <main className="ai-page">
+      <main className="ai-page ai-page-prompts">
         <small>✨ AI PROMPT TOOL</small>
         <h1>AI Prompt Generator</h1>
         <p>Create better prompts for image editing, image generation, study, coding, SEO and social media.</p>
