@@ -18,6 +18,11 @@ export const metadata = {
   description:
     'Free online PDF, image, calculator, student, productivity, SEO and AI tools. Fast, simple and mobile-friendly.',
   applicationName: 'QuickToolBox',
+  icons: {
+    icon: [{ url: '/quicktoolbox-mark.svg', type: 'image/svg+xml' }],
+    shortcut: ['/quicktoolbox-mark.svg'],
+    apple: [{ url: '/quicktoolbox-mark.svg', type: 'image/svg+xml' }],
+  },
   verification: {
     google: googleVerification,
   },
