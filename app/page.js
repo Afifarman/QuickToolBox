@@ -70,7 +70,38 @@ export default function Home() {
   return <>
     <header><Link className="brand" href="/"><b>Q</b> QuickToolBox</Link><nav><a href="#tools">Tools</a><a href="#ai">AI & CV</a><a href="#student-tools">Student</a><Link href="/login">Login / Register</Link><Link href="/dashboard">Dashboard</Link><Link href="/agent">AI Agent</Link></nav></header>
     <main>
-      <section className="hero hero-3d"><div className="hero-copy"><small>✦ FREE • FAST • SIMPLE • AI</small><h1>One toolbox.<br/><span>Infinite possibilities.</span></h1><p>Meet your all-in-one digital workspace: clever AI, everyday tools and student essentials wrapped in one fast, privacy-friendly experience.</p><div className="hero-actions"><a className="btn" href="#tools">Explore tools <span aria-hidden="true">↗</span></a><Link className="hero-secondary" href="/agent">Meet AI Agents <span aria-hidden="true">✦</span></Link></div><div className="hero-trust"><span><i/> Free to use</span><span><i/> Mobile-ready</span><span><i/> Privacy-minded</span></div></div><div className="hero-stage" aria-label="Animated 3D illustration of floating digital tools" role="img"><div className="hero-glow"/><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="orbit orbit-three"/><div className="hero-cube"><div className="cube-face cube-front">Q<span>✦</span></div><div className="cube-face cube-back">AI</div><div className="cube-face cube-right">PDF</div><div className="cube-face cube-left">⌘</div><div className="cube-face cube-top">✧</div><div className="cube-face cube-bottom">QT</div></div><div className="float-chip chip-ai"><b>✦</b><span>AI tools</span></div><div className="float-chip chip-pdf"><b>▤</b><span>PDF magic</span></div><div className="float-chip chip-study"><b>✎</b><span>Study smarter</span></div><div className="float-chip chip-speed"><b>↯</b><span>Instant tools</span></div><div className="stage-spark spark-one">✦</div><div className="stage-spark spark-two">✧</div><div className="stage-spark spark-three">·</div></div></section>
+      <section className="home-hero">
+        <div className="home-hero-copy">
+          <div className="home-eyebrow"><span className="home-live-dot"/> YOUR EVERYDAY DIGITAL TOOLKIT</div>
+          <h1>Get things done.<br/><span>Without the hassle.</span></h1>
+          <p>Free online tools for everyday tasks, smarter studying and AI-powered help — all in one simple place.</p>
+          <div className="home-hero-actions">
+            <a className="btn home-primary" href="#tools">Explore all tools <span aria-hidden="true">↘</span></a>
+            <Link className="home-secondary" href="/ai">Try AI Assistant <span aria-hidden="true">↗</span></Link>
+          </div>
+          <div className="home-proof"><span><b>✓</b> Free tools</span><span><b>✓</b> Works on mobile</span><span><b>✓</b> No install needed</span></div>
+        </div>
+        <div className="home-hero-visual" aria-label="QuickToolBox collection of online tools">
+          <div className="home-visual-glow"/>
+          <div className="home-window">
+            <div className="home-window-top"><div className="home-window-dots"><i/><i/><i/></div><span>quicktoolbox / workspace</span><span className="home-window-status">READY</span></div>
+            <div className="home-window-body">
+              <div className="home-window-greeting"><span className="home-avatar">Q</span><div><b>Your toolbox is ready.</b><small>What would you like to do today?</small></div></div>
+              <Link href="/ai" className="home-feature-tile home-feature-ai"><span className="home-feature-icon">✦</span><span><b>AI Assistant</b><small>Write, explain and summarize</small></span><em>↗</em></Link>
+              <Link href="/pdf-merge" className="home-feature-tile"><span className="home-feature-icon home-feature-blue">▤</span><span><b>PDF tools</b><small>Merge, split and compress files</small></span><em>↗</em></Link>
+              <Link href="/student-tools/ai-study-assistant" className="home-feature-tile"><span className="home-feature-icon home-feature-orange">✎</span><span><b>Study smarter</b><small>Study helpers for students</small></span><em>↗</em></Link>
+              <div className="home-window-foot"><span><i/> Simple to use</span><span>One place. Many possibilities.</span></div>
+            </div>
+          </div>
+          <div className="home-float-note home-note-top"><span>⚡</span><div><b>Quick & simple</b><small>Start in seconds</small></div></div>
+          <div className="home-float-note home-note-bottom"><span>◈</span><div><b>Made for everyday</b><small>Desktop + mobile</small></div></div>
+        </div>
+      </section>
+      <section className="home-shortcuts" aria-label="Popular categories">
+        <a href="#tools"><span className="shortcut-icon shortcut-purple">▤</span><span><b>Everyday tools</b><small>PDF, images, calculators</small></span><em>↗</em></a>
+        <a href="#ai"><span className="shortcut-icon shortcut-blue">✦</span><span><b>AI & creativity</b><small>Writing, prompts and more</small></span><em>↗</em></a>
+        <a href="#student-tools"><span className="shortcut-icon shortcut-green">✎</span><span><b>Student tools</b><small>Notes, quizzes, study plans</small></span><em>↗</em></a>
+      </section>
       <ToolDiscovery tools={tools} aiTools={aiTools} studentTools={studentTools} />
       <section id="about" className="about"><small>WHY QUICKTOOLBOX?</small><h2>Fast, private and mobile-friendly.</h2><div className="features"><div>⚡ <b>Fast</b><p>Lightweight browser-first tools.</p></div><div>🔒 <b>Private</b><p>Local file tools process files in your browser.</p></div><div>📱 <b>Responsive</b><p>Designed for phones, tablets and computers.</p></div></div></section>
     </main>
