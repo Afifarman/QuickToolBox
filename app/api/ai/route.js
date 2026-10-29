@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 const PROMPT_LIMIT = 8000;
-const PROVIDER_TIMEOUT_MS = 12000;
+const PROVIDER_TIMEOUT_MS = 20000;
 
 function configuredProviders() {
   return {
@@ -117,7 +117,7 @@ async function geminiChat(prompt) {
   if (!key) return null;
   // Prefer stable, broadly available Gemini models. Keep the model list short so
   // one provider outage cannot consume the entire serverless function duration.
-  const models = unique([process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3.5-flash-lite']);
+  const models = unique([process.env.GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-2.0-flash']);
 
   for (const model of models) {
     const { response, data } = await fetchJson(
@@ -188,20 +188,26 @@ export async function POST(request) {
       ['openrouter', openrouterChat],
       ['openai', openaiChat],
     ];
+    const providerFailures = [];
 
     for (const [provider, run] of runners) {
       try {
         const result = await run(clipped);
         if (result?.text) return NextResponse.json(result);
       } catch (error) {
-        logProviderFailure(provider, errorDetails(error));
+        const details = errorDetails(error);
+        logProviderFailure(provider, details);
+        providerFailures.push({ provider, reason: /abort|timeout/i.test(`${details.errorName} ${details.errorMessage}`) ? 'timeout' : 'request_failed' });
       }
     }
 
     const available = Object.entries(configuredProviders()).filter(([, configured]) => configured).map(([provider]) => provider);
-    console.warn('[QuickToolBox AI] No configured provider returned a usable response.', { configuredProviders: available });
+    console.warn('[QuickToolBox AI] No configured provider returned a usable response.', { configuredProviders: available, failures: providerFailures });
+    const failureHint = providerFailures.some(item => item.reason === 'timeout')
+      ? 'An AI provider timed out. Please retry shortly.'
+      : 'AI providers rejected the request or are unavailable. Verify the key, model access, and quota in the provider dashboard.';
     return NextResponse.json(
-      { error: available.length ? 'Configured AI providers could not generate a response. Check API keys, model access, quota, and provider logs.' : 'No AI provider is configured. Add a valid provider API key in Vercel Environment Variables.' },
+      { error: available.length ? failureHint : 'No AI provider is configured. Add a valid provider API key in Vercel Environment Variables.' },
       { status: available.length ? 502 : 503 },
     );
   } catch (error) {
