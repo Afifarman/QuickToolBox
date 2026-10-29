@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getClientKey, rateLimit } from '../../../../lib/security/rate-limit';
+import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
