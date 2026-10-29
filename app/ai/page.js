@@ -132,16 +132,24 @@ export default function AIPage() {
           <span className="ai-count">{count} characters</span>
         </div>
 
+        {errorMessage && (
+          <section className="result ai-error" role="alert" style={{marginTop:20,border:'1px solid #fda29b',background:'#fff5f5',color:'#912018'}}>
+            <strong>AI response unavailable — এটি AI-তৈরি উত্তর নয়</strong>
+            <p>{errorMessage}</p>
+            <button className="btn light" type="button" onClick={generate} disabled={busy}>{busy ? 'Retrying…' : 'Try again'}</button>
+          </section>
+        )}
+
         {answer && (
-          <section className={`result ai-result ${source === 'error' ? 'ai-error' : ''}`} role={source === 'error' ? 'alert' : 'status'}>
+          <section className="result ai-result" role="status">
             <div className="ai-result-bar">
-              <strong>{source === 'error' ? 'AI response unavailable' : 'AI-generated result'}</strong>
+              <strong>AI-generated result</strong>
               <span>{SOURCE_LABEL[source] || 'Assistant'}</span>
               <button className="btn light" type="button" onClick={copyAnswer}>
                 {copied ? 'Copied' : 'Copy'}
               </button>
             </div>
-            <div className="ai-result-body">{source === 'error' ? errorMessage : answer}</div>
+            <div className="ai-result-body">{answer}</div>
           </section>
         )}
 
