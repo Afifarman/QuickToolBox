@@ -26,6 +26,7 @@ export default function AIPage() {
   const [source, setSource] = useState('');
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
@@ -52,6 +53,7 @@ export default function AIPage() {
     setBusy(true);
     setAnswer('');
     setSource('');
+    setErrorMessage('');
     setCopied(false);
     try {
       const res = await fetch('/api/ai', {
@@ -67,8 +69,9 @@ export default function AIPage() {
       setSource(data.source);
       remember(value, data.text, data.source);
     } catch (error) {
-      setAnswer(error?.message || 'AI is temporarily unavailable. Please try again later.');
+      setAnswer('');
       setSource('error');
+      setErrorMessage(error?.message || 'AI is temporarily unavailable. No AI-generated answer was returned. Please try again later.');
     } finally {
       setBusy(false);
     }
@@ -130,15 +133,15 @@ export default function AIPage() {
         </div>
 
         {answer && (
-          <section className="result ai-result">
+          <section className={`result ai-result ${source === 'error' ? 'ai-error' : ''}`} role={source === 'error' ? 'alert' : 'status'}>
             <div className="ai-result-bar">
-              <strong>Result</strong>
+              <strong>{source === 'error' ? 'AI response unavailable' : 'AI-generated result'}</strong>
               <span>{SOURCE_LABEL[source] || 'Assistant'}</span>
               <button className="btn light" type="button" onClick={copyAnswer}>
                 {copied ? 'Copied' : 'Copy'}
               </button>
             </div>
-            <div className="ai-result-body">{answer}</div>
+            <div className="ai-result-body">{source === 'error' ? errorMessage : answer}</div>
           </section>
         )}
 
@@ -157,7 +160,7 @@ export default function AIPage() {
                 }}
               >
                 <b>{item.prompt}</b>
-                <span>{SOURCE_LABEL[item.source] || 'Assistant'}</span>
+                <span>{item.source === 'error' ? 'Not an AI answer' : `${SOURCE_LABEL[item.source] || 'Assistant'} · saved preview`}</span>
               </button>
             ))}
           </section>
