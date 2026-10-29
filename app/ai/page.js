@@ -26,6 +26,7 @@ export default function AIPage() {
   const [source, setSource] = useState('');
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
@@ -52,6 +53,7 @@ export default function AIPage() {
     setBusy(true);
     setAnswer('');
     setSource('');
+    setErrorMessage('');
     setCopied(false);
     try {
       const res = await fetch('/api/ai', {
@@ -67,8 +69,9 @@ export default function AIPage() {
       setSource(data.source);
       remember(value, data.text, data.source);
     } catch (error) {
-      setAnswer(error?.message || 'AI is temporarily unavailable. Please try again later.');
+      setAnswer('');
       setSource('error');
+      setErrorMessage(error?.message || 'AI is temporarily unavailable. No AI-generated answer was returned. Please try again later.');
     } finally {
       setBusy(false);
     }
@@ -129,10 +132,18 @@ export default function AIPage() {
           <span className="ai-count">{count} characters</span>
         </div>
 
+        {errorMessage && (
+          <section className="result ai-error" role="alert" style={{marginTop:20,border:'1px solid #fda29b',background:'#fff5f5',color:'#912018'}}>
+            <strong>AI response unavailable — এটি AI-তৈরি উত্তর নয়</strong>
+            <p>{errorMessage}</p>
+            <button className="btn light" type="button" onClick={generate} disabled={busy}>{busy ? 'Retrying…' : 'Try again'}</button>
+          </section>
+        )}
+
         {answer && (
-          <section className="result ai-result">
+          <section className="result ai-result" role="status">
             <div className="ai-result-bar">
-              <strong>Result</strong>
+              <strong>AI-generated result</strong>
               <span>{SOURCE_LABEL[source] || 'Assistant'}</span>
               <button className="btn light" type="button" onClick={copyAnswer}>
                 {copied ? 'Copied' : 'Copy'}
@@ -157,7 +168,7 @@ export default function AIPage() {
                 }}
               >
                 <b>{item.prompt}</b>
-                <span>{SOURCE_LABEL[item.source] || 'Assistant'}</span>
+                <span>{item.source === 'error' ? 'Not an AI answer' : `${SOURCE_LABEL[item.source] || 'Assistant'} · saved preview`}</span>
               </button>
             ))}
           </section>
