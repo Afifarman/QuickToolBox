@@ -64,7 +64,7 @@ export default function AIPhotoEditor() {
         <Link className="brand" href="/"><b>Q</b> QuickToolBox</Link>
         <nav><Link href="/ai">AI Assistant</Link><Link href="/ai-prompts">AI Prompts</Link><Link href="/">← All tools</Link></nav>
       </header>
-      <main className="ai-page">
+      <main className="ai-page ai-page-photo-editor">
         <small>🖼️ AI PHOTO EDITOR</small>
         <h1>AI Photo Editor</h1>
         <p>Upload a photo, describe the look you want, get AI-assisted editing instructions, then fine-tune the image privately in your browser.</p>
