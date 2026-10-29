@@ -430,3 +430,75 @@
   .hero,.ai-page{padding-left:18px;padding-right:18px}
   .tool-discovery{padding-left:18px;padding-right:18px}
 }
+
+
+/* Distinct identity for every tool card */
+.tool-glyph{display:inline-grid;place-items:center;min-width:30px;min-height:30px;font-size:23px;font-weight:850;line-height:1;letter-spacing:-.06em}
+.tool-glyph-code{font-size:17px;letter-spacing:-.08em}
+.tool-glyph-spark,.tool-glyph-star{color:#c4b5fd}
+.tool-glyph-image,.tool-glyph-palette,.tool-glyph-crop{filter:saturate(1.2)}
+.tool-glyph-graduation,.tool-glyph-book,.tool-glyph-brain{filter:saturate(1.2)}
+:root[data-theme="dark"] .icon-wrap{background:linear-gradient(145deg,#1d2940,#242044);border:1px solid rgba(129,140,248,.16)}
+.tool-card-wrap:nth-child(6n+1) .icon-wrap{--icon-tint:#818cf8}
+.tool-card-wrap:nth-child(6n+2) .icon-wrap{--icon-tint:#38bdf8}
+.tool-card-wrap:nth-child(6n+3) .icon-wrap{--icon-tint:#34d399}
+.tool-card-wrap:nth-child(6n+4) .icon-wrap{--icon-tint:#fb923c}
+.tool-card-wrap:nth-child(6n+5) .icon-wrap{--icon-tint:#f472b6}
+.tool-card-wrap:nth-child(6n) .icon-wrap{--icon-tint:#a78bfa}
+.tool-card-wrap .icon-wrap{color:var(--icon-tint,#a5b4fc);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--icon-tint,#a5b4fc) 22%,transparent)}
+.tool-card-wrap:hover .icon-wrap{box-shadow:0 0 25px color-mix(in srgb,var(--icon-tint,#818cf8) 20%,transparent),inset 0 0 0 1px var(--icon-tint,#818cf8)}
+
+/* Purpose-built tool page shells: shared design language, different visual accents */
+.tool-page{max-width:1000px!important;padding:42px 22px 72px!important}
+.tool-hero{display:grid;grid-template-columns:92px minmax(0,1fr);gap:22px;align-items:center;padding:28px;margin:10px 0 24px;border:1px solid var(--qt-border,#26344b);border-radius:26px;background:linear-gradient(135deg,rgba(21,31,49,.94),rgba(15,23,42,.92));position:relative;overflow:hidden}
+.tool-hero:after{content:"";position:absolute;right:-80px;top:-110px;width:260px;height:260px;border-radius:50%;background:var(--page-accent,rgba(99,102,241,.18));filter:blur(3px);opacity:.45;pointer-events:none}
+.tool-page-icon{width:84px;height:84px;border-radius:24px;display:grid;place-items:center;font-size:39px;background:var(--icon-bg,rgba(99,102,241,.18));border:1px solid var(--icon-border,rgba(129,140,248,.3));box-shadow:0 12px 34px rgba(0,0,0,.18);position:relative;z-index:1}
+.tool-hero>div{position:relative;z-index:1}
+.tool-hero small,.student-tool-hero small{font-size:11px;letter-spacing:.16em;color:var(--page-text,#a5b4fc);font-weight:850}
+.tool-hero h1,.student-tool-hero h1{font-size:clamp(30px,5vw,48px);line-height:1.06;letter-spacing:-.055em;margin:9px 0}
+.tool-hero p,.student-tool-hero p{max-width:650px;color:#a4b1c7;line-height:1.65;margin:0}
+.tool-private-note,.student-tool-note{display:inline-flex;margin-top:14px;font-size:12px;color:#a4b1c7;border:1px solid rgba(148,163,184,.2);background:rgba(15,23,42,.55);border-radius:999px;padding:7px 11px}
+.tool-workspace{border:1px solid var(--qt-border,#26344b);border-radius:22px;padding:clamp(18px,3vw,30px);background:linear-gradient(160deg,rgba(16,24,39,.98),rgba(11,18,32,.98));box-shadow:0 22px 60px rgba(0,0,0,.18)}
+.tool-workspace .upload{display:flex;align-items:center;justify-content:center;min-height:104px;padding:18px;border:1px dashed #52617b;border-radius:16px;background:rgba(129,140,248,.055);cursor:pointer;text-align:center}
+.tool-workspace .field{display:grid;gap:8px;margin:14px 0;color:#c7d2e5;font-weight:700}
+.tool-workspace .field input,.tool-workspace input:not([type="file"]):not([type="range"]):not([type="checkbox"]),.tool-workspace textarea,.tool-workspace select{width:100%;max-width:100%;border-radius:12px;padding:13px 14px;background:#0b1220;color:#edf2ff;border:1px solid #34435c}
+.tool-workspace .result{padding:16px;border-radius:14px;background:#101827;border:1px solid #2b3950;color:#edf2ff}
+.tool-workspace .row{display:flex;gap:10px;flex-wrap:wrap}
+.tool-page-pdf{--page-accent:rgba(56,189,248,.25);--page-text:#7dd3fc;--icon-bg:rgba(14,165,233,.13);--icon-border:rgba(56,189,248,.35)}
+.tool-page-image{--page-accent:rgba(244,114,182,.24);--page-text:#f9a8d4;--icon-bg:rgba(219,39,119,.14);--icon-border:rgba(244,114,182,.35)}
+.tool-page-calculator{--page-accent:rgba(52,211,153,.23);--page-text:#6ee7b7;--icon-bg:rgba(5,150,105,.14);--icon-border:rgba(52,211,153,.35)}
+.tool-page-developer{--page-accent:rgba(167,139,250,.25);--page-text:#c4b5fd;--icon-bg:rgba(124,58,237,.14);--icon-border:rgba(167,139,250,.35)}
+.tool-page-connect{--page-accent:rgba(45,212,191,.23);--page-text:#5eead4;--icon-bg:rgba(13,148,136,.14);--icon-border:rgba(45,212,191,.35)}
+.tool-page-security{--page-accent:rgba(251,191,36,.22);--page-text:#fcd34d;--icon-bg:rgba(217,119,6,.14);--icon-border:rgba(251,191,36,.35)}
+.tool-page-time{--page-accent:rgba(96,165,250,.24);--page-text:#93c5fd;--icon-bg:rgba(37,99,235,.14);--icon-border:rgba(96,165,250,.35)}
+.tool-page-create{--page-accent:rgba(129,140,248,.23);--page-text:#a5b4fc}
+.tool-page-pdf .tool-workspace{background:linear-gradient(150deg,rgba(8,47,73,.28),#101827 42%)}
+.tool-page-image .tool-workspace{background:linear-gradient(150deg,rgba(80,7,36,.24),#101827 42%)}
+.tool-page-calculator .tool-workspace{background:linear-gradient(150deg,rgba(6,78,59,.24),#101827 42%)}
+.tool-page-developer .tool-workspace{background:linear-gradient(150deg,rgba(46,16,101,.26),#101827 42%)}
+.tool-page-connect .tool-workspace{background:linear-gradient(150deg,rgba(19,78,74,.24),#101827 42%)}
+.tool-page-security .tool-workspace{background:linear-gradient(150deg,rgba(120,53,15,.22),#101827 42%)}
+.tool-page-time .tool-workspace{background:linear-gradient(150deg,rgba(30,58,138,.25),#101827 42%)}
+
+/* Student tools each retain their own route and icon, with a dedicated study-studio shell */
+.student-tool-page{color:var(--qt-text,#edf2ff)}
+.student-tool-hero{display:grid;grid-template-columns:78px minmax(0,1fr);gap:20px;align-items:center;padding:26px;margin-bottom:22px;border:1px solid #2b3950;border-radius:24px;background:linear-gradient(135deg,#121b30,#17172f);box-shadow:0 18px 50px rgba(0,0,0,.15)}
+.student-tool-icon{width:72px;height:72px;border-radius:21px;display:grid;place-items:center;font-size:36px;background:linear-gradient(135deg,#242b52,#31214a);border:1px solid rgba(167,139,250,.28);box-shadow:0 12px 30px rgba(0,0,0,.18)}
+.student-tool-page>section{max-width:none;margin:16px 0;padding:22px;border:1px solid #2b3950!important;border-radius:20px;background:linear-gradient(145deg,#111b2d,#101827);box-shadow:0 12px 32px rgba(0,0,0,.12)}
+.student-tool-page input:not([type="checkbox"]):not([type="date"]),.student-tool-page textarea,.student-tool-page input[type="date"]{background:#0b1220!important;color:#edf2ff!important;border:1px solid #34435c!important;border-radius:11px}
+.student-tool-page pre{background:#0b1220!important;color:#dbeafe;border:1px solid #2b3950;border-radius:14px;padding:16px;overflow:auto}
+.student-tool-page button{background:linear-gradient(135deg,#4f46e5,#7c3aed)!important;color:white!important;border-radius:11px!important;box-shadow:0 8px 22px rgba(79,70,229,.18)}
+.student-tool-page input[type="checkbox"]{accent-color:#818cf8}
+.student-tool-page.student-tool-pomodoro-timer .student-tool-hero{background:radial-gradient(circle at 85% 30%,rgba(16,185,129,.13),transparent 35%),linear-gradient(135deg,#102b2a,#17172f)}
+.student-tool-page.student-tool-gpa-cgpa-calculator .student-tool-hero,.student-tool-page.student-tool-semester-result-calculator .student-tool-hero{background:radial-gradient(circle at 85% 30%,rgba(56,189,248,.16),transparent 35%),linear-gradient(135deg,#10253b,#17172f)}
+.student-tool-page.student-tool-ai-study-assistant .student-tool-hero,.student-tool-page.student-tool-notes-summarizer .student-tool-hero{background:radial-gradient(circle at 85% 30%,rgba(167,139,250,.2),transparent 35%),linear-gradient(135deg,#241744,#17172f)}
+.student-tool-page.student-tool-assignment-planner .student-tool-hero,.student-tool-page.student-tool-assignment-checklist .student-tool-hero{background:radial-gradient(circle at 85% 30%,rgba(251,191,36,.14),transparent 35%),linear-gradient(135deg,#302516,#17172f)}
+@media(max-width:650px){
+ .tool-page{padding:24px 16px 50px!important}
+ .tool-hero{grid-template-columns:1fr;gap:14px;padding:21px;border-radius:20px}
+ .tool-page-icon{width:68px;height:68px;border-radius:19px;font-size:32px}
+ .tool-workspace{padding:16px;border-radius:18px}
+ .student-tool-hero{grid-template-columns:1fr;gap:14px;padding:20px}
+ .student-tool-icon{width:62px;height:62px;font-size:30px}
+ .student-tool-note{border-radius:12px}
+}
