@@ -115,9 +115,37 @@ async function groqChat(prompt) {
 async function geminiChat(prompt) {
   const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!key) return null;
-  // Prefer stable, broadly available Gemini models. Keep the model list short so
-  // one provider outage cannot consume the entire serverless function duration.
-  const models = unique([process.env.GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-2.0-flash']);
+  // Discover models available to this exact API key instead of assuming a
+  // hard-coded model is enabled for every Google AI project.
+  let availableModels = [];
+  try {
+    const { response: listResponse, data: listData } = await fetchJson(
+      `https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000`,
+      { method: 'GET', headers: { 'x-goog-api-key': key.trim() } },
+      8000,
+    );
+    if (listResponse.ok && Array.isArray(listData.models)) {
+      availableModels = listData.models
+        .filter(item => Array.isArray(item.supportedGenerationMethods) && item.supportedGenerationMethods.includes('generateContent'))
+        .map(item => String(item.name || '').replace(/^models\\//, ''))
+        .filter(name => /flash/i.test(name) && !/audio|image|tts|embedding|robotics|computer-use|live/i.test(name));
+    } else {
+      logProviderFailure('gemini-model-list', { status: listResponse.status });
+    }
+  } catch (error) {
+    logProviderFailure('gemini-model-list', errorDetails(error));
+  }
+
+  const models = unique([
+    process.env.GEMINI_MODEL,
+    ...availableModels.filter(name => /flash/i.test(name) && /latest|stable|2\\.5|2\\.0|3\\./i.test(name)),
+    ...availableModels,
+  ]).slice(0, 4);
+
+  if (!models.length) {
+    console.warn('[QuickToolBox AI] Gemini API key could not list any generateContent Flash models.');
+    return null;
+  }
 
   for (const model of models) {
     const { response, data } = await fetchJson(
