@@ -117,7 +117,7 @@ async function geminiChat(prompt) {
   if (!key) return null;
   // Prefer stable, broadly available Gemini models. Keep the model list short so
   // one provider outage cannot consume the entire serverless function duration.
-  const models = unique([process.env.GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+  const models = unique([process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3.5-flash-lite']);
 
   for (const model of models) {
     const { response, data } = await fetchJson(
