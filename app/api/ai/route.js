@@ -121,10 +121,13 @@ async function geminiChat(prompt) {
 
   for (const model of models) {
     const { response, data } = await fetchJson(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': key.trim(),
+        },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: `${AI_SYSTEM_PROMPT}\n\n${prompt}` }] }],
           generationConfig: { maxOutputTokens: 900, temperature: 0.6 },
