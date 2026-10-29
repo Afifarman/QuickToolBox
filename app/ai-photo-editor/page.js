@@ -17,6 +17,18 @@ export default function AIPhotoEditor() {
   const [aiError, setAiError] = useState('');
   const [aiBusy, setAiBusy] = useState(false);
   const [imageError, setImageError] = useState('');
+  const [apiStatus, setApiStatus] = useState('checking');
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/ai', { cache: 'no-store' })
+      .then(async (response) => ({ response, data: await response.json().catch(() => ({})) }))
+      .then(({ response, data }) => {
+        if (active) setApiStatus(response.ok && data.available ? 'ready' : 'unavailable');
+      })
+      .catch(() => { if (active) setApiStatus('unavailable'); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     if (!src || !canvasRef.current) return undefined;
@@ -123,9 +135,11 @@ export default function AIPhotoEditor() {
           <label htmlFor="photo-prompt"><b>Describe the edit you want</b></label>
           <textarea id="photo-prompt" rows={4} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Describe how you want to edit the photo…" />
           <div className="ai-actions">
-            <button className="btn" type="button" onClick={improvePrompt} disabled={aiBusy || !prompt.trim()}>{aiBusy ? 'Generating…' : '✨ Get AI Instructions'}</button>
+            <button className="btn" type="button" onClick={improvePrompt} disabled={aiBusy || !prompt.trim() || apiStatus === 'unavailable'}>{aiBusy ? 'Generating…' : apiStatus === 'unavailable' ? 'AI Unavailable' : '✨ Get AI Instructions'}</button>
             <button className="btn light" type="button" onClick={download} disabled={!src}>Download PNG</button>
           </div>
+          {apiStatus === 'checking' && <p role="status" style={{marginTop:16,color:'#667085'}}>Checking AI service availability…</p>}
+          {apiStatus === 'unavailable' && <p role="alert" style={{marginTop:16,color:'#b42318',whiteSpace:'pre-wrap'}}>AI service is not configured or is unavailable on this deployment. Add a valid AI provider key to this Vercel environment and redeploy. Your photo can still be edited locally with the sliders.</p>}
           {aiError && <p role="alert" style={{marginTop:16,color:'#b42318',whiteSpace:'pre-wrap'}}>{aiError}</p>}
           {aiTip && <div className="result" style={{marginTop:16,whiteSpace:'pre-wrap'}}><strong>AI-generated instructions (not an edited image)</strong><p>{aiTip}</p></div>}
           {imageError && <p role="alert" style={{marginTop:16,color:'#b42318'}}>{imageError}</p>}
