@@ -63,16 +63,16 @@ export default function AgentPage() {
       'Current appearance: mode=' + mode + ', accent=' + accent + '.'
     ].join('\n\n');
     try {
-      const response = await fetch('/api/ai', {
+      const response = await fetch('/api/ai-agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ message: prompt }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Agent request failed.');
       const result = data.text || 'No plan was returned. Please try again.';
       setPlan(result);
-      setHistory(items => [{ goal: task, result, source: data.source || 'unknown', at: new Date().toISOString(), appearance: changes }, ...items].slice(0, 8));
+      setHistory(items => [{ goal: task, result, source: data.model || data.source || 'unknown', toolsUsed: data.toolsUsed || [], at: new Date().toISOString(), appearance: changes }, ...items].slice(0, 8));
       setStatus('done');
     } catch (err) {
       setError(err.message || 'Could not reach the AI service.');
@@ -90,6 +90,7 @@ export default function AgentPage() {
       { name: 'AI Agent page', path: '/agent' },
       { name: 'Tools page', path: '/tools' },
       { name: 'AI API availability', path: '/api/ai' },
+      { name: 'AI Agent API availability', path: '/api/ai-agent' },
       { name: 'Robots.txt', path: '/robots.txt' },
       { name: 'Sitemap.xml', path: '/sitemap.xml' },
     ];
@@ -97,9 +98,9 @@ export default function AgentPage() {
       try {
         const response = await fetch(check.path, { cache: 'no-store' });
         let detail = response.status + ' ' + response.statusText;
-        if (check.path === '/api/ai' && response.ok) {
+        if ((check.path === '/api/ai' || check.path === '/api/ai-agent') && response.ok) {
           const data = await response.json();
-          detail += data.available ? ' · provider key configured' : ' · no AI provider detected';
+          detail += check.path === '/api/ai-agent' ? (data.configured ? ' · Gemini configured' : ' · Gemini key missing') : (data.available ? ' · provider key configured' : ' · no AI provider detected');
         } else if (check.path === '/sitemap.xml' && response.ok) {
           const body = await response.text();
           detail += ' · ' + (body.match(/<url>/g) || []).length + ' URLs detected';
@@ -131,7 +132,7 @@ export default function AgentPage() {
       <section className="qt-agent-hero">
         <span className="qt-agent-eyebrow">FREE MULTI-AGENT WORKSPACE · USER-CONTROLLED THEMES</span>
         <h1>Meet your <span>Free AI Agents</span></h1>
-        <p>Choose a specialist for studying, SEO, coding, content or research. Agents use the site's existing AI API and can change the local theme when you ask.</p>
+        <p>Choose a specialist for studying, SEO, coding, content or research. Requests use Gemini function calling for safe task planning, checklists, summaries and explanations. Theme changes remain local to this browser.</p>
       </section>
       <section className="qt-agent-layout">
         <div className="qt-agent-panel">
