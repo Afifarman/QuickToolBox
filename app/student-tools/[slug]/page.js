@@ -4,6 +4,7 @@ import {use,useEffect,useMemo,useState} from 'react';
 
 const META={
 'gpa-cgpa-calculator':['🎓','GPA / CGPA Calculator','Enter course credits and grade points, one course per line.'],
+'gpa-calculator':['🎓','GPA / CGPA Calculator','Enter course credits and grade points, one course per line.'],
 'grade-calculator':['📊','Grade & Percentage Calculator','Enter marks and total marks.'],
 'assignment-planner':['📝','Assignment Planner','Add assignments and deadlines. Saved locally.'],
 'study-timetable':['📅','Study Timetable Generator','Enter subjects and available study hours.'],
@@ -41,7 +42,7 @@ export default function StudentTool({params}){
  const save=(next)=>{setItems(next);try{localStorage.setItem('qt-'+slug,JSON.stringify(next))}catch{}};
  const gpa=useMemo(()=>{if(!value)return null; let c=0,p=0; value.split(/\n|,/).forEach(x=>{const [cr,pt]=x.trim().split(/\s*[:|]\s*/).map(Number);if(cr>0&&Number.isFinite(pt)){c+=cr;p+=cr*pt}});return c?p/c:null},[value]);
  const calculate=()=>{
-  if(slug==='gpa-cgpa-calculator'||slug==='semester-result-calculator'){setResult(gpa?`Weighted GPA: ${gpa.toFixed(2)}`:'Use format: 3:4.0, 3:3.5, 4:3.0');return}
+  if(slug==='gpa-cgpa-calculator'||slug==='gpa-calculator'||slug==='semester-result-calculator'){setResult(gpa?`Weighted GPA: ${gpa.toFixed(2)}`:'Use format: 3:4.0, 3:3.5, 4:3.0');return}
   if(slug==='grade-calculator'){const [m,t]=value.split(/[,/]/).map(Number);const pct=t?m/t*100:0;const grade=pct>=80?'A+':pct>=70?'A':pct>=60?'A-':pct>=50?'B':pct>=40?'C':'F';setResult(`${pct.toFixed(2)}% — Grade ${grade}`);return}
   if(slug==='study-time-calculator'){const [h,d]=value.split(/[,/]/).map(Number);setResult(h&&d?`${(h/d).toFixed(2)} hours/day`:'Use: total hours,days');return}
   if(slug==='student-budget-calculator'){const [income,...costs]=value.split(/[,/]/).map(Number);const total=costs.reduce((a,b)=>a+(b||0),0);setResult(`Expenses: ${total.toFixed(2)} | Balance: ${(income-total).toFixed(2)}`);return}
@@ -67,7 +68,7 @@ export default function StudentTool({params}){
   {slug==='study-timetable'&&<Card><textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Math, Physics, English..." rows={6} style={{width:'100%',padding:12}}/><button onClick={()=>setResult(notes.split(/[,\n]/).filter(Boolean).map((s,i)=>`${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][i%7]}: ${s.trim()} — 1 hour`).join('\n'))} style={{...btn,marginTop:10}}>Generate timetable</button></Card>}
   {slug==='pdf-notes-extractor'&&<Card><input type="file" accept="application/pdf,text/plain" onChange={async e=>{const f=e.target.files?.[0];if(!f)return;const t=await f.text();setResult(t.slice(0,10000))}}/><p>For text-readable PDFs, browser extraction depends on the PDF format. Plain text files are fully supported.</p></Card>}
   {slug==='notes-qr-generator'&&<Card><input value={value} onChange={e=>setValue(e.target.value)} placeholder="Paste a notes URL" style={{padding:12,width:'100%'}}/><button onClick={async()=>{try{await navigator.clipboard.writeText(value);setResult('Link copied. Paste it into any QR generator or share it.')}catch{setResult('Copy the link manually.')}}} style={{...btn,marginTop:10}}>Copy Link</button></Card>}
-  {!['assignment-planner','assignment-checklist','pomodoro-timer','study-timetable','pdf-notes-extractor','notes-qr-generator'].includes(slug)&&<Card><textarea value={notes||value} onChange={e=>{setNotes(e.target.value);setValue(e.target.value)}} placeholder={slug==='gpa-cgpa-calculator'||slug==='semester-result-calculator'?'3:4.0, 3:3.5, 4:3.0':slug==='citation-generator'?'Author | Title | Year | Publisher/Website':'Enter your text, values or topic…'} rows={8} style={{width:'100%',padding:14,borderRadius:10,border:'1px solid #ccc'}}/><button onClick={genericAction} style={{...btn,marginTop:10}}>Run Tool</button>{result&&<pre style={{whiteSpace:'pre-wrap',marginTop:16,padding:16,background:'#f5f5f5',borderRadius:12}}>{result}</pre>}</Card>}
+  {!['assignment-planner','assignment-checklist','pomodoro-timer','study-timetable','pdf-notes-extractor','notes-qr-generator'].includes(slug)&&<Card><textarea value={notes||value} onChange={e=>{setNotes(e.target.value);setValue(e.target.value)}} placeholder={slug==='gpa-cgpa-calculator'||slug==='gpa-calculator'||slug==='semester-result-calculator'?'3:4.0, 3:3.5, 4:3.0':slug==='citation-generator'?'Author | Title | Year | Publisher/Website':'Enter your text, values or topic…'} rows={8} style={{width:'100%',padding:14,borderRadius:10,border:'1px solid #ccc'}}/><button onClick={genericAction} style={{...btn,marginTop:10}}>Run Tool</button>{result&&<pre style={{whiteSpace:'pre-wrap',marginTop:16,padding:16,background:'#f5f5f5',borderRadius:12}}>{result}</pre>}</Card>}
   {slug==='notes-qr-generator'&&result&&<Card><pre style={{whiteSpace:'pre-wrap'}}>{result}</pre></Card>}
  </main>
 }
