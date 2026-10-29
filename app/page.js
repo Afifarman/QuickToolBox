@@ -88,7 +88,7 @@ export default function Home() {
             <div className="home-window-body">
               <div className="home-window-greeting"><span className="home-avatar">Q</span><div><b>Your toolbox is ready.</b><small>What would you like to do today?</small></div></div>
               <Link href="/ai" className="home-feature-tile home-feature-ai"><span className="home-feature-icon">✦</span><span><b>AI Assistant</b><small>Write, explain and summarize</small></span><em>↗</em></Link>
-              <Link href="/pdf-merge" className="home-feature-tile"><span className="home-feature-icon home-feature-blue">▤</span><span><b>PDF tools</b><small>Merge, split and compress files</small></span><em>↗</em></Link>
+              <Link href="/tools/pdf-merge" className="home-feature-tile"><span className="home-feature-icon home-feature-blue">▤</span><span><b>PDF tools</b><small>Merge, split and compress files</small></span><em>↗</em></Link>
               <Link href="/student-tools/ai-study-assistant" className="home-feature-tile"><span className="home-feature-icon home-feature-orange">✎</span><span><b>Study smarter</b><small>Study helpers for students</small></span><em>↗</em></Link>
               <div className="home-window-foot"><span><i/> Simple to use</span><span>One place. Many possibilities.</span></div>
             </div>
