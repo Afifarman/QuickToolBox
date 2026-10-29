@@ -502,3 +502,27 @@
  .student-tool-icon{width:62px;height:62px;font-size:30px}
  .student-tool-note{border-radius:12px}
 }
+
+
+/* AI destinations have distinct accents and task-oriented page compositions */
+.ai-page-assistant{--ai-accent:#a78bfa;--ai-glow:rgba(124,58,237,.19)}
+.ai-page-prompts{--ai-accent:#f0abfc;--ai-glow:rgba(192,38,211,.16)}
+.ai-page-photo-editor{--ai-accent:#f9a8d4;--ai-glow:rgba(219,39,119,.16)}
+.ai-page{position:relative}
+.ai-page:before{content:"";display:block;position:absolute;z-index:-1;top:0;left:4%;width:260px;height:230px;border-radius:50%;background:var(--ai-glow,rgba(79,70,229,.15));filter:blur(70px);pointer-events:none}
+.ai-page>small:first-child{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid color-mix(in srgb,var(--ai-accent,#a5b4fc) 35%,transparent);border-radius:999px;background:color-mix(in srgb,var(--ai-accent,#a5b4fc) 10%,transparent);color:var(--ai-accent,#a5b4fc)}
+.ai-page>h1{max-width:850px}
+.ai-page-assistant>textarea{border:1px solid #51447b;background:linear-gradient(145deg,#111a2b,#0b1220);box-shadow:0 18px 55px rgba(0,0,0,.16);min-height:190px}
+.ai-page-assistant .ai-templates{display:flex;gap:9px;flex-wrap:wrap;margin:20px 0}
+.ai-page-prompts .result{border-top:2px solid #d946ef;background:linear-gradient(145deg,rgba(42,17,48,.55),#101827)}
+.ai-page-prompts select{background:#0b1220!important;color:#edf2ff!important;border:1px solid #554065!important;border-radius:12px}
+.ai-page-photo-editor .result{border-top:2px solid #ec4899;background:linear-gradient(145deg,rgba(58,18,43,.42),#101827)}
+.ai-page-photo-editor input[type="file"]{display:block;width:100%;padding:18px;border:1px dashed #b05288;border-radius:15px;background:rgba(219,39,119,.06);color:#fbcfe8}
+.ai-page-photo-editor canvas{display:block;background:#0b1220!important;border:1px solid #54344a;box-shadow:0 20px 55px rgba(0,0,0,.24)}
+.student-tools-directory .card i{width:52px;height:52px;display:grid;place-items:center;border-radius:16px;font-style:normal;font-size:25px;background:linear-gradient(145deg,#242b52,#31214a);border:1px solid rgba(167,139,250,.2)}
+.student-tools-directory .card:nth-child(4n+1) i{background:linear-gradient(145deg,#1e3a5f,#172554)}
+.student-tools-directory .card:nth-child(4n+2) i{background:linear-gradient(145deg,#3b214e,#2e1065)}
+.student-tools-directory .card:nth-child(4n+3) i{background:linear-gradient(145deg,#164e63,#083344)}
+.student-tools-directory .card:nth-child(4n) i{background:linear-gradient(145deg,#422006,#431407)}
+.student-tools-directory .card{grid-template-columns:52px minmax(0,1fr) 20px}
+@media(max-width:650px){.ai-page-assistant>textarea{min-height:150px}.student-tools-directory .card{grid-template-columns:44px minmax(0,1fr) 16px}.student-tools-directory .card i{width:44px;height:44px;font-size:22px}}
