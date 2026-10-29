@@ -1,4 +1,11 @@
 import Link from 'next/link';
+import { SITE_URL } from '../../lib/site-config';
+
+export const metadata = {
+  title: 'Free Student Tools',
+  description: 'Free student tools for GPA, grades, study planning, flashcards, notes and exam preparation.',
+  alternates: { canonical: new URL('/student-tools', SITE_URL).toString() },
+};
 
 const studentTools = [
   ['grade-calculator', '📊', 'Grade & Percentage Calculator', 'Enter marks and total marks.'],
