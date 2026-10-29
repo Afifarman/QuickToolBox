@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 export default function AIPhotoEditor() {
   const canvasRef = useRef(null);
   const [src, setSrc] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [aiBusy, setAiBusy] = useState(false);
   const [prompt, setPrompt] = useState('Make this photo brighter, sharper and more professional while keeping the person and clothes natural.');
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
@@ -32,21 +34,55 @@ export default function AIPhotoEditor() {
   function upload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setAiTip('Please choose a valid image file.');
+      return;
+    }
+    setImageFile(file);
     setSrc(URL.createObjectURL(file));
+    setAiTip('');
   }
 
   async function improvePrompt() {
-    setAiTip('Generating editing instructions…');
+    if (!imageFile) {
+      setAiTip('আগে একটি ছবি আপলোড করুন, তারপর Improve with AI চাপুন।');
+      return;
+    }
+    if (!prompt.trim()) {
+      setAiTip('ছবিতে কী পরিবর্তন চান, তা লিখুন।');
+      return;
+    }
+
+    setAiBusy(true);
+    setAiTip('ছবি AI-তে পাঠানো হচ্ছে এবং সম্পাদিত ছবি তৈরি হচ্ছে…');
     try {
-      const res = await fetch('/api/ai', {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('ছবিটি পড়া যায়নি। আবার চেষ্টা করুন।'));
+        reader.readAsDataURL(imageFile);
+      });
+      const comma = dataUrl.indexOf(',');
+      if (comma < 0) throw new Error('ছবির ডেটা পড়া যায়নি।');
+      const res = await fetch('/api/ai-photo-editor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: `Turn this photo editing request into a precise, safe image-editing instruction. Request: ${prompt}` })
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          mimeType: imageFile.type,
+          imageBase64: dataUrl.slice(comma + 1),
+        }),
       });
-      const data = await res.json();
-      setAiTip(data.text || 'Try natural lighting, realistic skin tones, sharper details and a clean background.');
-    } catch {
-      setAiTip('Suggested edit: improve lighting and clarity, keep natural skin tones, preserve identity, clothing and composition.');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'AI দিয়ে ছবি সম্পাদনা করা যায়নি।');
+      if (!data.imageDataUrl) throw new Error('AI কোনো সম্পাদিত ছবি ফেরত দেয়নি।');
+      setSrc(data.imageDataUrl);
+      setImageFile(null);
+      setAiTip('AI-সম্পাদিত ছবি তৈরি হয়েছে। নিচের Download PNG বাটন দিয়ে সংরক্ষণ করুন।');
+    } catch (error) {
+      setAiTip(error instanceof Error ? error.message : 'AI ছবি সম্পাদনা ব্যর্থ হয়েছে। আবার চেষ্টা করুন।');
+    } finally {
+      setAiBusy(false);
     }
   }
 
@@ -67,12 +103,12 @@ export default function AIPhotoEditor() {
       <main className="ai-page">
         <small>🖼️ AI PHOTO EDITOR</small>
         <h1>AI Photo Editor</h1>
-        <p>Upload a photo, describe the look you want, get AI-assisted editing instructions, then fine-tune the image privately in your browser.</p>
+        <p>ছবি আপলোড করুন, কী পরিবর্তন চান লিখুন, তারপর AI দিয়ে ছবিটি সম্পাদনা করুন।
         <section className="result">
           <input type="file" accept="image/*" onChange={upload} />
           <textarea rows={4} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Describe how you want to edit the photo…" />
           <div className="ai-actions">
-            <button className="btn" type="button" onClick={improvePrompt}>✨ Improve with AI</button>
+            <button className="btn" type="button" onClick={improvePrompt} disabled={aiBusy || !imageFile}>{aiBusy ? "AI ছবি তৈরি করছে…" : "✨ Improve with AI"}</button>
             <button className="btn light" type="button" onClick={download} disabled={!src}>Download PNG</button>
           </div>
           {aiTip && <p className="result" style={{marginTop:16,whiteSpace:'pre-wrap'}}>{aiTip}</p>}
@@ -86,7 +122,7 @@ export default function AIPhotoEditor() {
             <label>Blur: {blur}px <input type="range" min="0" max="4" step="0.5" value={blur} onChange={e=>setBlur(Number(e.target.value))} /></label>
           </div>
           <canvas ref={canvasRef} style={{width:'100%',maxWidth:900,marginTop:20,borderRadius:16,background:'#eee'}} />
-          <p style={{color:'#667085'}}>Privacy: the basic photo adjustments run locally in your browser. The AI text assistant receives only your editing request, not the image pixels.</p>
+          <p style={{color:'#667085'}}>AI ছবি সম্পাদনার জন্য ছবিটি Gemini AI-তে পাঠানো হয়। সাধারণ brightness, contrast, saturation ও blur পরিবর্তন ব্রাউজারেই হয়।</p>
         </section>}
       </main>
       <footer>© 2026 QuickToolBox <span>Utility + AI/CV + Student tools.</span></footer>
