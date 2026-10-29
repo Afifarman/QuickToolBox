@@ -31,12 +31,8 @@ export const metadata = {
     'image tools',
     'QuickToolBox',
   ],
-  alternates: {
-    canonical: siteUrl,
-  },
   openGraph: {
     type: 'website',
-    url: siteUrl,
     siteName: 'QuickToolBox',
     title: 'QuickToolBox | Free Online Tools',
     description:
