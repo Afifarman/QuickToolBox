@@ -4,7 +4,7 @@ import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-const MODEL = process.env.GEMINI_AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const MODEL = process.env.GEMINI_AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 const MAX_MESSAGE = 6000;
 const MAX_TURNS = 4;
 const SYSTEM_INSTRUCTION = `You are QuickToolBox Agent, a helpful bilingual (Bangla/English) assistant.
