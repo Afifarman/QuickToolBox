@@ -1,171 +1,152 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-const TEMPLATES = [
-  ['Write', 'Write a professional CV summary for a software engineer.'],
-  ['Rewrite', 'Rewrite this more clearly and professionally:\n\n'],
-  ['Summarize', 'Summarize this in 5 short bullet points:\n\n'],
-  ['Email', 'Write a polite follow-up email about '],
-  ['Study', 'Explain this topic simply for a student: '],
-  ['Translate', 'Translate this to clear English:\n\n'],
+const STARTERS = [
+  { icon: '✍', title: 'Write something', prompt: 'Write a clear, professional introduction about ' },
+  { icon: '⌘', title: 'Help with code', prompt: 'Help me write or debug code. I am working with ' },
+  { icon: '▤', title: 'Summarize text', prompt: 'Summarize the following text into clear bullet points:\n\n' },
+  { icon: '🎓', title: 'Study a topic', prompt: 'Explain this topic in simple Bangla for a student: ' },
 ];
-
-const SOURCE_LABEL = {
-  openai: 'OpenAI',
-  groq: 'Groq',
-  gemini: 'Gemini',
-  openrouter: 'OpenRouter',
-  error: 'AI unavailable',
-};
+const LABELS = { gemini: 'Gemini', groq: 'Groq', huggingface: 'Hugging Face', openrouter: 'OpenRouter', openai: 'OpenAI' };
+const STORE = 'qtb_ai_conversations_v2';
+const makeId = () => `chat-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 export default function AIPage() {
-  const [prompt, setPrompt] = useState('Write a professional CV summary for a software engineer.');
-  const [answer, setAnswer] = useState('');
-  const [source, setSource] = useState('');
+  const [conversations, setConversations] = useState([]);
+  const [activeId, setActiveId] = useState('');
+  const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [history, setHistory] = useState([]);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState('');
+  const bottomRef = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('qtb_ai_history') || '[]');
-      if (Array.isArray(saved)) setHistory(saved.slice(0, 8));
+      const saved = JSON.parse(localStorage.getItem(STORE) || '[]');
+      if (Array.isArray(saved) && saved.length) {
+        setConversations(saved);
+        setActiveId(saved[0].id);
+        return;
+      }
     } catch {}
+    const initial = { id: makeId(), title: 'New chat', messages: [], updatedAt: Date.now() };
+    setConversations([initial]);
+    setActiveId(initial.id);
   }, []);
 
-  const count = useMemo(() => prompt.trim().length, [prompt]);
+  useEffect(() => {
+    if (conversations.length) {
+      try { localStorage.setItem(STORE, JSON.stringify(conversations.slice(0, 40))); } catch {}
+    }
+  }, [conversations]);
 
-  function remember(nextPrompt, nextAnswer, nextSource) {
-    const item = { prompt: nextPrompt.slice(0, 160), answer: nextAnswer.slice(0, 400), source: nextSource, at: Date.now() };
-    const next = [item, ...history.filter((x) => x.prompt !== item.prompt)].slice(0, 8);
-    setHistory(next);
-    try {
-      localStorage.setItem('qtb_ai_history', JSON.stringify(next));
-    } catch {}
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [activeId, conversations, busy]);
+
+  const active = conversations.find(item => item.id === activeId) || conversations[0];
+  const messages = active?.messages || [];
+
+  function updateActive(nextMessages) {
+    setConversations(current => current.map(item => item.id === activeId
+      ? { ...item, messages: nextMessages, title: item.messages.length ? item.title : (nextMessages.find(message => message.role === 'user')?.content || 'New chat').slice(0, 42), updatedAt: Date.now() }
+      : item).sort((a, b) => b.updatedAt - a.updatedAt));
   }
 
-  async function generate() {
-    const value = prompt.trim();
-    if (!value || busy) return;
+  function newChat() {
+    const item = { id: makeId(), title: 'New chat', messages: [], updatedAt: Date.now() };
+    setConversations(current => [item, ...current]);
+    setActiveId(item.id);
+    setDraft('');
+    setError('');
+    inputRef.current?.focus();
+  }
+
+  async function send(textOverride) {
+    const text = String(textOverride ?? draft).trim();
+    if (!text || busy || !active) return;
+    const nextMessages = [...messages, { role: 'user', content: text, id: makeId() }];
+    updateActive(nextMessages);
+    setDraft('');
+    setError('');
     setBusy(true);
-    setAnswer('');
-    setSource('');
-    setCopied(false);
     try {
-      const res = await fetch('/api/ai', {
+      const transcript = nextMessages.slice(-12).map(message => `${message.role === 'user' ? 'User' : 'Assistant'}: ${message.content}`).join('\n\n');
+      const prompt = `You are QuickToolBox AI, a helpful, accurate assistant. Reply in the user's language unless asked otherwise. Use the conversation context and answer the latest user message.\n\n${transcript}\n\nAssistant:`;
+      const response = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: value }),
+        body: JSON.stringify({ prompt }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.text || !data.source || data.source === 'local') {
-        throw new Error(data.error || 'AI provider did not return a real AI response. Please try again later.');
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.text || !data.source || data.source === 'local') {
+        throw new Error(data.error || 'No AI provider returned a real response. Please try again later.');
       }
-      setAnswer(data.text);
-      setSource(data.source);
-      remember(value, data.text, data.source);
-    } catch (error) {
-      setAnswer(error?.message || 'AI is temporarily unavailable. Please try again later.');
-      setSource('error');
+      updateActive([...nextMessages, { role: 'assistant', content: data.text, source: data.source, model: data.model, id: makeId() }]);
+    } catch (err) {
+      setError(err?.message || 'The AI request could not be completed.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function copyAnswer() {
-    if (!answer) return;
+  async function copyMessage(message) {
     try {
-      await navigator.clipboard.writeText(answer);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {}
+      await navigator.clipboard.writeText(message.content);
+      setCopied(message.id);
+      window.setTimeout(() => setCopied(''), 1400);
+    } catch { setError('Clipboard access is unavailable in this browser.'); }
+  }
+
+  function deleteChat(id) {
+    const next = conversations.filter(item => item.id !== id);
+    if (activeId === id) {
+      const replacement = next[0] || { id: makeId(), title: 'New chat', messages: [], updatedAt: Date.now() };
+      setConversations(next.length ? next : [replacement]);
+      setActiveId(replacement.id);
+    } else setConversations(next);
   }
 
   return (
-    <>
-      <header>
-        <Link className="brand" href="/">
-          <b>Q</b> QuickToolBox
-        </Link>
-        <nav>
-          <Link href="/cv-maker">CV Maker</Link>
-          <Link href="/student-tools">Student tools</Link>
-          <Link href="/">← All tools</Link>
-        </nav>
-      </header>
-      <main className="ai-page ai-page-assistant">
-        <small>🤖 AI TOOLS</small>
-        <h1>QuickToolBox AI Assistant</h1>
-        <p>
-          Generate, rewrite, summarize and improve text using a configured AI provider. If no provider is available, the page will show an error instead of presenting a built-in template as an AI answer.
-        </p>
-
-        <div className="ai-templates">
-          {TEMPLATES.map(([label, value]) => (
-            <button key={label} type="button" className="ai-chip" onClick={() => setPrompt(value)}>
-              {label}
-            </button>
-          ))}
+    <div className="qtb-ai-shell">
+      <aside className="qtb-ai-sidebar">
+        <Link href="/" className="qtb-ai-brand"><span>Q</span><b>QuickToolBox</b></Link>
+        <button className="qtb-ai-new" type="button" onClick={newChat}><span>＋</span> New chat</button>
+        <div className="qtb-ai-history-label">RECENT CHATS</div>
+        <div className="qtb-ai-history">
+          {conversations.map(item => <div className={item.id === activeId ? 'qtb-ai-history-item active' : 'qtb-ai-history-item'} key={item.id}>
+            <button type="button" onClick={() => { setActiveId(item.id); setError(''); }}><span>◷</span>{item.title}</button>
+            <button type="button" className="qtb-ai-delete" onClick={() => deleteChat(item.id)} aria-label={`Delete ${item.title}`}>×</button>
+          </div>)}
+          {!conversations.length && <p className="qtb-ai-empty-history">Your chats will appear here.</p>}
         </div>
-
-        <textarea
-          rows={8}
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          onKeyDown={(e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
-          }}
-          placeholder="Ask AI anything..."
-        />
-        <div className="ai-actions">
-          <button className="btn" onClick={generate} disabled={busy || !prompt.trim()}>
-            {busy ? 'Generating…' : 'Generate with AI →'}
-          </button>
-          <button className="btn light" type="button" onClick={() => { setPrompt(''); setAnswer(''); setSource(''); }}>
-            Clear
-          </button>
-          <span className="ai-count">{count} characters</span>
-        </div>
-
-        {answer && (
-          <section className="result ai-result">
-            <div className="ai-result-bar">
-              <strong>Result</strong>
-              <span>{SOURCE_LABEL[source] || 'Assistant'}</span>
-              <button className="btn light" type="button" onClick={copyAnswer}>
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-            </div>
-            <div className="ai-result-body">{answer}</div>
-          </section>
-        )}
-
-        {history.length > 0 && (
-          <section className="ai-history">
-            <h2>Recent on this device</h2>
-            {history.map((item) => (
-              <button
-                key={`${item.at}-${item.prompt}`}
-                type="button"
-                className="ai-history-item"
-                onClick={() => {
-                  setPrompt(item.prompt);
-                  setAnswer(item.answer);
-                  setSource(item.source);
-                }}
-              >
-                <b>{item.prompt}</b>
-                <span>{SOURCE_LABEL[item.source] || 'Assistant'}</span>
-              </button>
-            ))}
-          </section>
-        )}
+        <div className="qtb-ai-sidebar-bottom"><div className="qtb-ai-profile"><span>✦</span><div><b>QuickToolBox AI</b><small>Free-first models</small></div></div><Link href="/">← Back to tools</Link></div>
+      </aside>
+      <main className="qtb-ai-main">
+        <header className="qtb-ai-topbar"><div><span className="qtb-ai-status-dot" /> QuickToolBox AI <small>Preview</small></div><Link href="/">Explore tools ↗</Link></header>
+        <section className={messages.length ? 'qtb-ai-chat has-messages' : 'qtb-ai-chat'}>
+          {messages.length === 0 ? <div className="qtb-ai-welcome">
+            <div className="qtb-ai-orb"><span>✦</span></div><div className="qtb-ai-kicker">YOUR EVERYDAY AI PARTNER</div>
+            <h1>What can I help you <span>with?</span></h1><p>Ask in Bangla or English. Get help with writing, learning, ideas and code.</p>
+            <div className="qtb-ai-starters">{STARTERS.map(item => <button key={item.title} type="button" onClick={() => { setDraft(item.prompt); inputRef.current?.focus(); }}><span>{item.icon}</span><b>{item.title}</b><small>{item.prompt.slice(0, 48)}…</small></button>)}</div>
+          </div> : <div className="qtb-ai-messages">
+            {messages.map(message => <article className={message.role === 'user' ? 'qtb-ai-message user' : 'qtb-ai-message assistant'} key={message.id}>
+              <div className="qtb-ai-message-avatar">{message.role === 'user' ? 'You' : '✦'}</div>
+              <div className="qtb-ai-message-content"><div className="qtb-ai-message-label">{message.role === 'user' ? 'You' : 'QuickToolBox AI'}</div><div className="qtb-ai-message-text">{message.content}</div>
+                {message.role === 'assistant' && <div className="qtb-ai-message-tools"><span>{LABELS[message.source] || message.source || 'AI'}</span><button type="button" onClick={() => copyMessage(message)}>{copied === message.id ? 'Copied ✓' : 'Copy'}</button></div>}
+              </div>
+            </article>)}
+            {busy && <div className="qtb-ai-thinking"><span /><span /><span /> AI is thinking…</div>}<div ref={bottomRef} />
+          </div>}
+          {error && <div className="qtb-ai-error" role="alert"><b>AI request failed</b><span>{error}</span><button type="button" onClick={() => setError('')}>Dismiss</button></div>}
+          <form className="qtb-ai-composer" onSubmit={event => { event.preventDefault(); send(); }}>
+            <textarea ref={inputRef} value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); send(); } }} rows={2} placeholder="Message QuickToolBox AI…" aria-label="Message QuickToolBox AI" />
+            <div className="qtb-ai-composer-bottom"><span>↵ Send · Shift + ↵ New line</span><button type="submit" disabled={busy || !draft.trim()} aria-label="Send message">{busy ? '…' : '↑'}</button></div>
+          </form>
+          <div className="qtb-ai-disclaimer">QuickToolBox AI can make mistakes. Verify important information.</div>
+        </section>
       </main>
-      <footer>
-        © 2026 QuickToolBox <span>Utility + AI/CV + Student tools.</span>
-      </footer>
-    </>
+    </div>
   );
 }
