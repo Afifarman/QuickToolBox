@@ -5,7 +5,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 // Current Gemini image-editing model first; legacy image model is a compatibility fallback.
-const MODELS = [process.env.GEMINI_IMAGE_MODEL, 'gemini-3.1-flash-image', 'gemini-2.5-flash-image'].filter(Boolean);
+const FALLBACK_IMAGE_MODELS = ['gemini-2.5-flash-image', 'gemini-2.0-flash-preview-image-generation'];
 
 export async function POST(request) {
   const limit = rateLimit(getClientKey(request, 'ai-photo-edit'), { limit: 5, windowMs: 10 * 60 * 1000 });
@@ -23,12 +23,36 @@ export async function POST(request) {
     if (Math.floor(image.length * 3 / 4) > MAX_IMAGE_BYTES) return NextResponse.json({ error: 'ছবিটি ৮ MB-এর মধ্যে রাখুন।' }, { status: 413 });
     if (!prompt) return NextResponse.json({ error: 'কী পরিবর্তন চান তা লিখুন।' }, { status: 400 });
 
+    // Discover image-capable models available to this exact API key before inference.
+    // The list call is metadata-only; it does not generate content or consume inference quota.
+    let discoveredModels = [];
+    try {
+      const listResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000', {
+        headers: { 'x-goog-api-key': key.trim() },
+        signal: AbortSignal.timeout(8000),
+      });
+      const listData = await listResponse.json().catch(() => ({}));
+      if (listResponse.ok && Array.isArray(listData.models)) {
+        discoveredModels = listData.models
+          .filter(item => Array.isArray(item.supportedGenerationMethods) && item.supportedGenerationMethods.includes('generateContent'))
+          .map(item => String(item.name || '').replace(/^models\\//, ''))
+          .filter(name => /image/i.test(name) && /flash|image-generation/i.test(name));
+      }
+    } catch {
+      // Continue with known image model IDs; the inference response remains authoritative.
+    }
+    const models = [...new Set([
+      process.env.GEMINI_IMAGE_MODEL,
+      ...discoveredModels,
+      ...FALLBACK_IMAGE_MODELS,
+    ].filter(Boolean))].slice(0, 3);
+
     const contents = [{ role: 'user', parts: [
       { inlineData: { mimeType, data: image } },
       { text: `Edit the provided image according to this instruction: ${prompt}. Return the edited image, not just advice. Preserve the original subject identity and important details unless explicitly asked otherwise. Make a conservative natural edit when ambiguous.` },
     ] }];
     let lastStatus = 502;
-    for (const model of MODELS) {
+    for (const model of models) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 45000);
       let response;
