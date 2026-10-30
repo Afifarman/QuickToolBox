@@ -14,6 +14,7 @@ function configuredProviders() {
     openai: Boolean(process.env.OPENAI_API_KEY),
     groq: Boolean(process.env.GROQ_API_KEY),
     gemini: Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY),
+    huggingface: Boolean(process.env.HF_TOKEN || process.env.HUGGINGFACEHUB_API_TOKEN),
     openrouter: Boolean(process.env.OPENROUTER_API_KEY),
   };
 }
@@ -191,6 +192,19 @@ async function geminiChat(prompt) {
   return null;
 }
 
+async function huggingfaceChat(prompt) {
+  const key = process.env.HF_TOKEN || process.env.HUGGINGFACEHUB_API_TOKEN;
+  if (!key) return null;
+  // Hugging Face's OpenAI-compatible router may only serve models/providers
+  // currently available to this account; keep failures transparent.
+  return openaiCompatibleChat({
+    key,
+    baseUrl: 'https://router.huggingface.co/v1',
+    model: process.env.HF_MODEL || 'Qwen/Qwen2.5-7B-Instruct',
+    source: 'huggingface',
+  }, prompt);
+}
+
 async function openrouterChat(prompt) {
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) return null;
@@ -221,12 +235,14 @@ export async function POST(request) {
     if (!prompt) return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
 
     const clipped = prompt.slice(0, PROMPT_LIMIT);
-    // Prefer OpenAI, then fall back to Gemini. Optional providers remain
-    // available after these two if their keys are configured.
+    // Free-first provider order: Gemini, Groq, then Hugging Face.
+    // Paid/other providers are only attempted when explicitly configured,
+    // after the free-first options have failed.
     const runners = [
-      ['openai', openaiChat],
       ['gemini', geminiChat],
       ['groq', groqChat],
+      ['huggingface', huggingfaceChat],
+      ['openai', openaiChat],
       ['openrouter', openrouterChat],
     ];
     const providerFailures = [];
