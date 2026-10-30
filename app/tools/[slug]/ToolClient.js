@@ -28,7 +28,7 @@ function PDFMerge(){
  const[fs,setFs]=useState([]),[r,setR]=useState(''),[busy,setBusy]=useState(false);
  async function go(){
   if(fs.length<2)return setR('Select at least two PDF files to merge.');
-  if(fs.some(f=>f.type!=='application/pdf'&&!/\\.pdf$/i.test(f.name)))return setR('Every selected file must be a PDF.');
+  if(fs.some(f=>f.type!=='application/pdf'&&!/\.pdf$/i.test(f.name)))return setR('Every selected file must be a PDF.');
   if(fs.reduce((n,f)=>n+f.size,0)>50*1024*1024)return setR('The combined file size must be under 50 MB.');
   setBusy(true);setR('Merging PDFs…');
   try{
@@ -49,7 +49,7 @@ function PDFSplit(){
   setBusy(true);setR('Splitting PDF…');
   try{
    const d=await PDFDocument.load(await f.arrayBuffer()),raw=page.split(',').map(x=>x.trim());
-   if(!raw.length||raw.some(x=>!/^\\d+$/.test(x)))return setR('Enter page numbers separated by commas, for example 1,3,5.');
+   if(!raw.length||raw.some(x=>!/^\d+$/.test(x)))return setR('Enter page numbers separated by commas, for example 1,3,5.');
    const nums=raw.map(x=>Number(x)-1);
    if(nums.some(x=>x<0||x>=d.getPageCount()))return setR(`Page numbers must be between 1 and ${d.getPageCount()}.`);
    const out=await PDFDocument.create();(await out.copyPages(d,nums)).forEach(p=>out.addPage(p));
