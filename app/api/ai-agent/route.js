@@ -144,7 +144,7 @@ async function discoverAgentModels(key) {
   }
   const available = (data.models || [])
     .filter(model => Array.isArray(model.supportedGenerationMethods) && model.supportedGenerationMethods.includes('generateContent'))
-    .map(model => String(model.name || '').replace(/^models\\//, ''))
+    .map(model => String(model.name || '').replace(/^models\//, ''))
     .filter(name => /flash/i.test(name) && !/image|audio|tts|embedding|live|robotics/i.test(name));
   const preferred = MODEL_PREFERENCE && available.includes(MODEL_PREFERENCE) ? [MODEL_PREFERENCE] : [];
   return [...new Set([...preferred, ...available.filter(name => !/preview|experimental|latest/i.test(name)), ...available])].slice(0, 3);
