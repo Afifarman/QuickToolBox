@@ -3,7 +3,7 @@ import { getClientKey, rateLimit } from '../../../../lib/security/rate-limit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 // Current Gemini image-editing model first; legacy image model is a compatibility fallback.
 const MODELS = [process.env.GEMINI_IMAGE_MODEL, 'gemini-3.1-flash-image', 'gemini-2.5-flash-image'].filter(Boolean);
 
