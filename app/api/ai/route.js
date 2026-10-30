@@ -232,6 +232,9 @@ async function geminiChat(prompt) {
 }
 
 async function huggingfaceChat(prompt) {
+  // Hugging Face Inference Providers can consume paid account credits.
+  // Keep it disabled unless the owner explicitly opts in after checking billing.
+  if (process.env.HF_ALLOW_BILLABLE_INFERENCE !== 'true') return null;
   const key = process.env.HF_TOKEN || process.env.HUGGINGFACEHUB_API_TOKEN;
   if (!key) return null;
   // Hugging Face's OpenAI-compatible router may only serve models/providers
@@ -286,8 +289,8 @@ export async function POST(request) {
     const runners = [
       ['gemini', geminiChat],
       ['groq', groqChat],
-      ['huggingface', huggingfaceChat],
       ['openrouter-free', prompt => openrouterChat(prompt)],
+      ['huggingface', huggingfaceChat],
       ['openai-paid', openaiChat],
       ['openrouter-paid', prompt => openrouterChat(prompt, { paid: true })],
     ];
