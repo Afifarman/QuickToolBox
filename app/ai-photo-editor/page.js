@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 
 export default function AIPhotoEditor() {
   const canvasRef = useRef(null);
@@ -50,7 +50,7 @@ export default function AIPhotoEditor() {
       setError('শুধু JPG, PNG অথবা WebP ছবি ব্যবহার করুন।'); event.target.value = ''; return;
     }
     if (selected.size > MAX_IMAGE_BYTES) {
-      setError('AI এডিটের জন্য ছবিটি ৮ MB-এর মধ্যে রাখুন।'); event.target.value = ''; return;
+      setError('Vercel API request সীমার মধ্যে রাখতে ছবিটি ৩ MB-এর মধ্যে রাখুন।'); event.target.value = ''; return;
     }
     setFile(selected);
     setSrc(URL.createObjectURL(selected));
@@ -96,7 +96,7 @@ export default function AIPhotoEditor() {
       <h1>AI Photo Editor</h1>
       <p>ছবি আপলোড করুন, কী পরিবর্তন চান লিখুন—AI ছবির ডেটাসহ নির্দেশনা পাবে এবং সম্পাদিত ছবি ফেরত দেওয়ার চেষ্টা করবে। এটি শুধু টেক্সট নির্দেশনা তৈরি করার টুল নয়।</p>
       <section className="result">
-        <label htmlFor="photo-upload"><b>ছবি নির্বাচন করুন (সর্বোচ্চ ৮ MB)</b></label>
+        <label htmlFor="photo-upload"><b>ছবি নির্বাচন করুন (সর্বোচ্চ ৩ MB)</b></label>
         <input ref={fileRef} id="photo-upload" type="file" accept="image/jpeg,image/png,image/webp" onChange={upload} />
         <label htmlFor="photo-prompt"><b>কীভাবে এডিট করতে চান?</b></label>
         <textarea id="photo-prompt" rows={4} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="যেমন: ব্যাকগ্রাউন্ড পরিষ্কার করো, আলো বাড়াও…" />
