@@ -1,8 +1,8 @@
 import AiPlatformHub from '../../components/AiPlatformHub';
 
 export const metadata = {
-  title: 'AI Platform & Tools Directory',
-  description: 'Explore AI tools, chat with configured AI providers, and review model provider configuration in QuickToolBox.',
+  title: 'AI Tools Directory & Model Hub',
+  description: 'Discover curated AI tools from different companies, compare pricing types, save favorites and explore AI model families.',
   alternates: { canonical: '/ai-platform' },
 };
 

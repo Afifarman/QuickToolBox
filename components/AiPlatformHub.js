@@ -1,113 +1,105 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { aiTools, aiModels } from '../lib/ai-directory';
 import styles from './AiPlatformHub.module.css';
 
-const catalog = [
-  { name: 'AI Assistant', category: 'Chat & writing', description: 'Ask questions, rewrite, summarize and draft content.', href: '/ai', tags: ['Free tier available', 'Text'] },
-  { name: 'AI Prompt Generator', category: 'Chat & writing', description: 'Create reusable prompts for study, coding, images and work.', href: '/ai-prompts', tags: ['Free', 'Prompts'] },
-  { name: 'AI Photo Editor', category: 'Image', description: 'Submit an image and an editing instruction to the image-edit API.', href: '/ai-photo-editor', tags: ['Provider required', 'Image'] },
-  { name: 'AI CV Maker', category: 'Productivity', description: 'Build and format a professional CV.', href: '/cv-maker', tags: ['Free', 'Career'] },
-  { name: 'PDF Notes Extractor', category: 'Study', description: 'Extract selectable text from a PDF in your browser.', href: '/student-tools/pdf-notes-extractor', tags: ['Free', 'Study'] },
-  { name: 'Notes Summarizer', category: 'Study', description: 'Create a concise summary of your notes.', href: '/student-tools/notes-summarizer', tags: ['Local tool', 'Study'] },
-  { name: 'Grammar Checker', category: 'Study', description: 'Check common grammar, spacing and punctuation issues.', href: '/student-tools/grammar-checker', tags: ['Local tool', 'Study'] },
-  { name: 'Student Translator', category: 'Study', description: 'Use browser translation support where available.', href: '/student-tools/student-translator', tags: ['Browser support', 'Study'] },
-];
-
-const providers = [
-  { key: 'gemini', name: 'Google Gemini', note: 'Free quota may be available; subject to Google limits.' },
-  { key: 'groq', name: 'Groq', note: 'Free developer access may be available; model and rate limits apply.' },
-  { key: 'openrouter', name: 'OpenRouter', note: 'Free models/router can be rate-limited and availability varies.' },
-  { key: 'huggingface', name: 'Hugging Face', note: 'Some inference routes may require paid credits; not assumed free.' },
-  { key: 'openai', name: 'OpenAI', note: 'Paid provider; fallback is disabled unless explicitly enabled.' },
-];
-const filters = ['All', 'Chat & writing', 'Image', 'Productivity', 'Study'];
+const categories = ['All categories', ...new Set(aiTools.map((tool) => tool.category))];
+const pricingOptions = ['All pricing', 'Free', 'Freemium', 'Paid'];
 
 export default function AiPlatformHub() {
-  const [active, setActive] = useState('All');
   const [query, setQuery] = useState('');
-  const [providersState, setProvidersState] = useState(null);
-  const [healthLoading, setHealthLoading] = useState(true);
-  const [prompt, setPrompt] = useState('');
-  const [answer, setAnswer] = useState('');
-  const [chatError, setChatError] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
+  const [category, setCategory] = useState('All categories');
+  const [pricing, setPricing] = useState('All pricing');
+  const [sort, setSort] = useState('featured');
+  const [favorites, setFavorites] = useState([]);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [activeTab, setActiveTab] = useState('tools');
 
   useEffect(() => {
-    let live = true;
-    fetch('/api/ai', { cache: 'no-store' })
-      .then(async (r) => {
-        const data = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(data.error || 'Could not read provider configuration.');
-        return data;
-      })
-      .then((data) => { if (live) setProvidersState(data.providers || null); })
-      .catch(() => { if (live) setProvidersState(null); })
-      .finally(() => { if (live) setHealthLoading(false); });
-    return () => { live = false; };
+    try { setFavorites(JSON.parse(localStorage.getItem('qtb_ai_directory_favorites') || '[]')); } catch { setFavorites([]); }
   }, []);
 
-  const visibleTools = useMemo(() => catalog.filter((tool) => {
-    const matchesCategory = active === 'All' || tool.category === active;
-    const text = (tool.name + ' ' + tool.description + ' ' + tool.tags.join(' ')).toLowerCase();
-    return matchesCategory && text.includes(query.toLowerCase());
-  }), [active, query]);
-
-  async function sendPrompt(event) {
-    event.preventDefault();
-    if (!prompt.trim() || chatLoading) return;
-    setChatLoading(true); setChatError(''); setAnswer('');
-    try {
-      const response = await fetch('/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prompt.trim() }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'No AI provider completed this request.');
-      if (!data.text) throw new Error('The provider returned no usable answer.');
-      setAnswer(data.text);
-    } catch (error) {
-      setChatError(error.message || 'AI request failed. Please try again.');
-    } finally { setChatLoading(false); }
+  function toggleFavorite(id) {
+    setFavorites((current) => {
+      const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
+      try { localStorage.setItem('qtb_ai_directory_favorites', JSON.stringify(next)); } catch {}
+      return next;
+    });
   }
+
+  const visibleTools = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    const result = aiTools.filter((tool) => {
+      const searchable = [tool.name, tool.company, tool.category, tool.summary, ...tool.tags].join(' ').toLowerCase();
+      return (!term || searchable.includes(term))
+        && (category === 'All categories' || tool.category === category)
+        && (pricing === 'All pricing' || tool.pricing === pricing)
+        && (!favoritesOnly || favorites.includes(tool.id));
+    });
+    if (sort === 'az') result.sort((a, b) => a.name.localeCompare(b.name));
+    if (sort === 'za') result.sort((a, b) => b.name.localeCompare(a.name));
+    if (sort === 'featured') result.sort((a, b) => Number(b.featured) - Number(a.featured) || a.name.localeCompare(b.name));
+    return result;
+  }, [query, category, pricing, sort, favoritesOnly, favorites]);
+
+  const featured = aiTools.filter((tool) => tool.featured).slice(0, 6);
 
   return <main className={styles.page}>
     <header className={styles.header}>
-      <a href="/" className={styles.brand}>Q <span>QuickToolBox</span></a>
-      <nav><a href="#assistant">AI Chat</a><a href="#directory">Tools Directory</a><a href="#models">Model Hub</a></nav>
+      <a href="/" className={styles.brand}><span className={styles.brandMark}>Q</span><span>QuickToolBox</span></a>
+      <nav aria-label="Main navigation"><a href="/">Home</a><a href="#directory">Explore tools</a><a href="#models">AI models</a><a href="/favorites">My favorites</a></nav>
     </header>
+
     <section className={styles.hero}>
-      <p className={styles.eyebrow}>ONE WORKSPACE · MANY AI TOOLS</p>
-      <h1>Your AI workspace,<br /><span>all in one place.</span></h1>
-      <p className={styles.lead}>Chat with available AI providers, discover practical tools, and check which model providers are configured for this deployment.</p>
-      <div className={styles.heroStats}><span>Free-first routing</span><span>Honest provider status</span><span>Tool discovery</span></div>
+      <div className={styles.heroCopy}>
+        <span className={styles.kicker}>THE AI DISCOVERY PLATFORM</span>
+        <h1>Find the right AI tool<br/><em>for your next idea.</em></h1>
+        <p>Explore AI products from independent companies and leading technology providers. Compare what they do, check their pricing type, and visit the official website.</p>
+        <div className={styles.heroActions}><a href="#directory" className={styles.primaryButton}>Explore directory <span>↘</span></a><a href="#models" className={styles.textButton}>Browse AI models ↗</a></div>
+        <div className={styles.trustLine}><span>✓ Curated listings</span><span>✓ Official links</span><span>✓ Free & paid filters</span></div>
+      </div>
+      <div className={styles.heroVisual} aria-hidden="true">
+        <div className={`${styles.orbit} ${styles.orbitOne}`}></div><div className={`${styles.orbit} ${styles.orbitTwo}`}></div>
+        <div className={styles.orbitCore}><span>✳</span><b>AI</b><small>DISCOVER</small></div>
+        <div className={styles.floatCard + ' ' + styles.floatTop}><span>✦</span><div><b>40+ tools</b><small>Across 10 categories</small></div></div>
+        <div className={styles.floatCard + ' ' + styles.floatBottom}><span>⌘</span><div><b>Many providers</b><small>One place to explore</small></div></div>
+      </div>
     </section>
-    <section id="assistant" className={styles.section}>
-      <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>01 / AI ASSISTANT</p><h2>Ask your AI</h2></div><span className={styles.subtle}>Uses the QuickToolBox AI API</span></div>
-      <form className={styles.chat} onSubmit={sendPrompt}>
-        <label htmlFor="ai-prompt">What would you like help with?</label>
-        <textarea id="ai-prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="e.g. Explain solar panels in simple Bangla..." rows={4} maxLength={8000} />
-        <div className={styles.chatFooter}><span>Responses depend on provider configuration and quota.</span><button disabled={chatLoading || !prompt.trim()}>{chatLoading ? 'Working…' : 'Send prompt ↗'}</button></div>
-      </form>
-      {chatError && <p className={styles.error} role="alert">{chatError}</p>}
-      {answer && <article className={styles.answer}><h3>AI response</h3><p>{answer}</p></article>}
+
+    <section className={styles.featuredSection}>
+      <div className={styles.sectionIntro}><div><span className={styles.kicker}>START HERE</span><h2>Featured discoveries</h2></div><span>Curated picks · not a popularity ranking</span></div>
+      <div className={styles.featuredGrid}>{featured.map((tool) => <a key={tool.id} className={styles.featuredCard} href={tool.url} target="_blank" rel="noopener noreferrer"><span className={styles.featuredIcon}>{tool.name.slice(0,1)}</span><span><b>{tool.name}</b><small>{tool.category} · {tool.pricing}</small></span><i>↗</i></a>)}</div>
     </section>
-    <section id="directory" className={styles.section}>
-      <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>02 / DISCOVER</p><h2>AI tools directory</h2></div><span className={styles.subtle}>{visibleTools.length} tools listed</span></div>
-      <input className={styles.search} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search tools by name or task…" aria-label="Search AI tools" />
-      <div className={styles.filters}>{filters.map((filter) => <button type="button" key={filter} onClick={() => setActive(filter)} className={active === filter ? styles.selected : ''}>{filter}</button>)}</div>
-      <div className={styles.toolGrid}>{visibleTools.map((tool) => <a className={styles.toolCard} href={tool.href} key={tool.name}><span className={styles.toolCategory}>{tool.category}</span><h3>{tool.name}</h3><p>{tool.description}</p><div className={styles.tags}>{tool.tags.map((tag) => <span key={tag}>{tag}</span>)}</div><b>Open tool ↗</b></a>)}</div>
-      <p className={styles.disclaimer}>Directory entries describe existing QuickToolBox routes; listing a tool does not mean its full end-to-end behavior has passed testing.</p>
+
+    <section id="directory" className={styles.directorySection}>
+      <div className={styles.sectionIntro}><div><span className={styles.kicker}>EXPLORE THE ECOSYSTEM</span><h2>AI tools directory</h2></div><span>{aiTools.length} curated listings</span></div>
+      <div className={styles.tabs}><button className={activeTab === 'tools' ? styles.activeTab : ''} onClick={() => setActiveTab('tools')}>AI tools</button><button className={activeTab === 'models' ? styles.activeTab : ''} onClick={() => { setActiveTab('models'); document.getElementById('models')?.scrollIntoView({behavior:'smooth'}); }}>AI models</button></div>
+      <div className={styles.filters}>
+        <label className={styles.searchBox}><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by tool, company, task or tag…" aria-label="Search AI tools"/></label>
+        <select value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filter by category">{categories.map((item) => <option key={item}>{item}</option>)}</select>
+        <select value={pricing} onChange={(event) => setPricing(event.target.value)} aria-label="Filter by pricing">{pricingOptions.map((item) => <option key={item}>{item}</option>)}</select>
+        <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort tools"><option value="featured">Featured first</option><option value="az">Name A–Z</option><option value="za">Name Z–A</option></select>
+        <button className={favoritesOnly ? styles.favoritesActive : styles.favoritesButton} onClick={() => setFavoritesOnly((value) => !value)}>♥ Favorites ({favorites.length})</button>
+      </div>
+      <div className={styles.resultLine}><span>{visibleTools.length} results</span><button onClick={() => {setQuery('');setCategory('All categories');setPricing('All pricing');setSort('featured');setFavoritesOnly(false);}}>Reset filters</button></div>
+      {visibleTools.length ? <div className={styles.toolGrid}>{visibleTools.map((tool) => <article className={styles.toolCard} key={tool.id}>
+        <div className={styles.cardTop}><span className={styles.toolGlyph}>{tool.name.slice(0,1)}</span><button className={favorites.includes(tool.id) ? styles.saved : styles.save} aria-label={favorites.includes(tool.id) ? 'Remove from favorites' : 'Add to favorites'} onClick={() => toggleFavorite(tool.id)}>{favorites.includes(tool.id) ? '♥' : '♡'}</button></div>
+        <div className={styles.toolMeta}><span>{tool.category}</span><span className={styles.pricing}>{tool.pricing}</span></div>
+        <h3>{tool.name}</h3><p className={styles.company}>by {tool.company}</p><p className={styles.summary}>{tool.summary}</p>
+        <div className={styles.tags}>{tool.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+        <a className={styles.openLink} href={tool.url} target="_blank" rel="noopener noreferrer">Visit official website <span>↗</span></a>
+      </article>)}</div> : <div className={styles.empty}><b>No tools found</b><p>Try a different search term or clear some filters.</p><button onClick={() => {setQuery('');setCategory('All categories');setPricing('All pricing');setFavoritesOnly(false);}}>Clear filters</button></div>}
+      <p className={styles.note}>Pricing labels are broad directory classifications, not price quotes. Features, free quotas and availability can change by region and over time. Always confirm current terms on the provider’s official website.</p>
     </section>
-    <section id="models" className={styles.section}>
-      <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>03 / PROVIDERS</p><h2>AI model hub</h2></div><span className={styles.subtle}>{healthLoading ? 'Checking configuration…' : 'Configuration snapshot'}</span></div>
-      <div className={styles.providerGrid}>{providers.map((provider) => {
-        const configured = providersState?.[provider.key];
-        return <article className={styles.providerCard} key={provider.key}><div className={styles.providerTop}><h3>{provider.name}</h3><span className={configured === true ? styles.configured : styles.unknown}>{healthLoading ? 'Checking' : providersState ? (configured ? 'Key configured' : 'Not configured') : 'Status unavailable'}</span></div><p>{provider.note}</p><small>Key presence is not a live API health test.</small></article>;
-      })}</div>
-      <p className={styles.disclaimer}>A provider is not labelled “Working” just because an environment variable exists. Real API tests and per-tool functional tests are tracked separately.</p>
+
+    <section id="models" className={styles.modelsSection}>
+      <div className={styles.sectionIntro}><div><span className={styles.kicker}>MODELS & PROVIDERS</span><h2>AI model hub</h2></div><span>Model families · not standalone apps</span></div>
+      <p className={styles.modelsLead}>An AI model is the underlying technology. An AI tool is the product people use. The same model family may power multiple products.</p>
+      <div className={styles.modelGrid}>{aiModels.map((model) => <article className={styles.modelCard} key={model.name}><div className={styles.modelTop}><span className={styles.modelGlyph}>{model.company.slice(0,1)}</span><span>{model.kind}</span></div><h3>{model.name}</h3><p className={styles.company}>{model.company}</p><p>{model.modalities}</p><a href={model.url} target="_blank" rel="noopener noreferrer">Provider website ↗</a></article>)}</div>
     </section>
-    <footer className={styles.footer}>QuickToolBox · Free-first AI workspace <a href="/">Back to home</a></footer>
+
+    <section className={styles.disclaimerSection}><b>Independent directory</b><p>QuickToolBox is an independent discovery directory. Listed products belong to their respective companies. Listing a product does not mean it is built by QuickToolBox, endorsed by us, or integrated into this website. We do not claim live availability or rank tools by popularity without verified data.</p></section>
+    <footer className={styles.footer}><a href="/">QuickToolBox</a><span>Discover better ways to work with AI.</span><a href="#directory">Back to directory ↑</a></footer>
   </main>;
 }
