@@ -46,10 +46,6 @@ export default function AiPlatformHub() {
   const featured = aiTools.filter((tool) => tool.featured).slice(0, 6);
 
   return <main className={styles.page}>
-    <header className={styles.header}>
-      <a href="/" className={styles.brand}><span className={styles.brandMark}>Q</span><span>QuickToolBox</span></a>
-      <nav aria-label="Main navigation"><a href="/">Home</a><a href="#directory">Explore tools</a><a href="#models">AI models</a><a href="/favorites">My favorites</a></nav>
-    </header>
 
     <section className={styles.hero}>
       <div className={styles.heroCopy}>
