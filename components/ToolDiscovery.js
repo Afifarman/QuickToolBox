@@ -18,7 +18,7 @@ const TOOL_GLYPHS = {
  'gpa-calculator':'🎓','emi-calculator':'🏦','salary-calculator':'💵','tax-vat-calculator':'🧾','invoice-generator':'🧮',
  'cover-letter-builder':'✉️','qr-scanner':'▦','url-shortener':'🔗','json-formatter':'{ }','favicon-generator':'🎨',
  'meta-tag-generator':'🏷️','sitemap-generator':'🗺️','password-strength-checker':'🔐','world-clock':'🌐',
- 'ai':'🤖','cv-maker':'🧑‍💼','ai-photo-editor':'🖌️','ai-prompts':'✧','ai-student':'🧠',
+ 'ai':'🤖','cv-maker':'🧑‍💼','ai-photo-editor':'🖌️','ai-prompts':'✧',
  'grade-calculator':'📊','assignment-planner':'🗒️','study-timetable':'📅','pomodoro-timer':'⏱️','study-time-calculator':'⌛',
  'scientific-calculator':'🧮','math-problem-solver':'📐','word-character-counter':'🔠','citation-generator':'📚',
  'essay-outline-generator':'📝','flashcard-generator':'🗂️','quiz-generator':'❔','ai-study-assistant':'💡',
