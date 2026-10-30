@@ -24,6 +24,7 @@ export default function SiteHeader() {
           const active = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
           return <Link key={href} href={href} aria-current={active ? 'page' : undefined} className={active ? 'is-active' : ''}>{label}</Link>;
         })}
+        <Link className="qt-site-register" href="/login?mode=register">Register</Link>
       </nav>
     </header>
   );

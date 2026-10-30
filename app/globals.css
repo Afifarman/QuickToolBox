@@ -992,6 +992,8 @@ header nav a:last-child{border:1px solid var(--qt-border);border-radius:10px;pad
 .qt-site-nav{display:flex;align-items:center;justify-content:flex-end;gap:clamp(10px,2vw,24px);flex-wrap:wrap}
 .qt-site-nav a{font-size:13px;font-weight:750;color:var(--qt-muted,#667085);transition:color .18s ease}
 .qt-site-nav a:hover,.qt-site-nav a.is-active{color:var(--qt-accent,#4f46e5)}
+.qt-site-nav .qt-site-register{padding:9px 16px;border-radius:999px;background:var(--qt-accent,#4f46e5);color:#fff;box-shadow:0 6px 18px #4f46e533}
+.qt-site-nav .qt-site-register:hover{background:var(--qt-accent-strong,#3730a3);color:#fff}
 .qt-site-header-dark{margin:0;padding-left:clamp(18px,5vw,76px);padding-right:clamp(18px,5vw,76px);background:#080d17;border-color:#202b40;color:#f6f8ff}
 .qt-site-header-dark .qt-site-brand{color:#f6f8ff}
 .qt-site-header-dark .qt-site-mark{background:linear-gradient(135deg,#8b75ff,#5ac9ed);color:#07101c}
