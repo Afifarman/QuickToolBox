@@ -67,7 +67,6 @@ function ToolGrid({ items, base }) {
 
 export default function Home() {
   return <>
-    <header><Link className="brand" href="/"><b>Q</b> QuickToolBox</Link><nav><a href="#tools">Tools</a><a href="#ai">AI & CV</a><a href="#student-tools">Student</a><Link href="/login">Login / Register</Link><Link href="/dashboard">Dashboard</Link><Link href="/agent">AI Agent</Link></nav></header>
     <main>
       <section className="home-hero">
         <div className="home-hero-copy">

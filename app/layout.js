@@ -1,6 +1,7 @@
 import './globals.css';
 import SiteProviders from './providers';
 import QuickToolboxAssistant from '../components/QuickToolboxAssistant';
+import SiteHeader from '../components/SiteHeader';
 import Script from 'next/script';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
@@ -81,7 +82,7 @@ export default function RootLayout({ children }) {
         <meta name="google-site-verification" content={googleVerification} />
       </head>
       <body>
-        <SiteProviders>{children}</SiteProviders>
+        <SiteProviders><SiteHeader />{children}</SiteProviders>
         <QuickToolboxAssistant />
         <SpeedInsights />
         <Script
