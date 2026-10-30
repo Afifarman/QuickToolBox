@@ -104,7 +104,7 @@ async function openaiChat(prompt) {
 async function groqChat(prompt) {
   const key = process.env.GROQ_API_KEY;
   if (!key) return null;
-  const models = unique([process.env.GROQ_MODEL, 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'llama-3.1-70b-versatile']);
+  const models = unique([process.env.GROQ_MODEL, 'openai/gpt-oss-20b', 'openai/gpt-oss-120b', 'llama-3.3-70b-versatile']);
   for (const model of models) {
     const result = await openaiCompatibleChat({ key, baseUrl: 'https://api.groq.com/openai/v1', model, source: 'groq' }, prompt);
     if (result) return result;
@@ -186,7 +186,8 @@ async function openrouterChat(prompt) {
   return openaiCompatibleChat({
     key,
     baseUrl: 'https://openrouter.ai/api/v1',
-    model: process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini',
+    // OpenRouter's free router selects an available $0 model; it is quota-limited.
+    model: process.env.OPENROUTER_MODEL || 'openrouter/free',
     source: 'openrouter',
   }, prompt);
 }
@@ -210,13 +211,13 @@ export async function POST(request) {
     if (!prompt) return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
 
     const clipped = prompt.slice(0, PROMPT_LIMIT);
-    // Prefer OpenAI, then fall back to Gemini. Optional providers remain
-    // available after these two if their keys are configured.
+    // Free-tier providers first to avoid accidental paid usage by default.
+    // OpenAI/Gemini remain optional later fallbacks when their keys are configured.
     const runners = [
-      ['openai', openaiChat],
-      ['gemini', geminiChat],
       ['groq', groqChat],
       ['openrouter', openrouterChat],
+      ['gemini', geminiChat],
+      ['openai', openaiChat],
     ];
     const providerFailures = [];
 
