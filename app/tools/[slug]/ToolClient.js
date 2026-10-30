@@ -24,9 +24,44 @@ const META={
 const Field=({label,...p})=><label className="field"><span>{label}</span><input {...p}/></label>;
 const Button=({children,onClick,light=false})=><button className="btn" style={light?{background:'#f2f4f7',color:'#344054'}:{}} onClick={onClick}>{children}</button>;
 const Download=({data,name,type='text/plain'})=><a className="btn" href={data?.startsWith('data:')?data:`data:${type};charset=utf-8,${encodeURIComponent(data||'')}`} download={name}>Download</a>;
-function PDFMerge(){const[fs,setFs]=useState([]),[r,setR]=useState('');async function go(){try{if(!fs.length)return setR('Select PDF files.');const out=await PDFDocument.create();for(const f of fs){const d=await PDFDocument.load(await f.arrayBuffer());(await out.copyPages(d,d.getPageIndices())).forEach(p=>out.addPage(p))}const u=URL.createObjectURL(new Blob([await out.save()],{type:'application/pdf'}));const a=document.createElement('a');a.href=u;a.download='merged.pdf';a.click();setR('Merged PDF downloaded.')}catch(e){setR('Could not read a PDF.')}}return <><Upload label="Choose PDF files" accept="application/pdf" multiple onChange={e=>setFs(Array.from(e.target.files||[]))}/><Button onClick={go}>Merge PDFs</Button><p>{r}</p></>}
-function PDFSplit(){const[f,setF]=useState(null),[page,setPage]=useState('1'),[r,setR]=useState('');async function go(){try{if(!f)return setR('Choose a PDF.');const d=await PDFDocument.load(await f.arrayBuffer()),nums=page.split(',').map(x=>parseInt(x.trim(),10)-1).filter(x=>x>=0&&x<d.getPageCount());if(!nums.length)return setR('Enter valid page numbers.');const out=await PDFDocument.create();(await out.copyPages(d,nums)).forEach(p=>out.addPage(p));const u=URL.createObjectURL(new Blob([await out.save()],{type:'application/pdf'}));const a=document.createElement('a');a.href=u;a.download='split-pages.pdf';a.click();setR('Selected pages downloaded.')}catch{setR('Invalid PDF.')}}return <><Upload label="Choose PDF" accept="application/pdf" onChange={e=>setF(e.target.files?.[0])}/><Field label="Pages (example: 1,3,5)" value={page} onChange={e=>setPage(e.target.value)}/><Button onClick={go}>Split PDF</Button><p>{r}</p></>}
-async function loadPdfJs(){
+function PDFMerge(){
+ const[fs,setFs]=useState([]),[r,setR]=useState(''),[busy,setBusy]=useState(false);
+ async function go(){
+  if(fs.length<2)return setR('Select at least two PDF files to merge.');
+  if(fs.some(f=>f.type!=='application/pdf'&&!/\\.pdf$/i.test(f.name)))return setR('Every selected file must be a PDF.');
+  if(fs.reduce((n,f)=>n+f.size,0)>50*1024*1024)return setR('The combined file size must be under 50 MB.');
+  setBusy(true);setR('Merging PDFs…');
+  try{
+   const out=await PDFDocument.create();
+   for(const f of fs){const d=await PDFDocument.load(await f.arrayBuffer(),{ignoreEncryption:false});const pages=await out.copyPages(d,d.getPageIndices());pages.forEach(p=>out.addPage(p));}
+   const bytes=await out.save(),url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})),a=document.createElement('a');
+   a.href=url;a.download='merged.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+   setR(`Success: merged ${fs.length} files and ${out.getPageCount()} pages. Download started.`);
+  }catch(e){setR(/encrypt|password/i.test(e?.message||'')?'A PDF is password-protected. Unlock it before merging.':'Could not read one of the PDFs. Check that each file is valid and not password-protected.');}
+  finally{setBusy(false);}
+ }
+ return <><Upload label="Choose at least 2 PDF files (max 50 MB total)" accept="application/pdf,.pdf" multiple onChange={e=>{setFs(Array.from(e.target.files||[]));setR('')}}/><p>{fs.length} file(s) selected</p><Button onClick={go}>{busy?'Merging…':'Merge PDFs'}</Button><p role="status">{r}</p></>;
+}
+function PDFSplit(){
+ const[f,setF]=useState(null),[page,setPage]=useState('1'),[r,setR]=useState(''),[busy,setBusy]=useState(false);
+ async function go(){
+  if(!f)return setR('Choose a PDF first.');
+  setBusy(true);setR('Splitting PDF…');
+  try{
+   const d=await PDFDocument.load(await f.arrayBuffer()),raw=page.split(',').map(x=>x.trim());
+   if(!raw.length||raw.some(x=>!/^\\d+$/.test(x)))return setR('Enter page numbers separated by commas, for example 1,3,5.');
+   const nums=raw.map(x=>Number(x)-1);
+   if(nums.some(x=>x<0||x>=d.getPageCount()))return setR(`Page numbers must be between 1 and ${d.getPageCount()}.`);
+   const out=await PDFDocument.create();(await out.copyPages(d,nums)).forEach(p=>out.addPage(p));
+   const bytes=await out.save(),url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})),a=document.createElement('a');
+   a.href=url;a.download='split-pages.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+   setR(`Success: ${nums.length} page(s) exported. Download started.`);
+  }catch(e){setR(/encrypt|password/i.test(e?.message||'')?'This PDF is password-protected. Unlock it before splitting.':'Invalid or unreadable PDF. Please choose another file.');}
+  finally{setBusy(false);}
+ }
+ return <><Upload label="Choose PDF" accept="application/pdf,.pdf" onChange={e=>{setF(e.target.files?.[0]||null);setR('')}}/><Field label="Pages (example: 1,3,5)" value={page} onChange={e=>setPage(e.target.value)}/><Button onClick={go}>{busy?'Splitting…':'Split PDF'}</Button><p role="status">{r}</p></>;
+}
+function loadPdfJs(){
  if(window.pdfjsLib)return window.pdfjsLib;
  await new Promise((resolve,reject)=>{const existing=document.getElementById('qt-pdfjs');if(existing&&window.pdfjsLib)return resolve();const s=document.createElement('script');s.id='qt-pdfjs';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=resolve;s.onerror=()=>reject(new Error('Could not load the PDF processing library.'));document.head.appendChild(s)});
  if(!window.pdfjsLib)throw new Error('PDF processing library unavailable.');
@@ -37,11 +72,16 @@ function PDFCompress(){
  const[f,setF]=useState(null),[r,setR]=useState(''),[busy,setBusy]=useState(false),[quality,setQuality]=useState('0.65');
  async function go(){
   if(!f)return setR('Choose a PDF first.');
-  setBusy(true);setR('Compressing pages…');
+  if(f.size>30*1024*1024)return setR('Please use a PDF smaller than 30 MB.');
+  setBusy(true);setR('Optimizing pages…');
+  let source;
   try{
-   const pdfjs=await loadPdfJs(),source=await pdfjs.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise,out=await PDFDocument.create();
+   const pdfjs=await loadPdfJs();source=await pdfjs.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise;
+   if(source.numPages>40)throw new Error('For performance, compress PDFs up to 40 pages at a time.');
+   const out=await PDFDocument.create();
    for(let n=1;n<=source.numPages;n++){
     const page=await source.getPage(n),viewport=page.getViewport({scale:1}),scale=0.85,canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+    if(!ctx)throw new Error('Canvas is not available in this browser.');
     canvas.width=Math.max(1,Math.floor(viewport.width*scale));canvas.height=Math.max(1,Math.floor(viewport.height*scale));
     await page.render({canvasContext:ctx,viewport:page.getViewport({scale})}).promise;
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',Number(quality)));
@@ -49,13 +89,15 @@ function PDFCompress(){
     const image=await out.embedJpg(await blob.arrayBuffer()),pdfPage=out.addPage([viewport.width,viewport.height]);
     pdfPage.drawImage(image,{x:0,y:0,width:viewport.width,height:viewport.height});page.cleanup();canvas.width=1;canvas.height=1;
    }
-   const bytes=await out.save({useObjectStreams:true}),url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})),a=document.createElement('a');
-   a.href=url;a.download='compressed.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+   const bytes=await out.save({useObjectStreams:true});
+   if(bytes.length>=f.size){setR('This PDF is already smaller than the optimized image version. No larger replacement was downloaded. Try a lower image quality or keep the original PDF.');return;}
+   const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})),a=document.createElement('a');a.href=url;a.download='compressed.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
    const before=(f.size/1024).toFixed(1),after=(bytes.length/1024).toFixed(1),delta=((1-bytes.length/f.size)*100).toFixed(1);
-   setR(`Done: ${before} KB → ${after} KB (${delta}% change). Pages are rasterized; selectable text, links, forms and accessibility may be lost.`);
-  }catch(e){setR(e?.message||'Compression failed. Try another PDF.')}finally{setBusy(false)}
+   setR(`Success: ${before} KB → ${after} KB (${delta}% smaller). Note: pages are rasterized; selectable text, links, forms and accessibility may be lost.`);
+  }catch(e){setR(e?.message||'Compression failed. Try another PDF.');}
+  finally{try{await source?.destroy()}catch{}setBusy(false);}
  }
- return <><Upload label="Choose PDF" accept="application/pdf" onChange={e=>setF(e.target.files?.[0])}/><label className="field"><span>Image quality</span><select value={quality} onChange={e=>setQuality(e.target.value)}><option value="0.45">Smaller file</option><option value="0.65">Balanced</option><option value="0.82">Higher quality</option></select></label><Button onClick={go}>{busy?'Compressing…':'Compress PDF'}</Button><p>{r}</p><small>This tool converts pages to compressed images. Output is not searchable/selectable text.</small></>
+ return <><Upload label="Choose PDF (max 30 MB)" accept="application/pdf,.pdf" onChange={e=>{setF(e.target.files?.[0]||null);setR('')}}/><label className="field"><span>Image quality</span><select value={quality} onChange={e=>setQuality(e.target.value)}><option value="0.45">Smaller file</option><option value="0.65">Balanced</option><option value="0.82">Higher quality</option></select></label><Button onClick={go}>{busy?'Optimizing…':'Compress PDF'}</Button><p role="status">{r}</p><small>This image-based compressor may reduce file size but rasterizes pages. Searchable text and interactive PDF elements are not preserved.</small></>;
 }
 function ImagePDF(){const[fs,setFs]=useState([]),[r,setR]=useState('');async function go(){try{if(!fs.length)return setR('Choose images.');const out=await PDFDocument.create();for(const f of fs){const bytes=await f.arrayBuffer();let im; if(f.type==='image/png') im=await out.embedPng(bytes); else im=await out.embedJpg(bytes);const p=out.addPage([595,842]);const s=Math.min(555/im.width,802/im.height);p.drawImage(im,{x:(595-im.width*s)/2,y:(842-im.height*s)/2,width:im.width*s,height:im.height*s})}const u=URL.createObjectURL(new Blob([await out.save()],{type:'application/pdf'}));const a=document.createElement('a');a.href=u;a.download='images.pdf';a.click();setR('PDF downloaded.')}catch{setR('Use JPG or PNG images.')}}return <><Upload label="Choose JPG/PNG images" accept="image/jpeg,image/png" multiple onChange={e=>setFs(Array.from(e.target.files||[]))}/><Button onClick={go}>Create PDF</Button><p>{r}</p></>}
 function Passport(){const[f,setF]=useState(null),[o,setO]=useState('');function go(){if(!f)return;const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=600;c.height=600;const x=c.getContext('2d'),s=Math.max(600/im.width,600/im.height);const w=im.width*s,h=im.height*s;x.drawImage(im,(600-w)/2,(600-h)/2,w,h);setO(c.toDataURL('image/jpeg',.92))};im.src=URL.createObjectURL(f)}return <><Upload label="Choose portrait" accept="image/*" onChange={e=>setF(e.target.files?.[0])}/><Button onClick={go}>Make Photo</Button>{o&&<><img src={o} alt="Passport photo" style={{maxWidth:'280px',display:'block',marginTop:16}}/><Download data={o} name="passport-photo.jpg"/></>}</>}
