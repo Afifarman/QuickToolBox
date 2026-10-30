@@ -4,10 +4,10 @@ import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
 import { classifyProviderError, logProviderFailure as logSafeProviderFailure } from '../../../lib/ai/provider-diagnostics';
 
 export const runtime = 'nodejs';
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const PROMPT_LIMIT = 8000;
-const PROVIDER_TIMEOUT_MS = 20000;
+const PROVIDER_TIMEOUT_MS = 12000;
 
 function configuredProviders() {
   return {
@@ -87,6 +87,8 @@ async function openaiCompatibleChat({ key, baseUrl, model, source }, prompt) {
       ? data.error.message.slice(0, 200)
       : (text ? 'Provider returned an unexpected response format' : 'Provider returned no usable text'),
   });
+  // Quota and upstream outages are provider-wide; do not retry other model IDs.
+  if (response.status === 429 || response.status >= 500) return { unavailable: true };
   return null;
 }
 
@@ -96,7 +98,8 @@ async function openaiChat(prompt) {
   const models = unique([process.env.OPENAI_MODEL, 'gpt-4o-mini', 'gpt-4.1-mini', 'gpt-4o', 'gpt-5-mini']);
   for (const model of models) {
     const result = await openaiCompatibleChat({ key, baseUrl: 'https://api.openai.com/v1', model, source: 'openai' }, prompt);
-    if (result) return result;
+    if (result?.text) return result;
+    if (result?.unavailable) return null;
   }
   return null;
 }
@@ -107,7 +110,8 @@ async function groqChat(prompt) {
   const models = unique([process.env.GROQ_MODEL, 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'llama-3.1-70b-versatile']);
   for (const model of models) {
     const result = await openaiCompatibleChat({ key, baseUrl: 'https://api.groq.com/openai/v1', model, source: 'groq' }, prompt);
-    if (result) return result;
+    if (result?.text) return result;
+    if (result?.unavailable) return null;
   }
   return null;
 }
@@ -122,7 +126,7 @@ async function geminiChat(prompt) {
     const { response: listResponse, data: listData } = await fetchJson(
       `https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000`,
       { method: 'GET', headers: { 'x-goog-api-key': key.trim() } },
-      8000,
+      6000,
     );
     if (listResponse.ok && Array.isArray(listData.models)) {
       availableModels = listData.models
@@ -136,11 +140,18 @@ async function geminiChat(prompt) {
     logProviderFailure('gemini-model-list', errorDetails(error));
   }
 
+  // Only use model IDs advertised for this exact API key.
+  // Ignore stale GEMINI_MODEL values that are not in the provider's model list.
+  const preferredModels = availableModels.filter(name =>
+    /flash/i.test(name) && !/preview|experimental|latest/i.test(name)
+  );
   const models = unique([
-    process.env.GEMINI_MODEL,
-    ...availableModels.filter(name => /flash/i.test(name) && /latest|stable|2\.5|2\.0|3\./i.test(name)),
+    process.env.GEMINI_MODEL && availableModels.includes(process.env.GEMINI_MODEL)
+      ? process.env.GEMINI_MODEL
+      : null,
+    ...preferredModels,
     ...availableModels,
-  ]).slice(0, 4);
+  ]).slice(0, 2);
 
   if (!models.length) {
     console.warn('[QuickToolBox AI] Gemini API key could not list any generateContent Flash models.');
