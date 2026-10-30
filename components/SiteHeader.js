@@ -24,6 +24,14 @@ export default function SiteHeader() {
           const active = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
           return <Link key={href} href={href} aria-current={active ? 'page' : undefined} className={active ? 'is-active' : ''}>{label}</Link>;
         })}
+        <a
+          className="qt-register-link"
+          href="https://quick-tool-net80bcxg-armanarif852-2879s-projects.vercel.app/register"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Register
+        </a>
       </nav>
     </header>
   );
