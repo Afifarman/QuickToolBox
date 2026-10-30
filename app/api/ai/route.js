@@ -266,7 +266,13 @@ async function openrouterChat(prompt, { paid = false } = {}) {
 }
 
 export async function GET() {
-  return NextResponse.json({ ok: true, available: Object.values(configuredProviders()).some(Boolean) });
+  const providers = configuredProviders();
+  return NextResponse.json({
+    ok: true,
+    available: Object.values(providers).some(Boolean),
+    providers,
+    statusMeaning: 'Configured keys only; this endpoint does not perform live provider health checks.',
+  });
 }
 
 export async function POST(request) {
