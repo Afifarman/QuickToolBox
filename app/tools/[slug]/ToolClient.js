@@ -61,7 +61,7 @@ function PDFSplit(){
  }
  return <><Upload label="Choose PDF" accept="application/pdf,.pdf" onChange={e=>{setF(e.target.files?.[0]||null);setR('')}}/><Field label="Pages (example: 1,3,5)" value={page} onChange={e=>setPage(e.target.value)}/><Button onClick={go}>{busy?'Splitting…':'Split PDF'}</Button><p role="status">{r}</p></>;
 }
-function loadPdfJs(){
+async function loadPdfJs(){
  if(window.pdfjsLib)return window.pdfjsLib;
  await new Promise((resolve,reject)=>{const existing=document.getElementById('qt-pdfjs');if(existing&&window.pdfjsLib)return resolve();const s=document.createElement('script');s.id='qt-pdfjs';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=resolve;s.onerror=()=>reject(new Error('Could not load the PDF processing library.'));document.head.appendChild(s)});
  if(!window.pdfjsLib)throw new Error('PDF processing library unavailable.');
