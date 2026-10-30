@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
 
 export const runtime = 'nodejs';
-export const maxDuration = 30;
+export const maxDuration = 60;
 
-const MODEL = process.env.GEMINI_AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+const MODEL = process.env.GEMINI_AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const MAX_MESSAGE = 6000;
 const MAX_TURNS = 4;
 const SYSTEM_INSTRUCTION = `You are QuickToolBox Agent, a helpful bilingual (Bangla/English) assistant.
@@ -142,7 +142,7 @@ async function callGemini(contents, key) {
         toolConfig: { functionCallingConfig: { mode: 'AUTO' } },
         generationConfig: { temperature: 0.35, maxOutputTokens: 1200 },
       }),
-      signal: AbortSignal.timeout(18000),
+      signal: AbortSignal.timeout(25000),
     },
   );
   const data = await response.json().catch(() => ({}));
