@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 const STORAGE_KEY = 'qtb_global_assistant_history';
 
 export default function QuickToolboxAssistant() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState([]);
@@ -57,6 +59,8 @@ export default function QuickToolboxAssistant() {
       setBusy(false);
     }
   }
+
+  if (pathname === '/ai') return null;
 
   return (
     <div className="qtb-float-assistant">
