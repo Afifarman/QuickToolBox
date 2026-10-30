@@ -1,5 +1,6 @@
 import './globals.css';
 import SiteProviders from './providers';
+import QuickToolboxAssistant from '../components/QuickToolboxAssistant';
 import Script from 'next/script';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
@@ -81,6 +82,7 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <SiteProviders>{children}</SiteProviders>
+        <QuickToolboxAssistant />
         <SpeedInsights />
         <Script
           async
