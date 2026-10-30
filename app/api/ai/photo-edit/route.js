@@ -35,7 +35,7 @@ export async function POST(request) {
       if (listResponse.ok && Array.isArray(listData.models)) {
         discoveredModels = listData.models
           .filter(item => Array.isArray(item.supportedGenerationMethods) && item.supportedGenerationMethods.includes('generateContent'))
-          .map(item => String(item.name || '').replace(/^models\\//, ''))
+          .map(item => String(item.name || '').replace(/^models\//, ''))
           .filter(name => /image/i.test(name) && /flash|image-generation/i.test(name));
       }
     } catch {
