@@ -9,8 +9,7 @@ const aiTools = [
   ['ai','spark','AI Assistant','Generate, rewrite, summarize and improve text. Works with configured AI providers and local fallback.'],
   ['cv-maker','document','AI CV Maker','Build a professional CV with AI-assisted content.'],
   ['ai-photo-editor','image','AI Photo Editor','Edit photos with AI-assisted instructions and browser-based adjustments.'],
-  ['ai-prompts','spark','AI Prompt Generator','Create copy-ready prompts for image, study, coding, SEO and social media.'],
-  ['ai-student','graduation','AI Student Hub','AI study assistant, notes, quizzes, flashcards and essay tools in one place.']
+  ['ai-prompts','spark','AI Prompt Generator','Create copy-ready prompts for image, study, coding, SEO and social media.']
 ];
 
 const studentTools = [
