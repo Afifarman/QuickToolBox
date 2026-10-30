@@ -2,17 +2,13 @@ import Link from 'next/link';
 
 const studentTools = [
   ['grade-calculator', '📊', 'Grade & Percentage Calculator', 'Enter marks and total marks.'],
-  ['assignment-planner', '📝', 'Assignment Planner', 'Add assignments and deadlines. Saved locally.'],
   ['study-timetable', '📅', 'Study Timetable Generator', 'Enter subjects and available study hours.'],
-  ['pomodoro-timer', '⏱️', 'Pomodoro Study Timer', 'Focus with a 25-minute study session and a 5-minute break.'],
   ['study-time-calculator', '⏰', 'Study Time Calculator', 'Split your target study hours across days.'],
   ['scientific-calculator', '🔢', 'Scientific Calculator', 'Calculate arithmetic and common scientific expressions.'],
   ['math-problem-solver', '📐', 'Math Problem Solver', 'Solve arithmetic, percentages and simple linear equations.'],
   ['citation-generator', '📚', 'Citation Generator', 'Generate APA, MLA or Chicago-style basic citations.'],
   ['essay-outline-generator', '✍️', 'Essay Outline Generator', 'Create a clear essay structure from your topic.'],
-  ['flashcard-generator', '🧠', 'Flashcard Generator', 'Create editable Q&A flashcards from notes.'],
   ['quiz-generator', '❓', 'Quiz Generator', 'Create practice questions from notes.'],
-  ['ai-study-assistant', '🤖', 'AI Study Assistant', 'Ask a study question and get a clear explanation.'],
   ['notes-summarizer', '📄', 'Notes Summarizer', 'Make a concise local summary from notes.'],
   ['grammar-checker', '🔤', 'Grammar Checker', 'Detect common spacing, capitalization and punctuation issues.'],
   ['student-translator', '🌐', 'Student Translator', 'Use the browser translation API when supported.'],
@@ -39,7 +35,7 @@ export default function StudentToolsPage() {
       <main className="student-tools-directory" style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 20px 80px' }}>
         <small>STUDENT TOOLS</small>
         <h1>Useful tools for students.</h1>
-        <p>GPA, planners, flashcards, study timers and an AI study assistant.</p>
+        <p>GPA, calculators, writing helpers and study utilities.</p>
         <div className="grid" style={{ marginTop: 28 }}>
           {studentTools.map(([slug, icon, title, desc]) => (
             <Link className="card" href={`/student-tools/${slug}`} key={slug}>
