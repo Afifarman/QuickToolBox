@@ -33,6 +33,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'register') setMode('register');
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
     const error = params.get('error') || hashParams.get('error_description') || hashParams.get('error');
     if (error) setMsg(getErrorMessage(error));
