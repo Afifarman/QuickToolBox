@@ -58,7 +58,7 @@ async function fetchJson(url, options, timeoutMs = PROVIDER_TIMEOUT_MS) {
   }
 }
 
-async function openaiCompatibleChat({ key, baseUrl, model, source }, prompt) {
+async function openaiCompatibleChat({ key, baseUrl, model, source, tokenField = 'max_tokens', temperature = 0.6 }, prompt) {
   if (!key) return null;
 
   const { response, data } = await fetchJson(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
@@ -73,8 +73,8 @@ async function openaiCompatibleChat({ key, baseUrl, model, source }, prompt) {
         { role: 'system', content: AI_SYSTEM_PROMPT },
         { role: 'user', content: prompt },
       ],
-      max_tokens: 900,
-      temperature: 0.6,
+      [tokenField]: 900,
+      ...(temperature === null ? {} : { temperature }),
     }),
   });
 
@@ -108,9 +108,46 @@ async function openaiChat(prompt) {
 async function groqChat(prompt) {
   const key = process.env.GROQ_API_KEY;
   if (!key) return null;
-  const models = unique([process.env.GROQ_MODEL, 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'llama-3.1-70b-versatile']);
+
+  // Ask this API key which models are currently active. This avoids repeatedly
+  // calling retired IDs and handles account-specific model availability.
+  let activeModels = [];
+  try {
+    const { response, data } = await fetchJson('https://api.groq.com/openai/v1/models', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${key}` },
+    }, 6000);
+    if (response.ok && Array.isArray(data?.data)) {
+      activeModels = data.data
+        .filter(item => item?.active !== false && typeof item?.id === 'string')
+        .map(item => item.id);
+    } else {
+      logProviderFailure('groq-model-list', { status: response.status });
+    }
+  } catch (error) {
+    logProviderFailure('groq-model-list', errorDetails(error));
+  }
+
+  const preferred = [
+    process.env.GROQ_MODEL,
+    'openai/gpt-oss-20b',
+    'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
+  ].filter(Boolean);
+  const models = activeModels.length
+    ? unique([...preferred.filter(model => activeModels.includes(model)), ...activeModels.filter(model => /chat|llama|qwen|gpt-oss/i.test(model))]).slice(0, 3)
+    : unique(preferred.slice(1));
+
   for (const model of models) {
-    const result = await openaiCompatibleChat({ key, baseUrl: 'https://api.groq.com/openai/v1', model, source: 'groq' }, prompt);
+    const result = await openaiCompatibleChat({
+      key,
+      baseUrl: 'https://api.groq.com/openai/v1',
+      model,
+      source: 'groq',
+      tokenField: 'max_completion_tokens',
+      // Some Groq reasoning models reject custom temperature values.
+      temperature: null,
+    }, prompt);
     if (result?.text) return result;
     if (result?.unavailable) return null;
   }
