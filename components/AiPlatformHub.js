@@ -60,7 +60,7 @@ export default function AiPlatformHub() {
         <div className={styles.trustLine}><span>✓ Curated listings</span><span>✓ Official links</span><span>✓ Free & paid filters</span></div>
       </div>
       <div className={styles.heroVisual} aria-hidden="true">
-        <div className={styles.orbit orbitOne}></div><div className={styles.orbit orbitTwo}></div>
+        <div className={`${styles.orbit} ${styles.orbitOne}`}></div><div className={`${styles.orbit} ${styles.orbitTwo}`}></div>
         <div className={styles.orbitCore}><span>✳</span><b>AI</b><small>DISCOVER</small></div>
         <div className={styles.floatCard + ' ' + styles.floatTop}><span>✦</span><div><b>40+ tools</b><small>Across 10 categories</small></div></div>
         <div className={styles.floatCard + ' ' + styles.floatBottom}><span>⌘</span><div><b>Many providers</b><small>One place to explore</small></div></div>
