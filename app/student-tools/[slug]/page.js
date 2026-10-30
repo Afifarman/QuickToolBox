@@ -1,22 +1,19 @@
 'use client';
 
 import {use,useEffect,useMemo,useState} from 'react';
+import {notFound} from 'next/navigation';
 
 const META={
 'gpa-cgpa-calculator':['🎓','GPA / CGPA Calculator','Enter course credits and grade points, one course per line.'],
 'grade-calculator':['📊','Grade & Percentage Calculator','Enter marks and total marks.'],
-'assignment-planner':['📝','Assignment Planner','Add assignments and deadlines. Saved locally.'],
 'study-timetable':['📅','Study Timetable Generator','Enter subjects and available study hours.'],
-'pomodoro-timer':['⏱️','Pomodoro Study Timer','Focus with a 25-minute study session and 5-minute break.'],
 'study-time-calculator':['⏰','Study Time Calculator','Split your target study hours across days.'],
 'scientific-calculator':['🔢','Scientific Calculator','Calculate arithmetic and common scientific expressions.'],
 'math-problem-solver':['📐','Math Problem Solver','Solve arithmetic, percentages and simple linear equations.'],
 'word-character-counter':['📖','Word & Character Counter','Count words, characters, lines and reading time.'],
 'citation-generator':['📚','Citation Generator','Generate APA, MLA or Chicago-style basic citations.'],
 'essay-outline-generator':['✍️','Essay Outline Generator','Create a clear essay structure from your topic.'],
-'flashcard-generator':['🧠','Flashcard Generator','Create editable Q&A flashcards from notes.'],
 'quiz-generator':['❓','Quiz Generator','Create practice questions from notes.'],
-'ai-study-assistant':['🤖','AI Study Assistant','Ask a study question and get a clear explanation.'],
 'notes-summarizer':['📄','Notes Summarizer','Make a concise local summary from notes.'],
 'grammar-checker':['🔤','Grammar Checker','Detect common spacing, capitalization and punctuation issues.'],
 'student-translator':['🌐','Student Translator','Use the browser translation API when supported, or copy text for translation.'],
@@ -33,7 +30,7 @@ function Card({children}){return <section style={{padding:22,border:'1px solid #
 const btn={padding:'10px 14px',border:0,borderRadius:10,cursor:'pointer'};
 
 export default function StudentTool({params}){
- const resolvedParams=use(params); const slug=resolvedParams?.slug||''; const [value,setValue]=useState(''); const [result,setResult]=useState(''); const [items,setItems]=useState([]); const [seconds,setSeconds]=useState(1500);
+ const resolvedParams=use(params); const slug=resolvedParams?.slug||''; if(!META[slug]) notFound(); const [value,setValue]=useState(''); const [result,setResult]=useState(''); const [items,setItems]=useState([]); const [seconds,setSeconds]=useState(1500);
  const [name,setName]=useState(''); const [deadline,setDeadline]=useState(''); const [task,setTask]=useState(''); const [notes,setNotes]=useState('');
  const meta=META[slug]||['🎓','Student Tool','Useful student utility.'];
  useEffect(()=>{try{const k='qt-'+slug; const saved=JSON.parse(localStorage.getItem(k)||'[]'); if(Array.isArray(saved))setItems(saved)}catch{}},[slug]);
