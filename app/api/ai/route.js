@@ -210,11 +210,13 @@ export async function POST(request) {
     if (!prompt) return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
 
     const clipped = prompt.slice(0, PROMPT_LIMIT);
+    // Prefer OpenAI, then fall back to Gemini. Optional providers remain
+    // available after these two if their keys are configured.
     const runners = [
+      ['openai', openaiChat],
       ['gemini', geminiChat],
       ['groq', groqChat],
       ['openrouter', openrouterChat],
-      ['openai', openaiChat],
     ];
     const providerFailures = [];
 
