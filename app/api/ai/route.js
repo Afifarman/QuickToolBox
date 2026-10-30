@@ -251,7 +251,7 @@ async function openrouterChat(prompt, { paid = false } = {}) {
   // Keep the default route strictly on OpenRouter's free-model router.
   // Paid model IDs are only used after an explicit environment opt-in.
   const allowPaid = process.env.ENABLE_PAID_AI_FALLBACK === 'true';
-  if (paid && !allowPaid) return null;
+  if (paid && (!allowPaid || !process.env.OPENROUTER_MODEL)) return null;
   if (!paid && allowPaid && process.env.OPENROUTER_MODEL) return null;
 
   return openaiCompatibleChat({
