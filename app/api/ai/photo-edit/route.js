@@ -4,7 +4,8 @@ import { getClientKey, rateLimit } from '../../../../lib/security/rate-limit';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
-const MODELS = ['gemini-2.5-flash-image', 'gemini-2.0-flash-preview-image-generation'];
+// Current Gemini image-editing model first; legacy image model is a compatibility fallback.
+const MODELS = [process.env.GEMINI_IMAGE_MODEL, 'gemini-3.1-flash-image', 'gemini-2.5-flash-image'].filter(Boolean);
 
 export async function POST(request) {
   const limit = rateLimit(getClientKey(request, 'ai-photo-edit'), { limit: 5, windowMs: 10 * 60 * 1000 });
@@ -23,8 +24,8 @@ export async function POST(request) {
     if (!prompt) return NextResponse.json({ error: 'কী পরিবর্তন চান তা লিখুন।' }, { status: 400 });
 
     const contents = [{ role: 'user', parts: [
-      { text: `Edit the provided image according to this instruction: ${prompt}. Return the edited image, not just advice. Preserve the original subject identity and important details unless explicitly asked otherwise. Make a conservative natural edit when ambiguous.` },
       { inlineData: { mimeType, data: image } },
+      { text: `Edit the provided image according to this instruction: ${prompt}. Return the edited image, not just advice. Preserve the original subject identity and important details unless explicitly asked otherwise. Make a conservative natural edit when ambiguous.` },
     ] }];
     let lastStatus = 502;
     for (const model of MODELS) {

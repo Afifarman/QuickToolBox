@@ -292,12 +292,15 @@ export async function POST(request) {
     const clipped = prompt.slice(0, PROMPT_LIMIT);
     // Free-first order. OpenRouter's free router only selects free models.
     // Paid OpenAI / custom OpenRouter models require an explicit opt-in.
+    // If the optional paid OpenAI route is enabled, try it first. A 429 or
+    // provider outage then falls through to free Gemini/Groq/OpenRouter routes.
+    // Hugging Face remains opt-in because inference may consume paid credits.
     const runners = [
+      ['openai-paid', openaiChat],
       ['gemini', geminiChat],
       ['groq', groqChat],
       ['openrouter-free', prompt => openrouterChat(prompt)],
       ['huggingface', huggingfaceChat],
-      ['openai-paid', openaiChat],
       ['openrouter-paid', prompt => openrouterChat(prompt, { paid: true })],
     ];
     const providerFailures = [];

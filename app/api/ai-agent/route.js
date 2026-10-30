@@ -4,7 +4,7 @@ import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-const MODEL = process.env.GEMINI_AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+const MODEL_PREFERENCE = process.env.GEMINI_AGENT_MODEL || process.env.GEMINI_MODEL || '';
 const MAX_MESSAGE = 6000;
 const MAX_TURNS = 4;
 const SYSTEM_INSTRUCTION = `You are QuickToolBox Agent, a helpful bilingual (Bangla/English) assistant.
@@ -129,12 +129,33 @@ function runTool(name, args = {}) {
   throw new Error('Unsupported tool');
 }
 
-async function callGemini(contents, key) {
+async function discoverAgentModels(key) {
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000', {
+    headers: { 'x-goog-api-key': key.trim() },
+    signal: AbortSignal.timeout(8000),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(response.status === 429
+      ? 'Gemini quota/rate limit reached. Please wait and retry.'
+      : 'Could not verify available Gemini models for this API key.');
+    error.status = response.status === 429 ? 429 : 502;
+    throw error;
+  }
+  const available = (data.models || [])
+    .filter(model => Array.isArray(model.supportedGenerationMethods) && model.supportedGenerationMethods.includes('generateContent'))
+    .map(model => String(model.name || '').replace(/^models\//, ''))
+    .filter(name => /flash/i.test(name) && !/image|audio|tts|embedding|live|robotics/i.test(name));
+  const preferred = MODEL_PREFERENCE && available.includes(MODEL_PREFERENCE) ? [MODEL_PREFERENCE] : [];
+  return [...new Set([...preferred, ...available.filter(name => !/preview|experimental|latest/i.test(name)), ...available])].slice(0, 3);
+}
+
+async function callGemini(contents, key, model) {
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent?key=${encodeURIComponent(key)}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key.trim() },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
         contents,
@@ -154,7 +175,7 @@ async function callGemini(contents, key) {
         ? 'Gemini API key is invalid or does not have access to this model.'
         : 'AI provider is temporarily unavailable. Check the API key, model access and provider quota.';
     const error = new Error(message);
-    error.status = status === 429 ? 429 : 502;
+    error.status = status === 429 ? 429 : status === 404 || status === 400 ? 404 : 502;
     throw error;
   }
   return data;
@@ -162,7 +183,7 @@ async function callGemini(contents, key) {
 
 export async function GET() {
   const configured = Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY);
-  return NextResponse.json({ ok: true, configured, model: MODEL, tools: functionDeclarations.map(({ name, description }) => ({ name, description })) });
+  return NextResponse.json({ ok: true, configured, model: MODEL_PREFERENCE || 'auto-discovery', tools: functionDeclarations.map(({ name, description }) => ({ name, description })) });
 }
 
 export async function POST(request) {
@@ -183,11 +204,21 @@ export async function POST(request) {
     const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!key) return NextResponse.json({ error: 'AI Agent চালু নেই: Vercel Environment Variables-এ GEMINI_API_KEY যোগ করে নতুন deployment করতে হবে।' }, { status: 503 });
 
+    const models = await discoverAgentModels(key);
+    if (!models.length) return NextResponse.json({ error: 'এই API Key-তে Tool Calling সমর্থিত Gemini Flash model পাওয়া যায়নি।' }, { status: 503 });
     const contents = [{ role: 'user', parts: [{ text: message }] }];
     const toolsUsed = [];
+    let selectedModel = models[0];
 
     for (let turn = 0; turn < MAX_TURNS; turn += 1) {
-      const data = await callGemini(contents, key);
+      let data;
+      try { data = await callGemini(contents, key, selectedModel); }
+      catch (modelError) {
+        if (modelError?.status === 404 && models.length > 1) {
+          selectedModel = models[1];
+          data = await callGemini(contents, key, selectedModel);
+        } else throw modelError;
+      }
       const candidate = data?.candidates?.[0];
       const parts = candidate?.content?.parts || [];
       if (!parts.length) throw new Error('AI provider returned an empty response.');
@@ -196,7 +227,7 @@ export async function POST(request) {
       if (!functionCalls.length) {
         const text = parts.map((part) => part.text || '').filter(Boolean).join('\n').trim();
         if (!text) throw new Error('AI provider did not return usable text.');
-        return NextResponse.json({ ok: true, text, model: MODEL, toolsUsed });
+        return NextResponse.json({ ok: true, text, model: selectedModel, toolsUsed });
       }
 
       contents.push({ role: 'model', parts });
@@ -210,11 +241,11 @@ export async function POST(request) {
       contents.push({ role: 'user', parts: functionResponses });
     }
 
-    const finalData = await callGemini(contents, key);
+    const finalData = await callGemini(contents, key, selectedModel);
     const finalParts = finalData?.candidates?.[0]?.content?.parts || [];
     const finalText = finalParts.map((part) => part.text || '').filter(Boolean).join('\n').trim();
     if (!finalText) throw new Error('Agent reached its tool-step limit before producing a final answer.');
-    return NextResponse.json({ ok: true, text: finalText, model: MODEL, toolsUsed, note: 'Tool-step limit reached.' });
+    return NextResponse.json({ ok: true, text: finalText, model: selectedModel, toolsUsed, note: 'Tool-step limit reached.' });
   } catch (error) {
     if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
       return NextResponse.json({ error: 'AI Agent-এর উত্তর পেতে বেশি সময় লাগছে। আবার চেষ্টা করুন।' }, { status: 504 });
