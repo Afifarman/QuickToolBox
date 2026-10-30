@@ -94,6 +94,8 @@ async function openaiCompatibleChat({ key, baseUrl, model, source, tokenField = 
 }
 
 async function openaiChat(prompt) {
+  // Paid providers stay disabled unless explicitly enabled by the site owner.
+  if (process.env.ENABLE_PAID_AI_FALLBACK !== 'true') return null;
   const key = process.env.OPENAI_API_KEY;
   if (!key) return null;
   const models = unique([process.env.OPENAI_MODEL, 'gpt-4o-mini', 'gpt-4.1-mini', 'gpt-4o', 'gpt-5-mini']);
@@ -242,14 +244,21 @@ async function huggingfaceChat(prompt) {
   }, prompt);
 }
 
-async function openrouterChat(prompt) {
+async function openrouterChat(prompt, { paid = false } = {}) {
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) return null;
+
+  // Keep the default route strictly on OpenRouter's free-model router.
+  // Paid model IDs are only used after an explicit environment opt-in.
+  const allowPaid = process.env.ENABLE_PAID_AI_FALLBACK === 'true';
+  if (paid && !allowPaid) return null;
+  if (!paid && allowPaid && process.env.OPENROUTER_MODEL) return null;
+
   return openaiCompatibleChat({
     key,
     baseUrl: 'https://openrouter.ai/api/v1',
-    model: process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini',
-    source: 'openrouter',
+    model: paid ? process.env.OPENROUTER_MODEL : 'openrouter/free',
+    source: paid ? 'openrouter-paid' : 'openrouter-free',
   }, prompt);
 }
 
@@ -272,15 +281,15 @@ export async function POST(request) {
     if (!prompt) return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
 
     const clipped = prompt.slice(0, PROMPT_LIMIT);
-    // Free-first provider order: Gemini, Groq, then Hugging Face.
-    // Paid/other providers are only attempted when explicitly configured,
-    // after the free-first options have failed.
+    // Free-first order. OpenRouter's free router only selects free models.
+    // Paid OpenAI / custom OpenRouter models require an explicit opt-in.
     const runners = [
       ['gemini', geminiChat],
       ['groq', groqChat],
       ['huggingface', huggingfaceChat],
-      ['openai', openaiChat],
-      ['openrouter', openrouterChat],
+      ['openrouter-free', prompt => openrouterChat(prompt)],
+      ['openai-paid', openaiChat],
+      ['openrouter-paid', prompt => openrouterChat(prompt, { paid: true })],
     ];
     const providerFailures = [];
 
