@@ -4,26 +4,26 @@ import {use,useEffect,useMemo,useState} from 'react';
 import {notFound} from 'next/navigation';
 
 const META={
-'gpa-cgpa-calculator':['🎓','GPA / CGPA Calculator','Enter course credits and grade points, one course per line.'],
-'grade-calculator':['📊','Grade & Percentage Calculator','Enter marks and total marks.'],
-'study-timetable':['📅','Study Timetable Generator','Enter subjects and available study hours.'],
-'study-time-calculator':['⏰','Study Time Calculator','Split your target study hours across days.'],
-'scientific-calculator':['🔢','Scientific Calculator','Calculate arithmetic and common scientific expressions.'],
-'math-problem-solver':['📐','Math Problem Solver','Solve arithmetic, percentages and simple linear equations.'],
+'gpa-cgpa-calculator':['🎓','GPA / CGPA Calculator','Add each course with its credit value and grade point to calculate your weighted GPA.'],
+'grade-calculator':['📊','Grade & Percentage Calculator','Enter your obtained marks and the full marks to calculate your percentage and grade.'],
+'study-timetable':['📅','Study Timetable Generator','List your subjects and study preferences to build a simple weekly timetable.'],
+'study-time-calculator':['⏰','Study Time Calculator','Enter your total study hours and number of days to find a manageable daily target.'],
+'scientific-calculator':['🔢','Scientific Calculator','Enter an arithmetic or supported scientific expression to calculate its result.'],
+'math-problem-solver':['📐','Math Problem Solver','Try a percentage question or a basic linear equation and view the calculated answer.'],
 'word-character-counter':['📖','Word & Character Counter','Count words, characters, lines and reading time.'],
-'citation-generator':['📚','Citation Generator','Generate APA, MLA or Chicago-style basic citations.'],
-'essay-outline-generator':['✍️','Essay Outline Generator','Create a clear essay structure from your topic.'],
-'quiz-generator':['❓','Quiz Generator','Create practice questions from notes.'],
-'notes-summarizer':['📄','Notes Summarizer','Make a concise local summary from notes.'],
-'grammar-checker':['🔤','Grammar Checker','Detect common spacing, capitalization and punctuation issues.'],
+'citation-generator':['📚','Citation Generator','Enter the author, title, year and publisher or website to format a basic citation.'],
+'essay-outline-generator':['✍️','Essay Outline Generator','Enter your essay topic to create a structured outline with an introduction, key points and conclusion.'],
+'quiz-generator':['❓','Quiz Generator','Add one topic or fact per line to turn your notes into practice questions.'],
+'notes-summarizer':['📄','Notes Summarizer','Paste your notes to create a shorter version for quick revision.'],
+'grammar-checker':['🔤','Grammar Checker','Paste text to review common spacing, capitalization and punctuation issues.'],
 'student-translator':['🌐','Student Translator','Use the browser translation API when supported, or copy text for translation.'],
 'pdf-notes-extractor':['📑','PDF Study Notes Extractor','Extract text from a selectable PDF using the browser File API.'],
-'semester-result-calculator':['📈','Semester Result Calculator','Calculate weighted GPA from credits and grade points.'],
-'exam-countdown':['🎓','Exam Countdown','Set an exam date and see the remaining time.'],
-'student-budget-calculator':['💰','Student Budget Calculator','Compare monthly income with student expenses.'],
+'semester-result-calculator':['📈','Semester Result Calculator','Enter course credits and grade points to calculate your weighted semester GPA.'],
+'exam-countdown':['🎓','Exam Countdown','Choose your exam date and time to see how long remains.'],
+'student-budget-calculator':['💰','Student Budget Calculator','Enter your monthly income and expenses to see your remaining balance.'],
 'notes-qr-generator':['🔗','Notes QR Generator','Create a QR-ready link using the browser share/copy tools.'],
-'assignment-checklist':['☑️','Assignment Checklist','Create, complete and remove tasks. Saved locally.'],
-'study-notes-organizer':['🗂️','Study Notes Organizer','Store subject notes locally in your browser.']
+'assignment-checklist':['☑️','Assignment Checklist','Add assignments, set due dates and track completed tasks. Your list is saved in this browser.'],
+'study-notes-organizer':['🗂️','Study Notes Organizer','Save notes by subject and title. Your notes stay in this browser.']
 };
 
 function Card({children}){return <section style={{padding:22,border:'1px solid #ddd',borderRadius:16,marginTop:18}}>{children}</section>}
