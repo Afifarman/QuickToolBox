@@ -1002,3 +1002,53 @@ header nav a:last-child{border:1px solid var(--qt-border);border-radius:10px;pad
 :root[data-theme="dark"] .qt-site-header:not(.qt-site-header-dark){background:rgba(17,24,39,.94);border-color:var(--qt-border);color:var(--qt-text)}
 :root[data-theme="dark"] .qt-site-header:not(.qt-site-header-dark) .qt-site-nav a{color:var(--qt-muted)}
 @media(max-width:700px){.qt-site-header{height:auto;min-height:68px;padding:12px 16px;align-items:flex-start;flex-direction:column;gap:10px}.qt-site-nav{width:100%;justify-content:flex-start;gap:8px 16px}.qt-site-nav a{font-size:12px}}
+
+
+/* Student toolkit: consistent typography, spacing and readable tool surfaces. */
+.student-tools-directory{width:min(1120px,100%);padding:clamp(32px,5vw,58px) 20px 76px!important;color:var(--qt-text,#172033)}
+.student-tools-eyebrow,.student-tool-hero small{display:inline-flex;align-items:center;gap:8px;color:#6474d9;font-size:11px;font-weight:850;letter-spacing:.14em;text-transform:uppercase}
+.student-tools-directory>h1{max-width:760px;margin:13px 0 10px;font-size:clamp(32px,5vw,48px);line-height:1.08;letter-spacing:-.045em;font-weight:850}
+.student-tools-directory>p{max-width:660px;margin:0;color:var(--qt-muted,#667085);font-size:15px;line-height:1.75}
+.student-tools-directory>.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:32px!important}
+.student-tools-directory>.grid>.card{min-width:0;min-height:116px;display:grid;grid-template-columns:48px minmax(0,1fr) 18px;align-items:center;gap:15px;padding:18px;border:1px solid var(--qt-border,#e4e7ef);border-radius:18px;background:var(--qt-surface,#fff);text-decoration:none;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.student-tools-directory>.grid>.card:hover{transform:translateY(-2px);border-color:#9ba7f5;box-shadow:0 12px 30px #3443a011}
+.student-tools-directory>.grid>.card>i{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:#eef0ff;font-size:22px;font-style:normal}
+.student-tools-directory>.grid>.card>div{min-width:0}
+.student-tools-directory>.grid>.card h3{margin:0 0 6px;font-size:15px;line-height:1.35;font-weight:800;color:var(--qt-text,#172033)}
+.student-tools-directory>.grid>.card p{margin:0;color:var(--qt-muted,#667085);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.student-tools-directory>.grid>.card>strong{color:#6878e8;font-size:19px}
+.student-tool-page{width:min(900px,100%);padding:clamp(24px,5vw,48px) 20px 76px!important;color:var(--qt-text,#172033);line-height:1.65}
+.student-tool-hero{display:grid;grid-template-columns:58px minmax(0,1fr);align-items:start;gap:18px;padding:clamp(20px,4vw,30px);border:1px solid var(--qt-border,#e4e7ef);border-radius:22px;background:var(--qt-surface,#fff);box-shadow:0 12px 34px #1f29370a}
+.student-tool-icon{width:56px;height:56px;display:grid;place-items:center;border-radius:17px;background:#eef0ff;font-size:27px}
+.student-tool-hero>div{min-width:0}
+.student-tool-hero h1{margin:7px 0 8px;font-size:clamp(26px,4vw,36px);line-height:1.16;letter-spacing:-.035em;font-weight:850;overflow-wrap:anywhere}
+.student-tool-hero p{margin:0;color:var(--qt-muted,#667085);font-size:14px;line-height:1.75}
+.student-tool-note{display:block;margin-top:12px;color:var(--qt-muted,#7a8495);font-size:11px;line-height:1.6}
+.student-tool-page>section{margin-top:20px!important;padding:clamp(18px,3vw,26px)!important;border:1px solid var(--qt-border,#e4e7ef)!important;border-radius:20px!important;background:var(--qt-surface,#fff);box-shadow:0 10px 28px #1f293708}
+.student-tool-page>section h2,.student-tool-page>section h3{margin:0 0 14px;font-size:18px;line-height:1.35;font-weight:800}
+.student-tool-page label{display:block;margin:0 0 7px;font-size:13px;font-weight:750;color:var(--qt-text,#344054)}
+.student-tool-page input:not([type=checkbox]):not([type=file]),.student-tool-page textarea,.student-tool-page select{box-sizing:border-box;max-width:100%;border:1px solid var(--qt-border,#d8deea)!important;border-radius:11px!important;background:var(--qt-input,#fff)!important;color:var(--qt-text,#172033)!important;font:inherit;font-size:14px;line-height:1.55;padding:12px 14px!important;outline:none;transition:border-color .18s ease,box-shadow .18s ease}
+.student-tool-page input:not([type=checkbox]):not([type=file]):focus,.student-tool-page textarea:focus,.student-tool-page select:focus{border-color:#7c8af0!important;box-shadow:0 0 0 3px #7c8af022}
+.student-tool-page textarea{width:100%;min-height:150px;resize:vertical}
+.student-tool-page button{min-height:42px;padding:10px 16px!important;border:0;border-radius:11px!important;background:linear-gradient(135deg,#536dff,#7658df);color:#fff;font-size:13px;font-weight:800;line-height:1.35;cursor:pointer;transition:transform .16s ease,filter .16s ease}
+.student-tool-page button:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.student-tool-page pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;margin:16px 0 0!important;padding:16px!important;border:1px solid var(--qt-border,#e4e7ef);border-radius:13px;background:var(--qt-result,#f7f8fc)!important;color:var(--qt-text,#172033);font:inherit;font-size:13px;line-height:1.8}
+.student-tool-page p{color:var(--qt-muted,#667085);font-size:13px;line-height:1.75}
+:root[data-theme="dark"] .student-tools-directory,:root[data-theme="dark"] .student-tool-page{color:var(--qt-text,#f1f5f9)}
+:root[data-theme="dark"] .student-tools-directory>.grid>.card,:root[data-theme="dark"] .student-tool-hero,:root[data-theme="dark"] .student-tool-page>section{background:var(--qt-surface,#111827);border-color:var(--qt-border,#273449)}
+:root[data-theme="dark"] .student-tools-directory>.grid>.card>i,:root[data-theme="dark"] .student-tool-icon{background:#252d50}
+:root[data-theme="dark"] .student-tool-page pre{background:var(--qt-result,#0b1220)!important;border-color:var(--qt-border,#273449);color:var(--qt-text,#e5e7eb)}
+@media(max-width:640px){
+ .student-tools-directory{padding:30px 16px 56px!important}
+ .student-tools-directory>.grid{grid-template-columns:minmax(0,1fr);gap:10px;margin-top:24px!important}
+ .student-tools-directory>.grid>.card{min-height:100px;padding:14px;grid-template-columns:42px minmax(0,1fr) 14px;gap:12px}
+ .student-tools-directory>.grid>.card>i{width:40px;height:40px;font-size:20px}
+ .student-tools-directory>.grid>.card h3{font-size:14px}
+ .student-tool-page{padding:24px 14px 56px!important}
+ .student-tool-hero{grid-template-columns:44px minmax(0,1fr);gap:12px;padding:17px}
+ .student-tool-icon{width:42px;height:42px;border-radius:13px;font-size:21px}
+ .student-tool-hero h1{font-size:25px}
+ .student-tool-page>section{padding:16px!important}
+ .student-tool-page input:not([type=checkbox]):not([type=file]){width:100%;margin:7px 0!important}
+}
+@media(prefers-reduced-motion:reduce){.student-tools-directory>.grid>.card,.student-tool-page button{transition:none}}
