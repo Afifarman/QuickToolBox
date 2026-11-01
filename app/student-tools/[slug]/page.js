@@ -2,6 +2,7 @@
 
 import {use,useEffect,useMemo,useState} from 'react';
 import {notFound} from 'next/navigation';
+import {evaluateMathExpression} from '../../../lib/math/evaluate-expression.js';
 
 const META={
 'gpa-cgpa-calculator':['🎓','GPA / CGPA Calculator','Enter course credits and grade points, one course per line.'],
@@ -42,7 +43,7 @@ export default function StudentTool({params}){
   if(slug==='grade-calculator'){const [m,t]=value.split(/[,/]/).map(Number);const pct=t?m/t*100:0;const grade=pct>=80?'A+':pct>=70?'A':pct>=60?'A-':pct>=50?'B':pct>=40?'C':'F';setResult(`${pct.toFixed(2)}% — Grade ${grade}`);return}
   if(slug==='study-time-calculator'){const [h,d]=value.split(/[,/]/).map(Number);setResult(h&&d?`${(h/d).toFixed(2)} hours/day`:'Use: total hours,days');return}
   if(slug==='student-budget-calculator'){const [income,...costs]=value.split(/[,/]/).map(Number);const total=costs.reduce((a,b)=>a+(b||0),0);setResult(`Expenses: ${total.toFixed(2)} | Balance: ${(income-total).toFixed(2)}`);return}
-  if(slug==='scientific-calculator'){try{if(!/^[0-9+\-*/().,%\s^a-zA-Z]+$/.test(value))throw Error(); const safe=value.replace(/\^/g,'**').replace(/sin/gi,'Math.sin').replace(/cos/gi,'Math.cos').replace(/sqrt/gi,'Math.sqrt');setResult(String(Function(`"use strict";return (${safe})`)()))}catch{setResult('Invalid expression')}}
+  if(slug==='scientific-calculator'){try{setResult(String(evaluateMathExpression(value)))}catch(error){setResult(error?.message||'Invalid expression')}}
   if(slug==='math-problem-solver'){const x=value.trim(); const pct=x.match(/([0-9.]+)\s*%\s*of\s*([0-9.]+)/i); const eq=x.match(/^([0-9.]+)x\s*([+-])\s*([0-9.]+)\s*=\s*([0-9.]+)$/i); if(pct)setResult(String(Number(pct[1])*Number(pct[2])/100)); else if(eq){const a=Number(eq[1]),b=(eq[2]==='+'?1:-1)*Number(eq[3]),c=Number(eq[4]);setResult(`x = ${((c-b)/a).toFixed(6)}`)} else setResult('Try “15% of 240” or “2x + 4 = 10”')}
  };
  const add=()=>{if(!task.trim())return;save([...items,{id:Date.now(),text:task,deadline,done:false}]);setTask('');setDeadline('')};
