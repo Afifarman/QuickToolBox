@@ -1,8 +1,8 @@
 import { SITE_URL } from '../../lib/site-config';
 
-const title = 'Free AI Writing Assistant Online | QuickToolBox AI';
+const title = 'QuickToolBox AI Workspace';
 const description =
-  'Use QuickToolBox AI for free to draft, rewrite, summarize, translate and improve text for study, work, CVs and emails. No account required to try the tool.';
+  'Sign in to access the QuickToolBox AI workspace, chat assistant and free-tier AI tools.';
 
 export const metadata = {
   title,
@@ -23,7 +23,7 @@ export const metadata = {
     description,
   },
   robots: {
-    index: true,
+    index: false,
     follow: true,
   },
 };
