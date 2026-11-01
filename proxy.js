@@ -11,7 +11,8 @@ export async function proxy(request) {
   if (!needsAuth && !needsAdmin) return NextResponse.next();
 
   const response = NextResponse.next({ request });
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/\\/+$/, '');
+  let url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  while (url?.endsWith('/')) url = url.slice(0, -1);
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return NextResponse.redirect(new URL('/login?error=supabase_not_configured', request.url));
 
