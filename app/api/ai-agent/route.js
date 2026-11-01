@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getAuthenticatedUser, unauthorizedResponse } from '../../../lib/security/auth';
 import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
 
 export const runtime = 'nodejs';
@@ -182,11 +183,15 @@ async function callGemini(contents, key, model) {
 }
 
 export async function GET() {
+  const { user } = await getAuthenticatedUser();
+  if (!user) return unauthorizedResponse(NextResponse);
   const configured = Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY);
   return NextResponse.json({ ok: true, configured, model: MODEL_PREFERENCE || 'auto-discovery', tools: functionDeclarations.map(({ name, description }) => ({ name, description })) });
 }
 
 export async function POST(request) {
+  const { user } = await getAuthenticatedUser();
+  if (!user) return unauthorizedResponse(NextResponse);
   const limit = rateLimit(getClientKey(request, 'ai-agent'), { limit: 12, windowMs: 10 * 60 * 1000 });
   if (!limit.allowed) {
     return NextResponse.json({ error: 'অনেক বেশি অনুরোধ হয়েছে। কয়েক মিনিট পরে আবার চেষ্টা করুন।' }, {

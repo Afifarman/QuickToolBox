@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-const PROTECTED_PREFIXES = ['/dashboard', '/profile', '/settings', '/favorites', '/history', '/saved'];
+const PROTECTED_PREFIXES = ['/dashboard', '/profile', '/settings', '/favorites', '/history', '/saved', '/ai', '/ai-platform', '/api/ai', '/api/ai-agent'];
 const ADMIN_PREFIX = '/admin';
 
 export async function proxy(request) {
   const pathname = request.nextUrl.pathname;
   const needsAuth = PROTECTED_PREFIXES.some((path) => pathname === path || pathname.startsWith(`${path}/`));
   const needsAdmin = pathname === ADMIN_PREFIX || pathname.startsWith(`${ADMIN_PREFIX}/`);
+  const isAiApi = pathname.startsWith('/api/ai/') || pathname === '/api/ai' || pathname.startsWith('/api/ai-agent/') || pathname === '/api/ai-agent';
   if (!needsAuth && !needsAdmin) return NextResponse.next();
 
   const response = NextResponse.next({ request });
@@ -24,7 +25,15 @@ export async function proxy(request) {
   });
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(pathname)}`, request.url));
+  if (!user) {
+    if (isAiApi) {
+      return NextResponse.json(
+        { error: 'Login required to use QuickToolBox AI.', code: 'LOGIN_REQUIRED' },
+        { status: 401, headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
+    return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(pathname)}`, request.url));
+  }
 
   if (needsAdmin) {
     const admins = String(process.env.ADMIN_EMAILS || '').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean);
@@ -36,5 +45,5 @@ export async function proxy(request) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/profile/:path*', '/settings/:path*', '/favorites/:path*', '/history/:path*', '/saved/:path*', '/admin/:path*'],
+  matcher: ['/dashboard/:path*', '/profile/:path*', '/settings/:path*', '/favorites/:path*', '/history/:path*', '/saved/:path*', '/ai/:path*', '/ai-platform/:path*', '/api/ai/:path*', '/api/ai-agent/:path*', '/admin/:path*'],
 };
