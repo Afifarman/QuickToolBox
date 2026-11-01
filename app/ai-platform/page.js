@@ -1,9 +1,10 @@
 import AiPlatformHub from '../../components/AiPlatformHub';
 
 export const metadata = {
-  title: 'AI Tools Directory & Model Hub',
-  description: 'Discover curated AI tools from different companies, compare pricing types, save favorites and explore AI model families.',
-  alternates: { canonical: '/ai-platform' },
+  title: 'QuickToolBox AI Platform',
+  description: 'Sign in to explore AI tools and model options in the QuickToolBox AI platform.',
+  alternates: { canonical: 'https://quicktoolbox-bd.vercel.app/ai-platform' },
+  robots: { index: false, follow: true },
 };
 
 export default function AiPlatformPage() {
