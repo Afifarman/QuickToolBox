@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-const PROTECTED_PREFIXES = ['/dashboard', '/profile', '/settings', '/favorites', '/history', '/saved'];
+const PROTECTED_PREFIXES = ['/dashboard', '/profile', '/settings', '/favorites', '/history', '/saved', '/ai', '/ai-platform', '/api/ai', '/api/ai-agent'];
 const ADMIN_PREFIX = '/admin';
 
 export async function proxy(request) {
@@ -36,5 +36,5 @@ export async function proxy(request) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/profile/:path*', '/settings/:path*', '/favorites/:path*', '/history/:path*', '/saved/:path*', '/admin/:path*'],
+  matcher: ['/dashboard/:path*', '/profile/:path*', '/settings/:path*', '/favorites/:path*', '/history/:path*', '/saved/:path*', '/ai/:path*', '/ai-platform/:path*', '/api/ai/:path*', '/api/ai-agent/:path*', '/admin/:path*'],
 };
