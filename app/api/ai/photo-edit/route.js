@@ -20,7 +20,7 @@ export async function POST(request) {
     const prompt = String(body?.prompt || '').trim().slice(0, 1200);
     if (!/^image\/(png|jpeg|webp)$/.test(mimeType)) return NextResponse.json({ error: 'শুধু JPG, PNG অথবা WebP ছবি ব্যবহার করুন।' }, { status: 400 });
     if (!image || !/^[A-Za-z0-9+/]+=*$/.test(image)) return NextResponse.json({ error: 'ছবির ডেটা পাওয়া যায়নি। আবার আপলোড করুন।' }, { status: 400 });
-    if (Math.floor(image.length * 3 / 4) > MAX_IMAGE_BYTES) return NextResponse.json({ error: 'ছবিটি ৮ MB-এর মধ্যে রাখুন।' }, { status: 413 });
+    if (Math.floor(image.length * 3 / 4) > MAX_IMAGE_BYTES) return NextResponse.json({ error: 'ছবিটি ৩ MB-এর মধ্যে রাখুন।' }, { status: 413 });
     if (!prompt) return NextResponse.json({ error: 'কী পরিবর্তন চান তা লিখুন।' }, { status: 400 });
 
     const contents = [{ role: 'user', parts: [
