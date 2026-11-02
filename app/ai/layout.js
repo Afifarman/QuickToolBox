@@ -2,7 +2,7 @@ import { SITE_URL } from '../../lib/site-config';
 
 const title = 'QuickToolBox AI Workspace';
 const description =
-  'Use the QuickToolBox AI workspace and chat assistant for free, without signing in.';
+  'Sign in to access the QuickToolBox AI workspace, chat assistant and free-tier AI tools.';
 
 export const metadata = {
   title,
