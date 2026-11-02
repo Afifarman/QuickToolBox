@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getRequestOrigin } from '../../../lib/supabase/auth-redirect';
+import { SUPABASE_URL } from '../../../lib/supabase/config';
 
 function safeNextPath(value) {
   return value && value.startsWith('/') && !value.startsWith('//') ? value : '/dashboard';
@@ -14,12 +15,11 @@ export async function GET(request) {
   const next = safeNextPath(requestUrl.searchParams.get('next'));
   const origin = getRequestOrigin(request);
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseKey) {
+  if (!supabaseKey) {
     return NextResponse.redirect(new URL('/login?error=supabase_not_configured', origin));
   }
 
@@ -28,7 +28,7 @@ export async function GET(request) {
   }
 
   const successResponse = NextResponse.redirect(new URL(next, origin));
-  const supabase = createServerClient(supabaseUrl, supabaseKey, {
+  const supabase = createServerClient(SUPABASE_URL, supabaseKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
