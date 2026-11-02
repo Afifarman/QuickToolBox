@@ -15,9 +15,10 @@ export async function GET(request) {
   const next = safeNextPath(requestUrl.searchParams.get('next'));
   const origin = getRequestOrigin(request);
 
+  // Prefer the verified anon key whose project ref matches SUPABASE_URL.
   const supabaseKey =
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!supabaseKey) {
     return NextResponse.redirect(new URL('/login?error=supabase_not_configured', origin));
