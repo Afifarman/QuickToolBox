@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser, unauthorizedResponse } from '../../../lib/security/auth';
 import { AI_SYSTEM_PROMPT, extractModelText } from '../../../lib/ai';
 import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
 import { classifyProviderError, logProviderFailure as logSafeProviderFailure } from '../../../lib/ai/provider-diagnostics';
@@ -267,8 +266,6 @@ async function openrouterChat(prompt, { paid = false } = {}) {
 }
 
 export async function GET() {
-  const { user } = await getAuthenticatedUser();
-  if (!user) return unauthorizedResponse(NextResponse);
   const providers = configuredProviders();
   return NextResponse.json({
     ok: true,
@@ -279,8 +276,6 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const { user } = await getAuthenticatedUser();
-  if (!user) return unauthorizedResponse(NextResponse);
   const limit = rateLimit(getClientKey(request, 'ai'), { limit: 20, windowMs: 10 * 60 * 1000 });
   if (!limit.allowed) {
     return NextResponse.json(
