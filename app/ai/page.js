@@ -124,7 +124,7 @@ export default function AIPage() {
         <div className="qtb-ai-sidebar-bottom"><div className="qtb-ai-profile"><span>✦</span><div><b>QuickToolBox AI</b><small>Free-first models</small></div></div><Link href="/">← Back to tools</Link></div>
       </aside>
       <main className="qtb-ai-main">
-        <header className="qtb-ai-topbar"><div><span className="qtb-ai-status-dot" /> QuickToolBox AI <small>Preview</small></div><Link href="/">Explore tools ↗</Link></header>
+        <header className="qtb-ai-topbar"><div><span className="qtb-ai-status-dot" /> QuickToolBox AI <small>Preview</small></div><div style={{display:"flex",gap:16,alignItems:"center"}}><Link href="/ai/local" style={{color:"#a5b4fc",fontWeight:800}}>Free Local AI ↗</Link><Link href="/">Explore tools ↗</Link></div></header>
         <section className={messages.length ? 'qtb-ai-chat has-messages' : 'qtb-ai-chat'}>
           {messages.length === 0 ? <div className="qtb-ai-welcome">
             <div className="qtb-ai-orb"><span>✦</span></div><div className="qtb-ai-kicker">YOUR EVERYDAY AI PARTNER</div>
