@@ -13,7 +13,8 @@ export async function proxy(request) {
   if (!needsAuth && !needsAdmin) return NextResponse.next();
 
   const response = NextResponse.next({ request });
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // Keep middleware auth on the same verified Supabase project key as OAuth callback.
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!key) return NextResponse.redirect(new URL('/login?error=supabase_not_configured', request.url));
 
   const supabase = createServerClient(SUPABASE_URL, key, {
