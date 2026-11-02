@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getAuthenticatedUser, unauthorizedResponse } from '../../../../lib/security/auth';
 import { getClientKey, rateLimit } from '../../../../lib/security/rate-limit';
 
 export const runtime = 'nodejs';
@@ -8,6 +9,8 @@ const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 const MODELS = [process.env.GEMINI_IMAGE_MODEL, 'gemini-3.1-flash-image', 'gemini-2.5-flash-image'].filter(Boolean);
 
 export async function POST(request) {
+  const { user } = await getAuthenticatedUser();
+  if (!user) return unauthorizedResponse(NextResponse);
   const limit = rateLimit(getClientKey(request, 'ai-photo-edit'), { limit: 5, windowMs: 10 * 60 * 1000 });
   if (!limit.allowed) return NextResponse.json({ error: 'অনেক বেশি ছবি এডিটের অনুরোধ হয়েছে। কিছুক্ষণ পরে চেষ্টা করুন।' }, { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } });
 
