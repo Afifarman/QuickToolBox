@@ -3,15 +3,16 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import styles from './LocalAIChat.module.css';
+import { getLocalAIErrorMessage } from '../lib/ai/local-ai-errors';
 
 const MODEL_ID = 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC';
-const LIBRARY_URL = 'https://esm.run/@mlc-ai/web-llm@0.2.87';
 const SYSTEM_PROMPT = 'You are QuickToolBox Local AI, a helpful assistant. Reply in the same language as the user. Support Bangla and English. Be accurate, concise, and clearly say when you are unsure. You run locally in the user browser.';
 
 export default function LocalAIChat() {
   const engineRef = useRef(null);
   const loadingRef = useRef(false);
   const [supported, setSupported] = useState(null);
+  const [gpuInfo, setGpuInfo] = useState('');
   const [status, setStatus] = useState('not-loaded');
   const [progress, setProgress] = useState({ text: 'Model not downloaded', progress: 0 });
   const [messages, setMessages] = useState([]);
@@ -28,8 +29,21 @@ export default function LocalAIChat() {
         return;
       }
       try {
-        const adapter = await navigator.gpu.requestAdapter();
-        if (active) setSupported(Boolean(adapter));
+        const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+        if (active) {
+          setSupported(Boolean(adapter));
+          if (adapter) {
+            const info = adapter.info || {};
+            const name = [info.vendor, info.architecture, info.device].filter(Boolean).join(' · ');
+            const hasShaderF16 = adapter.features?.has('shader-f16');
+            setGpuInfo([
+              name || 'GPU adapter detected',
+              hasShaderF16 ? '16-bit shader support detected' : '16-bit shader extension not reported',
+            ].join(' · '));
+          } else {
+            setGpuInfo('No compatible WebGPU adapter was returned by this browser.');
+          }
+        }
       } catch {
         if (active) setSupported(false);
       }
@@ -41,7 +55,7 @@ export default function LocalAIChat() {
   async function loadModel() {
     if (engineRef.current || loadingRef.current) return;
     if (!supported) {
-      setError('এই browser/device-এ WebGPU পাওয়া যায়নি। সর্বশেষ Chrome বা Edge ব্যবহার করুন এবং hardware acceleration চালু করুন।');
+      setError('এই browser/device-এ WebGPU adapter পাওয়া যায়নি। Chrome বা Edge আপডেট করুন, hardware acceleration চালু করুন এবং browser restart করে আবার চেষ্টা করুন।');
       return;
     }
     loadingRef.current = true;
@@ -51,6 +65,9 @@ export default function LocalAIChat() {
     try {
       // Load WebLLM only in the browser. The model inference itself never calls a paid API.
       const webllm = await import(/* webpackIgnore: true */ 'https://esm.run/@mlc-ai/web-llm@0.2.87');
+      if (typeof webllm.CreateMLCEngine !== 'function') {
+        throw new Error('WebLLM engine load হয়নি। পেজ refresh করে আবার চেষ্টা করুন।');
+      }
       const engine = await webllm.CreateMLCEngine(MODEL_ID, {
         initProgressCallback: (report) => {
           setProgress({
@@ -66,7 +83,7 @@ export default function LocalAIChat() {
       setProgress({ text: 'Local model ready', progress: 1 });
     } catch (cause) {
       setStatus('error');
-      setError(cause?.message || 'Local AI model could not be loaded. Check your internet connection, browser compatibility, and available memory.');
+      setError(getLocalAIErrorMessage(cause));
     } finally {
       loadingRef.current = false;
     }
@@ -136,8 +153,9 @@ export default function LocalAIChat() {
           </div>
           <div className={styles.compat}>
             <span>WebGPU compatibility</span>
-            <b className={supported === null ? styles.neutral : supported ? styles.good : styles.bad}>{supported === null ? 'Checking…' : supported ? 'Supported' : 'Not detected'}</b>
+            <b className={supported === null ? styles.neutral : supported ? styles.good : styles.bad}>{supported === null ? 'Checking…' : supported ? 'Adapter detected · compatibility test pending' : 'Not detected'}</b>
           </div>
+          {gpuInfo && <p className={styles.smallNote}>{gpuInfo}</p>}
           <button className={styles.loadButton} onClick={loadModel} disabled={status === 'loading' || modelReady || supported === false}>
             {status === 'loading' ? 'Loading model…' : modelReady ? 'Model loaded ✓' : 'Load free AI model'}
           </button>
@@ -145,7 +163,7 @@ export default function LocalAIChat() {
             <div className={styles.progressText}><span>{progress.text}</span><b>{percent}%</b></div>
             <div className={styles.progressTrack}><i style={{ width: percent + '%' }} /></div>
           </div>}
-          <p className={styles.smallNote}>The first load needs internet and can take several minutes. After caching, the model may be reused offline in this browser. Keep this tab open while loading.</p>
+          <p className={styles.smallNote}>The first load needs internet and can take several minutes. After caching, the model may be reused offline in this browser. Keep this tab open while loading. WebGPU adapter detection does not guarantee that every model shader will compile on this GPU.</p>
         </aside>
         <section className={styles.chatPanel}>
           <div className={styles.chatHeader}><div><b>QuickToolBox Local AI</b><small>{modelReady ? 'Ready · browser inference' : 'Load the model to start chatting'}</small></div><button type="button" onClick={() => setMessages([])} disabled={!messages.length || busy}>Clear chat</button></div>
