@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { AI_SYSTEM_PROMPT, extractModelText } from '../../../lib/ai';
+import { selectGeminiModels } from '../../../lib/ai/gemini-models';
 import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
 import { classifyProviderError, logProviderFailure as logSafeProviderFailure } from '../../../lib/ai/provider-diagnostics';
 
@@ -170,10 +171,7 @@ async function geminiChat(prompt) {
       6000,
     );
     if (listResponse.ok && Array.isArray(listData.models)) {
-      availableModels = listData.models
-        .filter(item => Array.isArray(item.supportedGenerationMethods) && item.supportedGenerationMethods.includes('generateContent'))
-        .map(item => String(item.name || '').replace(/^models\//, ''))
-        .filter(name => /flash/i.test(name) && !/audio|image|tts|embedding|robotics|computer-use|live/i.test(name));
+      availableModels = listData.models;
     } else {
       logProviderFailure('gemini-model-list', { status: listResponse.status });
     }
@@ -181,18 +179,10 @@ async function geminiChat(prompt) {
     logProviderFailure('gemini-model-list', errorDetails(error));
   }
 
-  // Only use model IDs advertised for this exact API key.
-  // Ignore stale GEMINI_MODEL values that are not in the provider's model list.
-  const preferredModels = availableModels.filter(name =>
-    /flash/i.test(name) && !/preview|experimental|latest/i.test(name)
-  );
-  const models = unique([
-    process.env.GEMINI_MODEL && availableModels.includes(process.env.GEMINI_MODEL)
-      ? process.env.GEMINI_MODEL
-      : null,
-    ...preferredModels,
-    ...availableModels,
-  ]).slice(0, 2);
+  // Only use model IDs advertised for this exact API key. Prefer stable Flash
+  // models, but retain preview IDs as a last resort if the key exposes no stable
+  // option. Try up to five model-specific candidates before falling back.
+  const models = selectGeminiModels(availableModels, process.env.GEMINI_MODEL, 5);
 
   if (!models.length) {
     console.warn('[QuickToolBox AI] Gemini API key could not list any generateContent Flash models.');
@@ -201,7 +191,7 @@ async function geminiChat(prompt) {
 
   for (const model of models) {
     const { response, data } = await fetchJson(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
       {
         method: 'POST',
         headers: {
