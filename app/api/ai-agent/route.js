@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorizedResponse } from '../../../lib/security/auth';
 import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
+import { getOmniRouteConfig, requestOmniRouteChat } from '../../../lib/ai/omniroute';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -182,10 +183,91 @@ async function callGemini(contents, key, model) {
   return data;
 }
 
+function toOpenAIJsonSchema(schema) {
+  if (!schema || typeof schema !== 'object') return schema;
+  const result = { ...schema };
+  if (typeof result.type === 'string') result.type = result.type.toLowerCase();
+  if (result.properties && typeof result.properties === 'object') {
+    result.properties = Object.fromEntries(
+      Object.entries(result.properties).map(([key, value]) => [key, toOpenAIJsonSchema(value)]),
+    );
+  }
+  if (result.items) result.items = toOpenAIJsonSchema(result.items);
+  return result;
+}
+
+const openAITools = functionDeclarations.map((declaration) => ({
+  type: 'function',
+  function: {
+    name: declaration.name,
+    description: declaration.description,
+    parameters: toOpenAIJsonSchema(declaration.parameters),
+  },
+}));
+
+async function runOmniRouteAgent(message) {
+  if (!getOmniRouteConfig()) return null;
+  const messages = [
+    { role: 'system', content: SYSTEM_INSTRUCTION },
+    { role: 'user', content: message },
+  ];
+  const toolsUsed = [];
+
+  for (let turn = 0; turn < MAX_TURNS; turn += 1) {
+    const result = await requestOmniRouteChat({
+      messages,
+      tools: openAITools,
+      toolChoice: 'auto',
+      maxTokens: 1200,
+      temperature: 0.35,
+    });
+    const assistant = result?.data?.choices?.[0]?.message;
+    if (!assistant) throw new Error('OmniRoute Agent returned an empty response.');
+    const toolCalls = Array.isArray(assistant.tool_calls) ? assistant.tool_calls : [];
+    if (!toolCalls.length) {
+      const text = typeof assistant.content === 'string'
+        ? assistant.content.trim()
+        : Array.isArray(assistant.content)
+          ? assistant.content.map((part) => part?.text || '').join('\n').trim()
+          : '';
+      if (!text) throw new Error('OmniRoute Agent returned no usable text.');
+      return { text, model: result.model, toolsUsed, source: 'omniroute' };
+    }
+
+    messages.push(assistant);
+    for (const call of toolCalls) {
+      const name = call?.function?.name;
+      if (!functionDeclarations.some((declaration) => declaration.name === name)) {
+        throw new Error('OmniRoute requested an unsupported Agent tool.');
+      }
+      let args = {};
+      try { args = JSON.parse(call.function.arguments || '{}'); }
+      catch { throw new Error('OmniRoute returned invalid Agent tool arguments.'); }
+      const toolResult = runTool(name, args);
+      toolsUsed.push(name);
+      messages.push({
+        role: 'tool',
+        tool_call_id: call.id,
+        content: JSON.stringify(toolResult),
+      });
+    }
+  }
+
+  const finalResult = await requestOmniRouteChat({
+    messages,
+    maxTokens: 1200,
+    temperature: 0.35,
+  });
+  const finalMessage = finalResult?.data?.choices?.[0]?.message;
+  const finalText = typeof finalMessage?.content === 'string' ? finalMessage.content.trim() : '';
+  if (!finalText) throw new Error('Agent reached its tool-step limit before producing a final answer.');
+  return { text: finalText, model: finalResult.model, toolsUsed, source: 'omniroute', note: 'Tool-step limit reached.' };
+}
+
 export async function GET() {
   const { user } = await getAuthenticatedUser();
   if (!user) return unauthorizedResponse(NextResponse);
-  const configured = Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY);
+  const configured = Boolean(getOmniRouteConfig() || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY);
   return NextResponse.json({ ok: true, configured, model: MODEL_PREFERENCE || 'auto-discovery', tools: functionDeclarations.map(({ name, description }) => ({ name, description })) });
 }
 
@@ -206,8 +288,22 @@ export async function POST(request) {
     if (!message) return NextResponse.json({ error: 'একটি প্রশ্ন বা কাজ লিখুন।' }, { status: 400 });
     if (message.length > MAX_MESSAGE) return NextResponse.json({ error: 'বার্তাটি ৬,০০০ অক্ষরের মধ্যে রাখুন।' }, { status: 413 });
 
+    // Prefer the explicitly configured OmniRoute model. If it is unavailable or
+    // rejects tool calling, retain the existing Gemini Agent as a fallback.
+    if (getOmniRouteConfig()) {
+      try {
+        const routed = await runOmniRouteAgent(message);
+        if (routed?.text) return NextResponse.json({ ok: true, ...routed });
+      } catch (error) {
+        console.warn('[QuickToolBox Agent] OmniRoute unavailable; checking Gemini fallback.', {
+          status: Number(error?.status) || 0,
+          name: error?.name || 'Error',
+        });
+      }
+    }
+
     const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
-    if (!key) return NextResponse.json({ error: 'AI Agent চালু নেই: Vercel Environment Variables-এ GEMINI_API_KEY যোগ করে নতুন deployment করতে হবে।' }, { status: 503 });
+    if (!key) return NextResponse.json({ error: getOmniRouteConfig() ? 'OmniRoute Agent route failed. Verify its gateway URL, key, selected model and tool-calling support.' : 'AI Agent চালু নেই: OmniRoute অথবা GEMINI_API_KEY configure করতে হবে।' }, { status: 503 });
 
     const models = await discoverAgentModels(key);
     if (!models.length) return NextResponse.json({ error: 'এই API Key-তে Tool Calling সমর্থিত Gemini Flash model পাওয়া যায়নি।' }, { status: 503 });
