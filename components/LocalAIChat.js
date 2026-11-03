@@ -3,9 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import styles from './LocalAIChat.module.css';
+import { getQwenModelCandidates, isWebGPUShaderError } from '../lib/ai/local-model-selection';
 
-const FAST_MODEL_ID = 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC';
-const COMPAT_MODEL_ID = 'Qwen2.5-0.5B-Instruct-q4f32_1-MLC';
 const LIBRARY_URL = 'https://esm.run/@mlc-ai/web-llm@0.2.87';
 const SYSTEM_PROMPT = 'You are QuickToolBox Local AI, a helpful assistant. Reply in the same language as the user. Support Bangla and English. Be accurate, concise, and clearly say when you are unsure. You run locally in the user browser.';
 
@@ -57,11 +56,10 @@ export default function LocalAIChat() {
     try {
       // Load WebLLM only in the browser. The model inference itself never calls a paid API.
       const webllm = await import(/* webpackIgnore: true */ 'https://esm.run/@mlc-ai/web-llm@0.2.87');
-      const availableModels = new Set((webllm.prebuiltAppConfig?.model_list || []).map((item) => item.model_id));
-      const candidates = hasShaderF16
-        ? [FAST_MODEL_ID, COMPAT_MODEL_ID]
-        : [COMPAT_MODEL_ID];
-      const modelCandidates = candidates.filter((id) => availableModels.has(id));
+      const modelCandidates = getQwenModelCandidates(
+        hasShaderF16,
+        webllm.prebuiltAppConfig?.model_list || [],
+      );
       if (!modelCandidates.length) {
         throw new Error('এই WebLLM সংস্করণে প্রয়োজনীয় Qwen model পাওয়া যায়নি। পেজ রিফ্রেশ করে আবার চেষ্টা করুন।');
       }
@@ -90,8 +88,7 @@ export default function LocalAIChat() {
           break;
         } catch (cause) {
           lastError = cause;
-          const message = String(cause?.message || cause || '');
-          const shaderFailure = /shader|wgsl|ShaderModule|pipeline/i.test(message);
+          const shaderFailure = isWebGPUShaderError(cause);
           if (!shaderFailure || index === modelCandidates.length - 1) throw cause;
         }
       }
@@ -103,7 +100,7 @@ export default function LocalAIChat() {
     } catch (cause) {
       setStatus('error');
       const message = String(cause?.message || cause || '');
-      if (/shader|wgsl|ShaderModule|pipeline/i.test(message)) {
+      if (isWebGPUShaderError(cause)) {
         setError('আপনার GPU/browser এই Local AI model-এর shader তৈরি করতে পারছে না। Chrome/Edge আপডেট করুন, Hardware acceleration চালু করে browser restart দিন; তারপর আবার চেষ্টা করুন।');
       } else if (/memory|allocation|out of memory/i.test(message)) {
         setError('GPU memory যথেষ্ট নয়। অন্য heavy tab/app বন্ধ করে আবার model load করুন।');
