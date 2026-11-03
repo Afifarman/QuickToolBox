@@ -218,7 +218,7 @@ async function runOmniRouteAgent(message) {
       messages,
       tools: openAITools,
       toolChoice: 'auto',
-      maxTokens: 1200,
+      maxTokens: Number(process.env.OMNIROUTE_MAX_OUTPUT_TOKENS) || 2000,
       temperature: 0.35,
     });
     const assistant = result?.data?.choices?.[0]?.message;
@@ -255,7 +255,7 @@ async function runOmniRouteAgent(message) {
 
   const finalResult = await requestOmniRouteChat({
     messages,
-    maxTokens: 1200,
+    maxTokens: Number(process.env.OMNIROUTE_MAX_OUTPUT_TOKENS) || 2000,
     temperature: 0.35,
   });
   const finalMessage = finalResult?.data?.choices?.[0]?.message;
