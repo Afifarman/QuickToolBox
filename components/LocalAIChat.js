@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import styles from './LocalAIChat.module.css';
-import { getQwenModelCandidates, isWebGPUShaderError } from '../lib/ai/local-model-selection';
+import { COMPAT_QWEN_MODEL_ID, getQwenModelCandidates, isWebGPUShaderError } from '../lib/ai/local-model-selection';
 
 const LIBRARY_URL = 'https://esm.run/@mlc-ai/web-llm@0.2.87';
 const SYSTEM_PROMPT = 'You are QuickToolBox Local AI, a helpful assistant. Reply in the same language as the user. Support Bangla and English. Be accurate, concise, and clearly say when you are unsure. You run locally in the user browser.';
@@ -70,7 +70,7 @@ export default function LocalAIChat() {
         const modelId = modelCandidates[index];
         setProgress({
           text: index === 0
-            ? (modelId === COMPAT_MODEL_ID ? 'Compatible Qwen model প্রস্তুত হচ্ছে…' : 'Qwen model প্রস্তুত হচ্ছে…')
+            ? (modelId === COMPAT_QWEN_MODEL_ID ? 'Compatible Qwen model প্রস্তুত হচ্ছে…' : 'Qwen model প্রস্তুত হচ্ছে…')
             : 'প্রথম GPU shader variant কাজ করেনি; compatible model দিয়ে আবার চেষ্টা হচ্ছে…',
           progress: 0,
         });
