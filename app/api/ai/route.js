@@ -3,6 +3,7 @@ import { AI_SYSTEM_PROMPT, extractModelText } from '../../../lib/ai';
 import { selectGeminiModels } from '../../../lib/ai/gemini-models';
 import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
 import { classifyProviderError, logProviderFailure as logSafeProviderFailure } from '../../../lib/ai/provider-diagnostics';
+import { getOmniRouteConfig, requestOmniRouteChat } from '../../../lib/ai/omniroute';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -17,6 +18,7 @@ function configuredProviders() {
     gemini: Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY),
     huggingface: Boolean(process.env.HF_TOKEN || process.env.HUGGINGFACEHUB_API_TOKEN),
     openrouter: Boolean(process.env.OPENROUTER_API_KEY),
+    omniroute: Boolean(getOmniRouteConfig()),
   };
 }
 
@@ -93,6 +95,21 @@ async function openaiCompatibleChat({ key, baseUrl, model, source, tokenField = 
   // Quota and upstream outages are provider-wide; do not retry other model IDs.
   if (response.status === 429 || response.status >= 500) return { unavailable: true };
   return null;
+}
+
+async function omniRouteChat(prompt) {
+  if (!getOmniRouteConfig()) return null;
+  const result = await requestOmniRouteChat({
+    messages: [
+      { role: 'system', content: AI_SYSTEM_PROMPT },
+      { role: 'user', content: prompt },
+    ],
+    maxTokens: 900,
+    temperature: 0.6,
+  });
+  const text = extractModelText(result?.data);
+  if (!text) throw new Error('OmniRoute returned no usable text.');
+  return { text, source: 'omniroute', model: result.model };
 }
 
 async function openaiChat(prompt) {
@@ -287,6 +304,7 @@ export async function POST(request) {
     // provider outage then falls through to free Gemini/Groq/OpenRouter routes.
     // Hugging Face remains opt-in because inference may consume paid credits.
     const runners = [
+      ['omniroute', omniRouteChat],
       ['openai-paid', openaiChat],
       ['gemini', geminiChat],
       ['groq', groqChat],
