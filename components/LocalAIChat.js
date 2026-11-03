@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import styles from './LocalAIChat.module.css';
+import { getLocalAIErrorMessage } from '../lib/ai/local-ai-errors';
 
 const MODEL_ID = 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC';
 const SYSTEM_PROMPT = 'You are QuickToolBox Local AI, a helpful assistant. Reply in the same language as the user. Support Bangla and English. Be accurate, concise, and clearly say when you are unsure. You run locally in the user browser.';
@@ -82,17 +83,7 @@ export default function LocalAIChat() {
       setProgress({ text: 'Local model ready', progress: 1 });
     } catch (cause) {
       setStatus('error');
-      const rawMessage = String(cause?.message || cause || '');
-      const normalized = rawMessage.toLowerCase();
-      let friendlyMessage = rawMessage || 'Local AI model could not be loaded.';
-      if (/shadermodule|shader compilation|wgsl|pipeline.*invalid/.test(normalized)) {
-        friendlyMessage = 'GPU shader তৈরি করতে সমস্যা হয়েছে। Chrome/Edge আপডেট করুন, hardware acceleration চালু করুন, অন্য ভারী GPU app বন্ধ করুন এবং browser restart করে আবার চেষ্টা করুন। তবুও না হলে এই GPU/browser-এ মডেলটি compatible নাও হতে পারে।';
-      } else if (/out of memory|memory|allocation failed/.test(normalized)) {
-        friendlyMessage = 'এই মডেল চালানোর জন্য পর্যাপ্ত GPU memory পাওয়া যায়নি। অন্য GPU-নির্ভর tab/app বন্ধ করে আবার চেষ্টা করুন।';
-      } else if (/fetch|network|cors|http/.test(normalized)) {
-        friendlyMessage = 'মডেল ফাইল download করা যায়নি। Internet connection ও model host access পরীক্ষা করে আবার চেষ্টা করুন।';
-      }
-      setError(friendlyMessage);
+      setError(getLocalAIErrorMessage(cause));
     } finally {
       loadingRef.current = false;
     }
