@@ -104,7 +104,7 @@ async function omniRouteChat(prompt) {
       { role: 'system', content: AI_SYSTEM_PROMPT },
       { role: 'user', content: prompt },
     ],
-    maxTokens: 900,
+    maxTokens: Number(process.env.OMNIROUTE_MAX_OUTPUT_TOKENS) || 1600,
     temperature: 0.6,
   });
   const text = extractModelText(result?.data);
