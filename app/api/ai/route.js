@@ -27,6 +27,7 @@ function logProviderFailure(provider, details = {}) {
   logSafeProviderFailure(provider, {
     status: details.status,
     category: classifyProviderError({ status: details.status, error, timedOut }),
+    model: typeof details.model === 'string' ? details.model : undefined,
   });
 }
 
