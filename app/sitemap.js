@@ -1,7 +1,7 @@
 import { SITE_URL } from '../lib/site-config';
 
 const paths = [
-  '/', '/ai', '/ai-platform', '/cv-maker', '/ai-photo-editor', '/ai-prompts', '/file-converter', '/ai/local',
+  '/', '/ai', '/ai-platform', '/cv-maker', '/ai-photo-editor', '/ai-prompts', '/ai/local',
 ];
 
 export default function sitemap() {
