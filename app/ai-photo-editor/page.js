@@ -72,6 +72,7 @@ export default function AIPhotoEditor() {
         body: JSON.stringify({ image, mimeType: file.type, prompt: prompt.trim() }),
       });
       const data = await response.json().catch(() => ({}));
+      if (response.status === 401) throw new Error('AI দিয়ে ছবি সম্পাদনা করতে আগে লগইন করুন। লগইন করে আবার চেষ্টা করুন।');
       if (!response.ok || !data.image || !data.mimeType) throw new Error(data.error || 'AI সম্পাদিত ছবি ফেরত দেয়নি।');
       setEditedSrc(`data:${data.mimeType};base64,${data.image}`);
       setNotice(`AI দিয়ে ছবি সম্পাদিত হয়েছে • ${data.model || 'Gemini'}`);
@@ -106,7 +107,7 @@ export default function AIPhotoEditor() {
         </div>
         {notice && <p role="status" style={{color:'#067647',whiteSpace:'pre-wrap'}}>{notice}</p>}
         {error && <p role="alert" style={{color:'#b42318',whiteSpace:'pre-wrap'}}>{error}</p>}
-        <p style={{color:'#667085',fontSize:13}}>Privacy: নির্বাচিত ছবিটি AI সম্পাদনার জন্য Google Gemini API-তে পাঠানো হবে। সংবেদনশীল ছবি আপলোড করবেন না।</p>
+        <p style={{color:'#667085',fontSize:13}}>AI দিয়ে ছবি সম্পাদনা করতে আগে <Link href="/login">লগইন করুন</Link>। ছবি AI সম্পাদনার জন্য Google Gemini API-তে পাঠানো হবে; সংবেদনশীল ছবি আপলোড করবেন না।</p>
       </section>
       {src && <section className="result">
         <h2>Original / local adjustments</h2>
