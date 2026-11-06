@@ -18,7 +18,7 @@ const tools = [
     ["EPUB Converter", "E-books", "EPUB / MOBI / PDF"], ["ZIP Extractor", "Archives", "ZIP → files", "testing"], ["ZIP Creator", "Archives", "Files → ZIP", "testing"],
     ["EPS Converter", "Vector", "EPS / SVG / PDF"],
     ["DWG / DXF Converter", "CAD", "DWG / DXF"], ["Font Converter", "Fonts", "TTF / OTF / WOFF"],
-  ].map(([name, category, formats, status]) => ({ name, category, formats, description: status === "testing" ? "Browser-local engine added; real-file and Preview tests are pending." : "Planned for a later free, browser-first release.", status: status || "planned", href: status === "ready" ? "#converter-engines" : "#roadmap" })),
+  ].map(([name, category, formats, status]) => ({ name, category, formats, description: status === "testing" ? "Browser-local engine added; real-file and Preview tests are pending." : "Planned for a later free, browser-first release.", status: status || "planned", href: status === "ready" || status === "testing" ? "#converter-engines" : "#roadmap" })),
 ];
 
 const categories = ["All tools", "Documents", "Images", "Video", "Audio", "Spreadsheets", "Presentations", "E-books", "Archives", "Vector", "CAD", "Fonts"];
