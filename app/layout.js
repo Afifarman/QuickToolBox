@@ -18,7 +18,7 @@ export const metadata = {
     template: '%s | QuickToolBox',
   },
   description:
-    'Free online AI and productivity tools. Fast, simple and mobile-friendly.',
+    'Free online AI, file conversion and productivity tools. Fast, simple and mobile-friendly.',
   applicationName: 'QuickToolBox',
   icons: {
     icon: [{ url: '/quicktoolbox-mark.svg', type: 'image/svg+xml' }],
@@ -30,9 +30,11 @@ export const metadata = {
   },
   keywords: [
     'free online tools',
+    'PDF tools',
     'calculator',
     'AI tools',
     'SEO tools',
+    'image tools',
     'QuickToolBox',
   ],
   alternates: {
@@ -44,13 +46,13 @@ export const metadata = {
     siteName: 'QuickToolBox',
     title: 'QuickToolBox | Free Online Tools',
     description:
-      'Free AI and productivity tools in one toolbox.',
+      'Free AI, file conversion and productivity tools in one toolbox.',
     locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'QuickToolBox | Free Online Tools',
-    description: 'Free AI and productivity tools.',
+    description: 'Free AI, file conversion and productivity tools.',
   },
   robots: {
     index: true,

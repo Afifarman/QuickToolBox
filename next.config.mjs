@@ -16,8 +16,6 @@ const nextConfig = {
       { source: '/tools/:path*', destination: '/', permanent: true },
       { source: '/student-tools', destination: '/', permanent: true },
       { source: '/student-tools/:path*', destination: '/', permanent: true },
-      { source: '/file-converter', destination: '/', permanent: true },
-      { source: '/file-converter/:path*', destination: '/', permanent: true },
     ];
   },
   async headers() {
