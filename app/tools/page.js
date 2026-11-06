@@ -1,4 +1,11 @@
 import Link from 'next/link';
+import { SITE_URL } from '../../lib/site-config';
+
+export const metadata = {
+  title: 'Free Online Tools',
+  description: 'Browse free PDF, image, calculator, developer, SEO and productivity tools in QuickToolBox.',
+  alternates: { canonical: new URL('/tools', SITE_URL).toString() },
+};
 
 const tools = [
   ['pdf-merge','PDF Merge'],
