@@ -170,8 +170,10 @@ const button = { border: 0, borderRadius: 9, padding: "11px 16px", background: "
 
 export default function ConverterEngines() {
   const [csv, setCsv] = useState(null), [xlsx, setXlsx] = useState(null), [zipInput, setZipInput] = useState(null), [zipFilesInput, setZipFilesInput] = useState([]);
-  const [error, setError] = useState(""), [busy, setBusy] = useState("");\n  const [extracted, setExtracted] = useState([]);
-  const [csvResult, saveCsv, clearCsv] = useResult(), [xlsxResult, saveXlsx, clearXlsx] = useResult(), [zipResult, saveZip, clearZip] = useResult();\n  useEffect(() => () => extracted.forEach(item => URL.revokeObjectURL(item.url)), [extracted]);
+  const [error, setError] = useState(""), [busy, setBusy] = useState("");
+  const [extracted, setExtracted] = useState([]);
+  const [csvResult, saveCsv, clearCsv] = useResult(), [xlsxResult, saveXlsx, clearXlsx] = useResult(), [zipResult, saveZip, clearZip] = useResult();
+  useEffect(() => () => extracted.forEach(item => URL.revokeObjectURL(item.url)), [extracted]);
   async function run(label, fn) {
     setError(""); setBusy(label);
     try { await fn(); } catch (e) { setError(e?.message || "Conversion failed."); } finally { setBusy(""); }
@@ -202,7 +204,8 @@ export default function ConverterEngines() {
         const entries = await unzipEntries(zipInput);
         if (!entries.length) throw new Error("ZIP-এ extract করার মতো file নেই।");
         setExtracted(entries.map(entry => ({ name: entry.name, size: entry.data.length, url: URL.createObjectURL(new Blob([entry.data])) })));
-      })}>{busy === "unzip" ? "Extracting…" : "Extract files"}</button>\n      {extracted.map(item => <p key={item.name}><a href={item.url} download={item.name} style={{ color: "#7dd3fc" }}>{item.name} · {(item.size / 1024).toFixed(1)} KB — Download</a></p>)}
+      })}>{busy === "unzip" ? "Extracting…" : "Extract files"}</button>
+      {extracted.map(item => <p key={item.name}><a href={item.url} download={item.name} style={{ color: "#7dd3fc" }}>{item.name} · {(item.size / 1024).toFixed(1)} KB — Download</a></p>)}
     </section>
     {error && <p role="alert" style={{ color: "#fca5a5", marginTop: 14 }}>{error}</p>}
   </>;
