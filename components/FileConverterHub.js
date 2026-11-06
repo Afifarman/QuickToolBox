@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const tools = [
   { name: "PDF Merge", category: "Documents", description: "Combine multiple PDF files into one.", href: "/tools/pdf-merge", status: "ready", formats: "PDF → PDF" },
@@ -37,6 +37,10 @@ function ImageConverter() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => () => {
+    if (result?.url) URL.revokeObjectURL(result.url);
+  }, [result?.url]);
+
   function choose(next) {
     setFile(next);
     setResult(null);
@@ -47,7 +51,7 @@ function ImageConverter() {
     setError("");
     setResult(null);
     if (!file) return setError("Choose an image first.");
-    if (!file.type.startsWith("image/")) return setError("This file is not a supported image.");
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) return setError("Supported input formats are PNG, JPEG and WebP.");
     if (file.size > 25 * 1024 * 1024) return setError("Maximum input size is 25 MB.");
     setBusy(true);
     let objectUrl;
@@ -58,8 +62,8 @@ function ImageConverter() {
       await image.decode();
       const targetWidth = width ? Number(width) : image.naturalWidth;
       const targetHeight = height ? Number(height) : Math.round(image.naturalHeight * targetWidth / image.naturalWidth);
-      if (!Number.isInteger(targetWidth) || !Number.isInteger(targetHeight) || targetWidth < 1 || targetHeight < 1 || targetWidth > 12000 || targetHeight > 12000) {
-        throw new Error("Enter valid dimensions between 1 and 12,000 pixels.");
+      if (!Number.isInteger(targetWidth) || !Number.isInteger(targetHeight) || targetWidth < 1 || targetHeight < 1 || targetWidth > 12000 || targetHeight > 12000 || targetWidth * targetHeight > 40000000) {
+        throw new Error("Enter valid dimensions up to 12,000 px per side and 40 megapixels total.");
       }
       const canvas = document.createElement("canvas");
       canvas.width = targetWidth;
@@ -72,7 +76,8 @@ function ImageConverter() {
       }
       context.drawImage(image, 0, 0, targetWidth, targetHeight);
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, format, Number(quality)));
-      if (!blob) throw new Error("This browser cannot export that image format.");
+      if (!blob) throw new Error("This browser could not export the selected image format.");
+      if (blob.type !== format) throw new Error(`Your browser exported ${blob.type || "an unknown format"} instead of ${format}. Choose another output format.`);
       const extension = format === "image/jpeg" ? "jpg" : format === "image/png" ? "png" : "webp";
       const url = URL.createObjectURL(blob);
       setResult({ url, name: (file.name.replace(/\.[^.]+$/, "") || "converted-image") + "." + extension, size: blob.size, width: targetWidth, height: targetHeight });
@@ -94,7 +99,7 @@ function ImageConverter() {
         <p style={styles.muted}>Convert PNG, JPEG and WebP files locally on your device. Nothing is sent to a conversion server.</p>
       </div>
       <label style={styles.field}>Choose an image (up to 25 MB)
-        <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" onChange={(e) => choose(e.target.files?.[0] || null)} style={styles.input} />
+        <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => choose(e.target.files?.[0] || null)} style={styles.input} />
       </label>
       {file && <p style={styles.muted}>Selected: {file.name} · {(file.size / 1024).toFixed(1)} KB</p>}
       <div style={styles.controls}>
