@@ -60,8 +60,13 @@ function ImageConverter() {
       const image = new Image();
       image.src = objectUrl;
       await image.decode();
-      const targetWidth = width ? Number(width) : image.naturalWidth;
-      const targetHeight = height ? Number(height) : Math.round(image.naturalHeight * targetWidth / image.naturalWidth);
+      const hasWidth = width.trim() !== "";
+      const hasHeight = height.trim() !== "";
+      const requestedWidth = hasWidth ? Number(width) : null;
+      const requestedHeight = hasHeight ? Number(height) : null;
+      // Preserve the source aspect ratio when the user supplies only one dimension.
+      const targetWidth = hasWidth ? requestedWidth : hasHeight ? Math.round(image.naturalWidth * requestedHeight / image.naturalHeight) : image.naturalWidth;
+      const targetHeight = hasHeight ? requestedHeight : hasWidth ? Math.round(image.naturalHeight * targetWidth / image.naturalWidth) : image.naturalHeight;
       if (!Number.isInteger(targetWidth) || !Number.isInteger(targetHeight) || targetWidth < 1 || targetHeight < 1 || targetWidth > 12000 || targetHeight > 12000 || targetWidth * targetHeight > 40000000) {
         throw new Error("Enter valid dimensions up to 12,000 px per side and 40 megapixels total.");
       }
