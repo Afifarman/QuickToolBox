@@ -302,6 +302,7 @@ export default function FileConverterHub() {
       </div>
       <ImageConverter />
       <SvgToPngConverter />
+      <section id="converter-engines" style={{ marginTop: 34 }}><ConverterEngines /></section>
       <section id="roadmap" style={{ marginTop: 34 }}>
         <h2 style={styles.sectionTitle}>How the full platform will roll out</h2>
         <p style={styles.muted}>Format support will be enabled only when the conversion engine, output quality and failure cases pass tests. Planned cards are not active converters.</p>
