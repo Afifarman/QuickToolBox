@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import ConverterEngines from "./ConverterEngines";
 
 const tools = [
   { name: "Image Converter", category: "Images", description: "Convert images between PNG, JPEG and WebP in your browser.", href: "#image-converter", status: "ready", formats: "PNG ↔ JPEG ↔ WebP" },
@@ -12,12 +13,12 @@ const tools = [
     ["HTML to PDF", "Documents", "HTML → PDF"], ["PDF OCR", "Documents", "Scanned PDF → searchable PDF"],
     ["MP4 Converter", "Video", "MP4 / MOV / MKV"], ["Video Compressor", "Video", "MP4 / WebM"], ["Video to GIF", "Video", "Video → GIF"],
     ["MP3 Converter", "Audio", "MP3 / WAV / M4A"], ["Audio Compressor", "Audio", "MP3 / WAV / FLAC"],
-    ["CSV to Excel", "Spreadsheets", "CSV → XLSX"], ["Excel to CSV", "Spreadsheets", "XLSX → CSV"],
+    ["CSV to Excel", "Spreadsheets", "CSV → XLSX", "ready"], ["Excel to CSV", "Spreadsheets", "XLSX → CSV", "ready"],
     ["PowerPoint to PDF", "Presentations", "PPTX → PDF"], ["PDF to PowerPoint", "Presentations", "PDF → PPTX"],
-    ["EPUB Converter", "E-books", "EPUB / MOBI / PDF"], ["ZIP Extractor", "Archives", "ZIP → files"], ["ZIP Creator", "Archives", "Files → ZIP"],
+    ["EPUB Converter", "E-books", "EPUB / MOBI / PDF"], ["ZIP Extractor", "Archives", "ZIP → files", "ready"], ["ZIP Creator", "Archives", "Files → ZIP", "ready"],
     ["EPS Converter", "Vector", "EPS / SVG / PDF"],
     ["DWG / DXF Converter", "CAD", "DWG / DXF"], ["Font Converter", "Fonts", "TTF / OTF / WOFF"],
-  ].map(([name, category, formats]) => ({ name, category, formats, description: "Planned for a later free, browser-first release.", status: "planned", href: "#roadmap" })),
+  ].map(([name, category, formats, status]) => ({ name, category, formats, description: status === "ready" ? "Convert files locally in your browser; no paid API or account." : "Planned for a later free, browser-first release.", status: status || "planned", href: status === "ready" ? "#converter-engines" : "#roadmap" })),
 ];
 
 const categories = ["All tools", "Documents", "Images", "Video", "Audio", "Spreadsheets", "Presentations", "E-books", "Archives", "Vector", "CAD", "Fonts"];
