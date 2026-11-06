@@ -3,9 +3,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '../../lib/supabase/client';
 
 const LINKS = [
-  ['/tools','🧰','All tools','Browse PDF, image, calculator and productivity tools'],
   ['/ai','✦','AI workspace','Generate, rewrite and summarize with AI'],
-  ['/student-tools','🎓','Student studio','Study plans, flashcards, quizzes and calculators'],
   ['/favorites','★','Favourites','Quick access to your saved tools'],
   ['/history','◷','Recent activity','Return to tools you used recently'],
   ['/saved','▣','Saved results','Find your saved work'],
@@ -40,9 +38,7 @@ export default function Dashboard() {
       <header className="site-header">
         <a className="brand" href="/"><b>Q</b> QuickToolBox</a>
         <nav>
-          <a href="/tools">Tools</a>
           <a href="/ai">AI tools</a>
-          <a href="/student-tools">Student tools</a>
           <a href="/">Home</a>
         </nav>
       </header>
