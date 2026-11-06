@@ -201,11 +201,8 @@ export default function ConverterEngines() {
       <button style={button} disabled={!zipInput || !!busy} onClick={() => run("unzip", async () => {
         const entries = await unzipEntries(zipInput);
         if (!entries.length) throw new Error("ZIP-এ extract করার মতো file নেই।");
-        for (const entry of entries) {
-          const url = URL.createObjectURL(new Blob([entry.data]));
-          const a = document.createElement("a"); a.href = url; a.download = entry.name; a.click(); URL.revokeObjectURL(url);
-        }
-      })}>{busy === "unzip" ? "Extracting…" : "Extract files"}</button>
+        setExtracted(entries.map(entry => ({ name: entry.name, size: entry.data.length, url: URL.createObjectURL(new Blob([entry.data])) })));
+      })}>{busy === "unzip" ? "Extracting…" : "Extract files"}</button>\n      {extracted.map(item => <p key={item.name}><a href={item.url} download={item.name} style={{ color: "#7dd3fc" }}>{item.name} · {(item.size / 1024).toFixed(1)} KB — Download</a></p>)}
     </section>
     {error && <p role="alert" style={{ color: "#fca5a5", marginTop: 14 }}>{error}</p>}
   </>;
