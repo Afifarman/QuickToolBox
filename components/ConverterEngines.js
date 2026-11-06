@@ -34,12 +34,12 @@ async function zipFiles(files) {
     const local = new Uint8Array(30 + name.length + data.length);
     const lv = new DataView(local.buffer);
     u32(lv, 0, 0x04034b50); u16(lv, 4, 20); u16(lv, 6, 0x0800); u16(lv, 8, 0);
-    u32(lv, 14, crc); u32(lv, 18, data.length); u32(lv, 22, data.length);
+    u16(lv, 12, 0); u16(lv, 14, 0x0021); u32(lv, 14, crc); u32(lv, 18, data.length); u32(lv, 22, data.length);
     u16(lv, 26, name.length); local.set(name, 30); local.set(data, 30 + name.length);
     const central = new Uint8Array(46 + name.length);
     const cv = new DataView(central.buffer);
     u32(cv, 0, 0x02014b50); u16(cv, 4, 20); u16(cv, 6, 20); u16(cv, 8, 0x0800); u16(cv, 10, 0);
-    u32(cv, 16, crc); u32(cv, 20, data.length); u32(cv, 24, data.length);
+    u16(cv, 12, 0); u16(cv, 14, 0x0021); u32(cv, 16, crc); u32(cv, 20, data.length); u32(cv, 24, data.length);
     u16(cv, 28, name.length); u32(cv, 42, offset); central.set(name, 46);
     locals.push(local); centrals.push(central); offset += local.length;
   }
@@ -170,8 +170,8 @@ const button = { border: 0, borderRadius: 9, padding: "11px 16px", background: "
 
 export default function ConverterEngines() {
   const [csv, setCsv] = useState(null), [xlsx, setXlsx] = useState(null), [zipInput, setZipInput] = useState(null), [zipFilesInput, setZipFilesInput] = useState([]);
-  const [error, setError] = useState(""), [busy, setBusy] = useState("");
-  const [csvResult, saveCsv, clearCsv] = useResult(), [xlsxResult, saveXlsx, clearXlsx] = useResult(), [zipResult, saveZip, clearZip] = useResult();
+  const [error, setError] = useState(""), [busy, setBusy] = useState("");\n  const [extracted, setExtracted] = useState([]);
+  const [csvResult, saveCsv, clearCsv] = useResult(), [xlsxResult, saveXlsx, clearXlsx] = useResult(), [zipResult, saveZip, clearZip] = useResult();\n  useEffect(() => () => extracted.forEach(item => URL.revokeObjectURL(item.url)), [extracted]);
   async function run(label, fn) {
     setError(""); setBusy(label);
     try { await fn(); } catch (e) { setError(e?.message || "Conversion failed."); } finally { setBusy(""); }
@@ -197,7 +197,7 @@ export default function ConverterEngines() {
     </section>
     <section style={box} id="zip-extractor">
       <h2>ZIP Extractor</h2><p>ZIP-এর file integrity যাচাই করে browser-এ extract করুন।</p>
-      <label style={field}>ZIP file <input type="file" accept=".zip,application/zip" onChange={e => { setZipInput(e.target.files?.[0] || null); }} /></label>
+      <label style={field}>ZIP file <input type="file" accept=".zip,application/zip" onChange={e => { setZipInput(e.target.files?.[0] || null); setExtracted([]); }} /></label>
       <button style={button} disabled={!zipInput || !!busy} onClick={() => run("unzip", async () => {
         const entries = await unzipEntries(zipInput);
         if (!entries.length) throw new Error("ZIP-এ extract করার মতো file নেই।");
