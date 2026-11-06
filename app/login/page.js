@@ -13,8 +13,12 @@ function getErrorMessage(error) {
   if (lower.includes('redirect') || lower.includes('allowlist') || lower.includes('not allowed') || lower.includes('redirect_uri')) {
     return 'Google login is blocked by the Supabase redirect URL settings. Add this exact URL to Authentication → URL Configuration → Redirect URLs: ' + getAuthCallbackUrl();
   }
-  if (lower.includes('provider') && lower.includes('google')) {
-    return 'Google sign-in is not enabled in Supabase. Open Authentication → Providers → Google and enable it with the Google OAuth Client ID and Secret.';
+  if (
+    (lower.includes('provider') && lower.includes('google')) ||
+    lower.includes('unsupported provider') ||
+    (lower.includes('provider') && lower.includes('not enabled'))
+  ) {
+    return 'Google sign-in is disabled in Supabase. In your Supabase project, open Authentication → Sign In / Providers → Google, turn on Enable Sign in with Google, and save. If it is already enabled, check that the Google OAuth Client ID and Client Secret are saved. Then try again.';
   }
   if (lower.includes('invalid login credentials')) return 'Email or password is incorrect.';
   if (lower.includes('email not confirmed')) return 'Please confirm your email address first, then try logging in again.';
