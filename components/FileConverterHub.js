@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 const tools = [
   { name: "Image Converter", category: "Images", description: "Convert images between PNG, JPEG and WebP in your browser.", href: "#image-converter", status: "ready", formats: "PNG ↔ JPEG ↔ WebP" },
   { name: "Image Compressor", category: "Images", description: "Resize and compress an image with a quality setting.", href: "#image-converter", status: "ready", formats: "PNG / JPEG / WebP" },
+  { name: "SVG to PNG", category: "Vector", description: "Rasterize a local SVG file to a downloadable PNG in your browser.", href: "#svg-converter", status: "ready", formats: "SVG → PNG" },
   ...[
     ["PDF to Word", "Documents", "PDF → DOCX"], ["Word to PDF", "Documents", "DOCX → PDF"], ["PDF to JPG", "Documents", "PDF → JPG"],
     ["HTML to PDF", "Documents", "HTML → PDF"], ["PDF OCR", "Documents", "Scanned PDF → searchable PDF"],
@@ -14,7 +15,7 @@ const tools = [
     ["CSV to Excel", "Spreadsheets", "CSV → XLSX"], ["Excel to CSV", "Spreadsheets", "XLSX → CSV"],
     ["PowerPoint to PDF", "Presentations", "PPTX → PDF"], ["PDF to PowerPoint", "Presentations", "PDF → PPTX"],
     ["EPUB Converter", "E-books", "EPUB / MOBI / PDF"], ["ZIP Extractor", "Archives", "ZIP → files"], ["ZIP Creator", "Archives", "Files → ZIP"],
-    ["SVG to PNG", "Vector", "SVG → PNG"], ["EPS Converter", "Vector", "EPS / SVG / PDF"],
+    ["EPS Converter", "Vector", "EPS / SVG / PDF"],
     ["DWG / DXF Converter", "CAD", "DWG / DXF"], ["Font Converter", "Fonts", "TTF / OTF / WOFF"],
   ].map(([name, category, formats]) => ({ name, category, formats, description: "Planned for a later free, browser-first release.", status: "planned", href: "#roadmap" })),
 ];
@@ -131,6 +132,118 @@ function ImageConverter() {
   );
 }
 
+
+function SvgToPngConverter() {
+  const [file, setFile] = useState(null);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => () => {
+    if (result?.url) URL.revokeObjectURL(result.url);
+  }, [result?.url]);
+
+  async function convert() {
+    setError("");
+    setResult(null);
+    if (!file) return setError("Choose an SVG file first.");
+    if (file.size > 10 * 1024 * 1024) return setError("Maximum SVG file size is 10 MB.");
+    setBusy(true);
+    let sourceUrl;
+    try {
+      const source = await file.text();
+      const documentNode = new DOMParser().parseFromString(source, "image/svg+xml");
+      if (documentNode.querySelector("parsererror")) throw new Error("This file is not valid SVG XML.");
+      const svg = documentNode.documentElement;
+      if (svg.localName !== "svg" || svg.namespaceURI !== "http://www.w3.org/2000/svg") throw new Error("The file does not contain a valid SVG root element.");
+
+      // Remove active content and reject external references before loading the SVG as an image.
+      if (svg.querySelector("script, foreignObject, iframe, object, embed, audio, video")) {
+        throw new Error("This SVG contains active or embedded content and cannot be converted safely.");
+      }
+      for (const element of [svg, ...svg.querySelectorAll("*")]) {
+        for (const attribute of [...element.attributes]) {
+          const name = attribute.name.toLowerCase();
+          const value = attribute.value.trim();
+          if (name.startsWith("on")) {
+            element.removeAttribute(attribute.name);
+          } else if (name === "href" || name.endsWith(":href")) {
+            if (value && !value.startsWith("#")) throw new Error("External SVG references are not supported. Embed artwork directly in the SVG.");
+          } else if ((name === "style" || name === "filter") && /url\s*\(|@import|expression\s*\(/i.test(value)) {
+            throw new Error("External CSS resources are not supported in SVG files.");
+          }
+        }
+      }
+      for (const styleNode of svg.querySelectorAll("style")) {
+        if (/@import|url\s*\(|expression\s*\(/i.test(styleNode.textContent || "")) {
+          throw new Error("SVG styles that load external resources are not supported.");
+        }
+      }
+
+      const number = (value) => {
+        const match = String(value || "").trim().match(/^([0-9]+(?:\.[0-9]+)?)(?:px)?$/i);
+        return match ? Number(match[1]) : null;
+      };
+      const viewBox = (svg.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
+      const viewWidth = viewBox.length === 4 && viewBox.every(Number.isFinite) ? viewBox[2] : null;
+      const viewHeight = viewBox.length === 4 && viewBox.every(Number.isFinite) ? viewBox[3] : null;
+      const width = number(svg.getAttribute("width")) || viewWidth || 300;
+      const height = number(svg.getAttribute("height")) || viewHeight || 150;
+      const targetWidth = Math.round(width);
+      const targetHeight = Math.round(height);
+      if (!Number.isInteger(targetWidth) || !Number.isInteger(targetHeight) || targetWidth < 1 || targetHeight < 1 || targetWidth > 8000 || targetHeight > 8000 || targetWidth * targetHeight > 32000000) {
+        throw new Error("SVG dimensions must be within 8,000 px per side and 32 megapixels total.");
+      }
+
+      const safeSvg = new XMLSerializer().serializeToString(svg);
+      sourceUrl = URL.createObjectURL(new Blob([safeSvg], { type: "image/svg+xml" }));
+      const image = new Image();
+      image.src = sourceUrl;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Your browser could not start PNG processing.");
+      context.drawImage(image, 0, 0, targetWidth, targetHeight);
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob || blob.type !== "image/png") throw new Error("Your browser could not export a PNG image.");
+      const url = URL.createObjectURL(blob);
+      const baseName = file.name.replace(/\.svg$/i, "") || "converted-image";
+      setResult({ url, name: baseName + ".png", size: blob.size, width: targetWidth, height: targetHeight });
+      canvas.width = 1;
+      canvas.height = 1;
+    } catch (cause) {
+      setError(cause?.message || "SVG conversion failed. Try another SVG file.");
+    } finally {
+      if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section id="svg-converter" style={styles.converter}>
+      <div>
+        <span style={styles.eyebrow}>BROWSER-BASED · NO ACCOUNT · NO UPLOAD</span>
+        <h2 style={styles.sectionTitle}>SVG to PNG converter</h2>
+        <p style={styles.muted}>Convert a local SVG into a PNG image on your device. External resources and active SVG content are rejected for safety.</p>
+      </div>
+      <label style={styles.field}>Choose an SVG file (up to 10 MB)
+        <input type="file" accept=".svg,image/svg+xml" onChange={(event) => { setFile(event.target.files?.[0] || null); setResult(null); setError(""); }} style={styles.input} />
+      </label>
+      {file && <p style={styles.muted}>Selected: {file.name} · {(file.size / 1024).toFixed(1)} KB</p>}
+      <button type="button" onClick={convert} disabled={busy || !file} style={styles.primary}>{busy ? "Converting…" : "Convert SVG to PNG"}</button>
+      {error && <p role="alert" style={styles.error}>{error}</p>}
+      {result && <div role="status" style={styles.success}>
+        <strong>Conversion complete</strong>
+        <p>{result.width} × {result.height} px · {(result.size / 1024).toFixed(1)} KB</p>
+        <a href={result.url} download={result.name} style={styles.download}>Download {result.name}</a>
+      </div>}
+      <p style={styles.fine}>The output uses the SVG width/height or viewBox. SVG files with external images, fonts or linked CSS are not supported.</p>
+    </section>
+  );
+}
+
 const styles = {
   page: { maxWidth: 1160, margin: "0 auto", padding: "44px 20px 80px", color: "var(--foreground, #f7f8fc)" },
   hero: { padding: "38px 0 30px", borderBottom: "1px solid var(--border, #303746)" },
@@ -187,6 +300,7 @@ export default function FileConverterHub() {
         </article>)}
       </div>
       <ImageConverter />
+      <SvgToPngConverter />
       <section id="roadmap" style={{ marginTop: 34 }}>
         <h2 style={styles.sectionTitle}>How the full platform will roll out</h2>
         <p style={styles.muted}>Format support will be enabled only when the conversion engine, output quality and failure cases pass tests. Planned cards are not active converters.</p>
