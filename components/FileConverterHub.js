@@ -13,12 +13,12 @@ const tools = [
     ["HTML to PDF", "Documents", "HTML → PDF"], ["PDF OCR", "Documents", "Scanned PDF → searchable PDF"],
     ["MP4 Converter", "Video", "MP4 / MOV / MKV"], ["Video Compressor", "Video", "MP4 / WebM"], ["Video to GIF", "Video", "Video → GIF"],
     ["MP3 Converter", "Audio", "MP3 / WAV / M4A"], ["Audio Compressor", "Audio", "MP3 / WAV / FLAC"],
-    ["CSV to Excel", "Spreadsheets", "CSV → XLSX", "ready"], ["Excel to CSV", "Spreadsheets", "XLSX → CSV", "ready"],
+    ["CSV to Excel", "Spreadsheets", "CSV → XLSX", "testing"], ["Excel to CSV", "Spreadsheets", "XLSX → CSV", "testing"],
     ["PowerPoint to PDF", "Presentations", "PPTX → PDF"], ["PDF to PowerPoint", "Presentations", "PDF → PPTX"],
-    ["EPUB Converter", "E-books", "EPUB / MOBI / PDF"], ["ZIP Extractor", "Archives", "ZIP → files", "ready"], ["ZIP Creator", "Archives", "Files → ZIP", "ready"],
+    ["EPUB Converter", "E-books", "EPUB / MOBI / PDF"], ["ZIP Extractor", "Archives", "ZIP → files", "testing"], ["ZIP Creator", "Archives", "Files → ZIP", "testing"],
     ["EPS Converter", "Vector", "EPS / SVG / PDF"],
     ["DWG / DXF Converter", "CAD", "DWG / DXF"], ["Font Converter", "Fonts", "TTF / OTF / WOFF"],
-  ].map(([name, category, formats, status]) => ({ name, category, formats, description: status === "ready" ? "Convert files locally in your browser; no paid API or account." : "Planned for a later free, browser-first release.", status: status || "planned", href: status === "ready" ? "#converter-engines" : "#roadmap" })),
+  ].map(([name, category, formats, status]) => ({ name, category, formats, description: status === "testing" ? "Browser-local engine added; real-file and Preview tests are pending." : "Planned for a later free, browser-first release.", status: status || "planned", href: status === "ready" ? "#converter-engines" : "#roadmap" })),
 ];
 
 const categories = ["All tools", "Documents", "Images", "Video", "Audio", "Spreadsheets", "Presentations", "E-books", "Archives", "Vector", "CAD", "Fonts"];
@@ -293,11 +293,11 @@ export default function FileConverterHub() {
       </label>
       <div style={styles.grid}>
         {filtered.map((tool) => <article key={tool.name} style={styles.card}>
-          <span style={styles.tag}>{tool.category} · {tool.status === "ready" ? "Available" : "Planned"}</span>
+          <span style={styles.tag}>{tool.category} · {tool.status === "ready" ? "Available" : tool.status === "testing" ? "Testing" : "Planned"}</span>
           <h2 style={styles.cardTitle}>{tool.name}</h2>
           <p style={{ ...styles.muted, fontSize: 13, margin: 0 }}>{tool.description}</p>
           <span style={{ ...styles.muted, fontSize: 12 }}>{tool.formats}</span>
-          {tool.status === "ready" ? <Link href={tool.href} style={styles.link}>{tool.href.startsWith("#") ? "Use converter ↓" : "Open tool →"}</Link> : <span style={styles.disabled}>Coming in a tested update</span>}
+          {tool.status === "ready" || tool.status === "testing" ? <Link href={tool.href} style={styles.link}>{tool.status === "testing" ? "Open test area ↓" : "Use converter ↓"}</Link> : <span style={styles.disabled}>Coming in a tested update</span>}
         </article>)}
       </div>
       <ImageConverter />
