@@ -122,7 +122,6 @@ function runTool(name, args = {}) {
         { name: 'AI Assistant', path: '/ai', capability: 'Text generation, rewriting and summarizing through configured AI providers' },
         { name: 'AI Prompts', path: '/ai-prompts', capability: 'Help compose prompts' },
         { name: 'AI Photo Editor', path: '/ai-photo-editor', capability: 'Image editing flow, subject to provider/API availability' },
-        { name: 'Student Tools', path: '/student-tools', capability: 'Study support tools' },
         { name: 'CV Maker', path: '/cv-maker', capability: 'CV/resume creation' },
       ],
       limitation: 'This is a static known list, not a live health check of each page or API.',

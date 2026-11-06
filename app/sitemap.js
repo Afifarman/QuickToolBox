@@ -1,26 +1,13 @@
 import { SITE_URL } from '../lib/site-config';
 
 const paths = [
-  '/', '/ai', '/cv-maker', '/ai-photo-editor', '/ai-prompts', '/tools', '/file-converter', '/student-tools',
-  '/tools/pdf-merge', '/tools/pdf-split', '/tools/pdf-compressor', '/tools/image-to-pdf',
-  '/tools/passport-photo-maker', '/tools/gpa-calculator', '/tools/emi-calculator',
-  '/tools/salary-calculator', '/tools/tax-vat-calculator', '/tools/invoice-generator',
-  '/tools/cover-letter-builder', '/tools/qr-scanner', '/tools/url-shortener',
-  '/tools/json-formatter', '/tools/favicon-generator', '/tools/meta-tag-generator',
-  '/tools/sitemap-generator', '/tools/password-strength-checker', '/tools/world-clock',
-  '/student-tools/grade-calculator', '/student-tools/study-timetable',
-  '/student-tools/study-time-calculator', '/student-tools/scientific-calculator',
-  '/student-tools/math-problem-solver', '/student-tools/citation-generator', '/student-tools/essay-outline-generator',
-  '/student-tools/quiz-generator',
-  '/student-tools/notes-summarizer', '/student-tools/grammar-checker', '/student-tools/student-translator',
-  '/student-tools/pdf-notes-extractor', '/student-tools/semester-result-calculator', '/student-tools/exam-countdown',
-  '/student-tools/student-budget-calculator', '/student-tools/assignment-checklist', '/student-tools/study-notes-organizer',
+  '/', '/ai', '/ai-platform', '/cv-maker', '/ai-photo-editor', '/ai-prompts', '/file-converter', '/ai/local',
 ];
 
 export default function sitemap() {
   return paths.map((path) => ({
     url: `${SITE_URL}${path}`,
     changeFrequency: path === '/' ? 'daily' : 'weekly',
-    priority: path === '/' ? 1 : path === '/ai' || path === '/cv-maker' ? 0.9 : 0.7,
+    priority: path === '/' ? 1 : path === '/ai' || path === '/ai-platform' || path === '/cv-maker' ? 0.9 : 0.7,
   }));
 }

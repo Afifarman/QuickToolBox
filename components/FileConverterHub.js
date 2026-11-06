@@ -4,14 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 const tools = [
-  { name: "PDF Merge", category: "Documents", description: "Combine multiple PDF files into one.", href: "/tools/pdf-merge", status: "ready", formats: "PDF → PDF" },
-  { name: "PDF Split", category: "Documents", description: "Extract selected pages from a PDF.", href: "/tools/pdf-split", status: "ready", formats: "PDF → PDF" },
-  { name: "PDF Compressor", category: "Documents", description: "Reduce PDF size with an explicit rasterization warning.", href: "/tools/pdf-compressor", status: "ready", formats: "PDF → PDF" },
-  { name: "Images to PDF", category: "Documents", description: "Create a PDF from JPG and PNG images.", href: "/tools/image-to-pdf", status: "ready", formats: "JPG / PNG → PDF" },
   { name: "Image Converter", category: "Images", description: "Convert images between PNG, JPEG and WebP in your browser.", href: "#image-converter", status: "ready", formats: "PNG ↔ JPEG ↔ WebP" },
   { name: "Image Compressor", category: "Images", description: "Resize and compress an image with a quality setting.", href: "#image-converter", status: "ready", formats: "PNG / JPEG / WebP" },
-  { name: "Passport Photo Maker", category: "Images", description: "Create a square passport-style image.", href: "/tools/passport-photo-maker", status: "ready", formats: "Image → JPEG" },
-  { name: "Favicon Generator", category: "Images", description: "Create a 256 px PNG favicon from an image.", href: "/tools/favicon-generator", status: "ready", formats: "Image → PNG" },
   ...[
     ["PDF to Word", "Documents", "PDF → DOCX"], ["Word to PDF", "Documents", "DOCX → PDF"], ["PDF to JPG", "Documents", "PDF → JPG"],
     ["HTML to PDF", "Documents", "HTML → PDF"], ["PDF OCR", "Documents", "Scanned PDF → searchable PDF"],
