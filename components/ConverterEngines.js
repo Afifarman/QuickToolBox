@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PDFDocument } from "pdf-lib";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -155,6 +156,110 @@ async function xlsxToCsv(file) {
   return new Blob([rows.join("\r\n")], { type: "text/csv;charset=utf-8" });
 }
 
+function rasterizeToJpgBytes(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth || img.width;
+      canvas.height = img.naturalHeight || img.height;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob((blob) => {
+        if (!blob) return reject(new Error("Image conversion failed."));
+        blob.arrayBuffer().then((buf) => resolve(new Uint8Array(buf))).catch(reject);
+      }, "image/jpeg", 0.92);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("ছবির ফরম্যাট লোড করা যায়নি।"));
+    };
+    img.src = url;
+  });
+}
+
+async function imagesToPdf(files) {
+  if (!files || !files.length) throw new Error("কমপক্ষে একটি ছবি নির্বাচন করুন।");
+  const doc = await PDFDocument.create();
+  for (const file of files) {
+    let bytes = new Uint8Array(await file.arrayBuffer());
+    let img;
+    if (file.type === "image/jpeg" || file.type === "image/jpg") {
+      img = await doc.embedJpg(bytes);
+    } else if (file.type === "image/png") {
+      try {
+        img = await doc.embedPng(bytes);
+      } catch {
+        bytes = await rasterizeToJpgBytes(file);
+        img = await doc.embedJpg(bytes);
+      }
+    } else {
+      bytes = await rasterizeToJpgBytes(file);
+      img = await doc.embedJpg(bytes);
+    }
+    const page = doc.addPage([img.width, img.height]);
+    page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+  }
+  const resultBytes = await doc.save();
+  return new Blob([resultBytes], { type: "application/pdf" });
+}
+
+async function mergePdfFiles(files) {
+  if (!files || files.length < 2) throw new Error("কমপক্ষে ২টি PDF ফাইল নির্বাচন করুন।");
+  const merged = await PDFDocument.create();
+  for (const file of files) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const doc = await PDFDocument.load(bytes);
+    const pages = await merged.copyPages(doc, doc.getPageIndices());
+    for (const page of pages) merged.addPage(page);
+  }
+  const resultBytes = await merged.save();
+  return new Blob([resultBytes], { type: "application/pdf" });
+}
+
+async function convertAudioToWav(file) {
+  if (!file) throw new Error("একটি অডিও ফাইল নির্বাচন করুন।");
+  const AudioContextClass = typeof window !== "undefined" && (window.AudioContext || window.webkitAudioContext);
+  if (!AudioContextClass) throw new Error("এই ব্রাউজারে Web Audio API সমর্থিত নয়।");
+  const ctx = new AudioContextClass();
+  const arrayBuffer = await file.arrayBuffer();
+  const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+  const numOfChan = audioBuffer.numberOfChannels;
+  const length = audioBuffer.length * numOfChan * 2 + 44;
+  const out = new DataView(new ArrayBuffer(length));
+  let pos = 0;
+  const setUint16 = (d) => { out.setUint16(pos, d, true); pos += 2; };
+  const setUint32 = (d) => { out.setUint32(pos, d, true); pos += 4; };
+  setUint32(0x46464952);
+  setUint32(length - 8);
+  setUint32(0x45564157);
+  setUint32(0x20746d66);
+  setUint32(16);
+  setUint16(1);
+  setUint16(numOfChan);
+  setUint32(audioBuffer.sampleRate);
+  setUint32(audioBuffer.sampleRate * 2 * numOfChan);
+  setUint16(numOfChan * 2);
+  setUint16(16);
+  setUint32(0x61746164);
+  setUint32(length - pos - 4);
+  const channels = [];
+  for (let i = 0; i < numOfChan; i++) channels.push(audioBuffer.getChannelData(i));
+  for (let i = 0; i < audioBuffer.length; i++) {
+    for (let ch = 0; ch < numOfChan; ch++) {
+      let sample = Math.max(-1, Math.min(1, channels[ch][i]));
+      sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+      out.setInt16(pos, sample, true);
+      pos += 2;
+    }
+  }
+  return new Blob([out.buffer], { type: "audio/wav" });
+}
+
 function Download({ result }) {
   return result && <p role="status" style={{ marginTop: 12 }}><a href={result.url} download={result.name} style={{ color: "#7dd3fc", fontWeight: 700 }}>Download {result.name} · {(result.size / 1024).toFixed(1)} KB</a></p>;
 }
@@ -172,13 +277,33 @@ export default function ConverterEngines() {
   const [csv, setCsv] = useState(null), [xlsx, setXlsx] = useState(null), [zipInput, setZipInput] = useState(null), [zipFilesInput, setZipFilesInput] = useState([]);
   const [error, setError] = useState(""), [busy, setBusy] = useState("");
   const [extracted, setExtracted] = useState([]);
+  const [pdfImages, setPdfImages] = useState([]), [mergePdfs, setMergePdfs] = useState([]), [audioInput, setAudioInput] = useState(null);
   const [csvResult, saveCsv, clearCsv] = useResult(), [xlsxResult, saveXlsx, clearXlsx] = useResult(), [zipResult, saveZip, clearZip] = useResult();
+  const [imgPdfResult, saveImgPdf, clearImgPdf] = useResult(), [mergePdfResult, saveMergePdf, clearMergePdf] = useResult(), [audioResult, saveAudio, clearAudio] = useResult();
   useEffect(() => () => extracted.forEach(item => URL.revokeObjectURL(item.url)), [extracted]);
   async function run(label, fn) {
     setError(""); setBusy(label);
     try { await fn(); } catch (e) { setError(e?.message || "Conversion failed."); } finally { setBusy(""); }
   }
   return <>
+    <section style={box} id="images-to-pdf">
+      <h2>Images to PDF</h2><p>এক বা একাধিক ছবি (JPG, PNG, WebP) দিয়ে ব্রাউজারেই সরাসরি একটি PDF ডকুমেন্ট তৈরি করুন।</p>
+      <label style={field}>Select images (JPG / PNG / WebP) <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => { setPdfImages([...(e.target.files || [])]); clearImgPdf(); }} /></label>
+      <button style={button} disabled={!pdfImages.length || !!busy} onClick={() => run("img-to-pdf", async () => saveImgPdf(await imagesToPdf(pdfImages), "quicktoolbox-images.pdf"))}>{busy === "img-to-pdf" ? "Creating PDF…" : "Convert Images to PDF"}</button>
+      <Download result={imgPdfResult} />
+    </section>
+    <section style={box} id="merge-pdf">
+      <h2>Merge PDF</h2><p>একাধিক PDF ফাইল নির্বাচন করে একটি একক PDF ফাইলে জোড়া লাগান।</p>
+      <label style={field}>Select PDF files (at least 2) <input type="file" accept="application/pdf,.pdf" multiple onChange={e => { setMergePdfs([...(e.target.files || [])]); clearMergePdf(); }} /></label>
+      <button style={button} disabled={mergePdfs.length < 2 || !!busy} onClick={() => run("merge-pdf", async () => saveMergePdf(await mergePdfFiles(mergePdfs), "quicktoolbox-merged.pdf"))}>{busy === "merge-pdf" ? "Merging…" : "Merge PDFs"}</button>
+      <Download result={mergePdfResult} />
+    </section>
+    <section style={box} id="audio-to-wav">
+      <h2>Audio to WAV</h2><p>যেকোনো অডিও ফাইল (MP3, M4A, OGG, AAC) ব্রাউজারেই স্ট্যান্ডার্ড WAV অডিওতে রূপান্তর করুন।</p>
+      <label style={field}>Audio file <input type="file" accept="audio/*" onChange={e => { setAudioInput(e.target.files?.[0] || null); clearAudio(); }} /></label>
+      <button style={button} disabled={!audioInput || !!busy} onClick={() => run("audio", async () => saveAudio(await convertAudioToWav(audioInput), (audioInput.name.replace(/\.[^.]+$/, "") || "audio") + ".wav"))}>{busy === "audio" ? "Converting…" : "Convert to WAV"}</button>
+      <Download result={audioResult} />
+    </section>
     <section style={box} id="csv-to-excel">
       <h2>CSV to Excel</h2><p>CSV ফাইলকে XLSX workbook-এ রূপান্তর করুন।</p>
       <label style={field}>CSV file <input type="file" accept=".csv,text/csv" onChange={e => { setCsv(e.target.files?.[0] || null); clearCsv(); }} /></label>

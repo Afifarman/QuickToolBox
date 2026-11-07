@@ -6,7 +6,13 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 // Current Gemini image-editing model first; legacy image model is a compatibility fallback.
-const MODELS = [process.env.GEMINI_IMAGE_MODEL, 'gemini-3.1-flash-image', 'gemini-2.5-flash-image'].filter(Boolean);
+const MODELS = [
+  process.env.GEMINI_IMAGE_MODEL,
+  'gemini-2.0-flash-exp',
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+].filter(Boolean);
 
 export async function POST(request) {
   const { user } = await getAuthenticatedUser();

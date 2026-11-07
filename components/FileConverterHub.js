@@ -8,6 +8,9 @@ const tools = [
   { name: "Image Converter", category: "Images", description: "Convert images between PNG, JPEG and WebP in your browser.", href: "#image-converter", status: "ready", formats: "PNG ↔ JPEG ↔ WebP" },
   { name: "Image Compressor", category: "Images", description: "Resize and compress an image with a quality setting.", href: "#image-converter", status: "ready", formats: "PNG / JPEG / WebP" },
   { name: "SVG to PNG", category: "Vector", description: "Rasterize a local SVG file to a downloadable PNG in your browser.", href: "#svg-converter", status: "ready", formats: "SVG → PNG" },
+  { name: "Images to PDF", category: "Documents", description: "Convert one or more JPG, PNG or WebP images into a combined PDF file in your browser.", href: "#images-to-pdf", status: "ready", formats: "JPG / PNG / WebP → PDF" },
+  { name: "Merge PDF", category: "Documents", description: "Combine two or more PDF documents into a single PDF without uploading to a server.", href: "#merge-pdf", status: "ready", formats: "PDF + PDF → PDF" },
+  { name: "Audio to WAV", category: "Audio", description: "Convert any audio format (MP3, M4A, OGG, AAC) to high-quality uncompressed WAV in your browser.", href: "#audio-to-wav", status: "ready", formats: "MP3 / M4A / OGG → WAV" },
   ...[
     ["PDF to Word", "Documents", "PDF → DOCX"], ["Word to PDF", "Documents", "DOCX → PDF"], ["PDF to JPG", "Documents", "PDF → JPG"],
     ["HTML to PDF", "Documents", "HTML → PDF"], ["PDF OCR", "Documents", "Scanned PDF → searchable PDF"],
@@ -18,10 +21,24 @@ const tools = [
     ["EPUB Converter", "E-books", "EPUB / MOBI / PDF"], ["ZIP Extractor", "Archives", "ZIP → files", "testing"], ["ZIP Creator", "Archives", "Files → ZIP", "testing"],
     ["EPS Converter", "Vector", "EPS / SVG / PDF"],
     ["DWG / DXF Converter", "CAD", "DWG / DXF"], ["Font Converter", "Fonts", "TTF / OTF / WOFF"],
-  ].map(([name, category, formats, status]) => ({ name, category, formats, description: status === "testing" ? "Browser-local engine added; real-file and Preview tests are pending." : "Planned for a later free, browser-first release.", status: status || "planned", href: status === "ready" || status === "testing" ? "#converter-engines" : "#roadmap" })),
+  ].map(([name, category, formats, status]) => (status ? {
+    name,
+    category,
+    formats,
+    description: "Browser-local engine added; real-file and Preview tests are pending.",
+    status,
+    href: "#converter-engines",
+  } : {
+    name,
+    category,
+    formats,
+    description: "Planned for a later free, browser-first release.",
+    status: "planned",
+    href: "#roadmap",
+  })),
 ];
 
-const categories = ["All tools", "Documents", "Images", "Video", "Audio", "Spreadsheets", "Presentations", "E-books", "Archives", "Vector", "CAD", "Fonts"];
+const categories = ["All tools", "Available now", "Documents", "Images", "Audio", "Spreadsheets", "Archives", "Vector", "Video", "Presentations", "E-books", "CAD", "Fonts"];
 
 function ImageConverter() {
   const [file, setFile] = useState(null);
@@ -274,7 +291,7 @@ const styles = {
 export default function FileConverterHub() {
   const [active, setActive] = useState("All tools");
   const [query, setQuery] = useState("");
-  const filtered = useMemo(() => tools.filter((tool) => (active === "All tools" || tool.category === active) && (tool.name + " " + tool.description + " " + tool.formats).toLowerCase().includes(query.toLowerCase())), [active, query]);
+  const filtered = useMemo(() => tools.filter((tool) => (active === "All tools" ? true : active === "Available now" ? (tool.status === "ready" || tool.status === "testing") : tool.category === active) && (tool.name + " " + tool.description + " " + tool.formats).toLowerCase().includes(query.toLowerCase())), [active, query]);
   const readyCount = tools.filter((tool) => tool.status === "ready").length;
 
   return (
@@ -299,6 +316,9 @@ export default function FileConverterHub() {
           <span style={{ ...styles.muted, fontSize: 12 }}>{tool.formats}</span>
           {tool.status === "ready" || tool.status === "testing" ? <Link href={tool.href} style={styles.link}>{tool.status === "testing" ? "Open test area ↓" : "Use converter ↓"}</Link> : <span style={styles.disabled}>Coming in a tested update</span>}
         </article>)}
+      </div>
+      <div id="converter-engines" style={{ marginTop: 24 }}>
+        <ConverterEngines />
       </div>
       <ImageConverter />
       <SvgToPngConverter />
