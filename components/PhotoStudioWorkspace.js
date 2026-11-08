@@ -215,15 +215,15 @@ export default function PhotoStudioWorkspace() {
 
           {mode === "id" ? <>
             <div className="qt-studio-two-upload">
-              <FilePicker label="Front side" files={front} onChange={(file) => chooseSingle(file, setFront, setFrontPreview)} />
-              <FilePicker label="Back side" files={back} onChange={(file) => chooseSingle(file, setBack, setBackPreview)} />
+              <FilePicker accept="image/jpeg,image/png" label="Front side" files={front} onChange={(file) => chooseSingle(file, setFront, setFrontPreview)} />
+              <FilePicker accept="image/jpeg,image/png" label="Back side" files={back} onChange={(file) => chooseSingle(file, setBack, setBackPreview)} />
             </div>
             <p className="qt-studio-hint">Places the front and back images on one A4 page using the standard 85.6 × 54 mm card footprint. This is a print layout, not an official identity-card generator.</p>
             <div className="qt-studio-preview-row">{frontPreview ? <img src={frontPreview} alt="ID card front preview" /> : null}{backPreview ? <img src={backPreview} alt="ID card back preview" /> : null}</div>
           </> : null}
 
           {mode === "pdf" ? <>
-            <FilePicker label="Choose document images" multiple files={documents} onChange={(files) => { setDocuments(files); setError(""); setMessage(""); }} />
+            <FilePicker accept="image/jpeg,image/png" label="Choose document images" multiple files={documents} onChange={(files) => { setDocuments(files); setError(""); setMessage(""); }} />
             <p className="qt-studio-hint">Each JPG or PNG image becomes a separate A4 PDF page, fitted without stretching. WebP is currently not supported in this export.</p>
             {documents.length ? <ul className="qt-studio-file-list">{documents.map((file) => <li key={file.name + file.size}>{file.name}</li>)}</ul> : null}
           </> : null}
