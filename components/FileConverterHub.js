@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -8,20 +8,37 @@ const tools = [
   { name: "Image Converter", category: "Images", description: "Convert images between PNG, JPEG and WebP in your browser.", href: "#image-converter", status: "ready", formats: "PNG ↔ JPEG ↔ WebP" },
   { name: "Image Compressor", category: "Images", description: "Resize and compress an image with a quality setting.", href: "#image-converter", status: "ready", formats: "PNG / JPEG / WebP" },
   { name: "SVG to PNG", category: "Vector", description: "Rasterize a local SVG file to a downloadable PNG in your browser.", href: "#svg-converter", status: "ready", formats: "SVG → PNG" },
+  { name: "Images to PDF", category: "Documents", description: "Convert one or more JPG, PNG or WebP images into a combined PDF file in your browser.", href: "#images-to-pdf", status: "ready", formats: "JPG / PNG / WebP → PDF" },
+  { name: "Merge PDF", category: "Documents", description: "Combine two or more PDF documents into a single PDF without uploading to a server.", href: "#merge-pdf", status: "ready", formats: "PDF + PDF → PDF" },
+  { name: "Audio to WAV", category: "Audio", description: "Convert any audio format (MP3, M4A, OGG, AAC) to high-quality uncompressed WAV in your browser.", href: "#audio-to-wav", status: "ready", formats: "MP3 / M4A / OGG → WAV" },
   ...[
-    ["PDF to Word", "Documents", "PDF → DOCX"], ["Word to PDF", "Documents", "DOCX → PDF"], ["PDF to JPG", "Documents", "PDF → JPG"],
-    ["HTML to PDF", "Documents", "HTML → PDF"], ["PDF OCR", "Documents", "Scanned PDF → searchable PDF"],
-    ["MP4 Converter", "Video", "MP4 / MOV / MKV"], ["Video Compressor", "Video", "MP4 / WebM"], ["Video to GIF", "Video", "Video → GIF"],
-    ["MP3 Converter", "Audio", "MP3 / WAV / M4A"], ["Audio Compressor", "Audio", "MP3 / WAV / FLAC"],
+    ["PDF to Word", "Documents", "PDF → DOCX", "testing", "#pdf-to-docx"], ["Word to PDF", "Documents", "DOCX → PDF", "testing", "#word-to-pdf"], ["PDF to JPG", "Documents", "PDF → JPG", "testing", "#images-to-pdf"],
+    ["HTML to PDF", "Documents", "HTML → PDF", "testing", "#html-to-pdf"], ["PDF OCR", "Documents", "Scanned PDF → searchable PDF"],
+    ["MP4 Converter", "Video", "MP4 / MOV / MKV", "testing", "#video-compressor"], ["Video Compressor", "Video", "MP4 / WebM", "testing", "#video-compressor"], ["Video to GIF", "Video", "Video → GIF", "testing", "#video-compressor"],
+    ["MP3 Converter", "Audio", "MP3 / WAV / M4A", "testing", "#audio-to-wav"], ["Audio Compressor", "Audio", "MP3 / WAV / FLAC", "testing", "#audio-compressor"],
     ["CSV to Excel", "Spreadsheets", "CSV → XLSX", "testing"], ["Excel to CSV", "Spreadsheets", "XLSX → CSV", "testing"],
-    ["PowerPoint to PDF", "Presentations", "PPTX → PDF"], ["PDF to PowerPoint", "Presentations", "PDF → PPTX"],
+    ["PowerPoint to PDF", "Presentations", "PPTX → PDF", "testing", "#pptx-to-pdf"], ["PDF to PowerPoint", "Presentations", "PDF → PPTX"],
     ["EPUB Converter", "E-books", "EPUB / MOBI / PDF"], ["ZIP Extractor", "Archives", "ZIP → files", "testing"], ["ZIP Creator", "Archives", "Files → ZIP", "testing"],
     ["EPS Converter", "Vector", "EPS / SVG / PDF"],
-    ["DWG / DXF Converter", "CAD", "DWG / DXF"], ["Font Converter", "Fonts", "TTF / OTF / WOFF"],
-  ].map(([name, category, formats, status]) => ({ name, category, formats, description: status === "testing" ? "Browser-local engine added; real-file and Preview tests are pending." : "Planned for a later free, browser-first release.", status: status || "planned", href: status === "ready" || status === "testing" ? "#converter-engines" : "#roadmap" })),
+    ["DWG / DXF Converter", "CAD", "DWG / DXF"], ["Font Converter", "Fonts", "TTF / OTF / WOFF", "testing", "#font-converter"],
+  ].map(([name, category, formats, status, targetHref]) => (status ? {
+    name,
+    category,
+    formats,
+    description: "Browser-local engine added; real-file and Preview tests are pending.",
+    status,
+    href: targetHref || "#converter-engines",
+  } : {
+    name,
+    category,
+    formats,
+    description: "Planned for a later free, browser-first release.",
+    status: "planned",
+    href: "#roadmap",
+  })),
 ];
 
-const categories = ["All tools", "Documents", "Images", "Video", "Audio", "Spreadsheets", "Presentations", "E-books", "Archives", "Vector", "CAD", "Fonts"];
+const categories = ["All tools", "Available now", "Documents", "Images", "Audio", "Spreadsheets", "Archives", "Vector", "Video", "Presentations", "E-books", "CAD", "Fonts"];
 
 function ImageConverter() {
   const [file, setFile] = useState(null);
@@ -246,7 +263,7 @@ function SvgToPngConverter() {
 }
 
 const styles = {
-  page: { maxWidth: 1160, margin: "0 auto", padding: "44px 20px 80px", color: "var(--foreground, #f7f8fc)" },
+  page: { maxWidth: 1160, margin: "0 auto", padding: "clamp(20px,5vw,44px) clamp(12px,4vw,20px) 80px", color: "var(--foreground, #f7f8fc)", boxSizing: "border-box", width: "100%" },
   hero: { padding: "38px 0 30px", borderBottom: "1px solid var(--border, #303746)" },
   eyebrow: { color: "#7dd3fc", fontSize: 12, fontWeight: 800, letterSpacing: 1.4 },
   title: { fontSize: "clamp(32px, 5vw, 52px)", lineHeight: 1.08, margin: "12px 0" },
@@ -259,12 +276,12 @@ const styles = {
   tag: { fontSize: 11, color: "#7dd3fc", fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.8 },
   link: { color: "#7dd3fc", fontWeight: 700, textDecoration: "none", marginTop: "auto" },
   disabled: { color: "#9ca3af", fontSize: 13, marginTop: "auto" },
-  converter: { marginTop: 38, border: "1px solid var(--border, #303746)", borderRadius: 20, padding: 22, background: "var(--card, rgba(255,255,255,.025))" },
+  converter: { marginTop: 38, border: "1px solid var(--border, #303746)", borderRadius: 20, padding: "clamp(14px,4vw,22px)", background: "var(--card, rgba(255,255,255,.025))", width: "100%", boxSizing: "border-box", overflowX: "hidden" },
   sectionTitle: { fontSize: 25, margin: "8px 0" },
   field: { display: "flex", flexDirection: "column", gap: 8, fontSize: 13, fontWeight: 650, minWidth: 0 },
   input: { width: "100%", padding: 12, borderRadius: 10, border: "1px solid var(--border, #4b5563)", background: "var(--background, #111827)", color: "inherit", minHeight: 44 },
   controls: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 190px), 1fr))", gap: 14, margin: "18px 0" },
-  primary: { border: 0, borderRadius: 10, padding: "13px 20px", background: "#2563eb", color: "white", fontWeight: 800, cursor: "pointer" },
+  primary: { border: 0, borderRadius: 10, padding: "13px 20px", background: "#2563eb", color: "white", fontWeight: 800, cursor: "pointer", minHeight: 44, touchAction: "manipulation", width: "100%", maxWidth: 320, fontSize: "clamp(14px,3.5vw,16px)" },
   error: { color: "#fca5a5" },
   success: { marginTop: 18, padding: 16, borderRadius: 12, background: "rgba(34,197,94,.09)", border: "1px solid rgba(34,197,94,.35)" },
   download: { display: "inline-block", padding: "10px 14px", borderRadius: 9, background: "#15803d", color: "white", textDecoration: "none", fontWeight: 750 },
@@ -274,7 +291,7 @@ const styles = {
 export default function FileConverterHub() {
   const [active, setActive] = useState("All tools");
   const [query, setQuery] = useState("");
-  const filtered = useMemo(() => tools.filter((tool) => (active === "All tools" || tool.category === active) && (tool.name + " " + tool.description + " " + tool.formats).toLowerCase().includes(query.toLowerCase())), [active, query]);
+  const filtered = useMemo(() => tools.filter((tool) => (active === "All tools" ? true : active === "Available now" ? (tool.status === "ready" || tool.status === "testing") : tool.category === active) && (tool.name + " " + tool.description + " " + tool.formats).toLowerCase().includes(query.toLowerCase())), [active, query]);
   const readyCount = tools.filter((tool) => tool.status === "ready").length;
 
   return (
@@ -299,6 +316,9 @@ export default function FileConverterHub() {
           <span style={{ ...styles.muted, fontSize: 12 }}>{tool.formats}</span>
           {tool.status === "ready" || tool.status === "testing" ? <Link href={tool.href} style={styles.link}>{tool.status === "testing" ? "Open test area ↓" : "Use converter ↓"}</Link> : <span style={styles.disabled}>Coming in a tested update</span>}
         </article>)}
+      </div>
+      <div id="converter-engines" style={{ marginTop: 24 }}>
+        <ConverterEngines />
       </div>
       <ImageConverter />
       <SvgToPngConverter />

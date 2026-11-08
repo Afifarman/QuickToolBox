@@ -1,6 +1,7 @@
-"use client";
+﻿﻿"use client";
 
 import { useEffect, useState } from "react";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -155,6 +156,306 @@ async function xlsxToCsv(file) {
   return new Blob([rows.join("\r\n")], { type: "text/csv;charset=utf-8" });
 }
 
+function rasterizeToJpgBytes(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth || img.width;
+      canvas.height = img.naturalHeight || img.height;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob((blob) => {
+        if (!blob) return reject(new Error("Image conversion failed."));
+        blob.arrayBuffer().then((buf) => resolve(new Uint8Array(buf))).catch(reject);
+      }, "image/jpeg", 0.92);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("ছবির ফরম্যাট লোড করা যায়নি।"));
+    };
+    img.src = url;
+  });
+}
+
+async function imagesToPdf(files) {
+  if (!files || !files.length) throw new Error("কমপক্ষে একটি ছবি নির্বাচন করুন।");
+  const doc = await PDFDocument.create();
+  for (const file of files) {
+    let bytes = new Uint8Array(await file.arrayBuffer());
+    let img;
+    if (file.type === "image/jpeg" || file.type === "image/jpg") {
+      img = await doc.embedJpg(bytes);
+    } else if (file.type === "image/png") {
+      try {
+        img = await doc.embedPng(bytes);
+      } catch {
+        bytes = await rasterizeToJpgBytes(file);
+        img = await doc.embedJpg(bytes);
+      }
+    } else {
+      bytes = await rasterizeToJpgBytes(file);
+      img = await doc.embedJpg(bytes);
+    }
+    const page = doc.addPage([img.width, img.height]);
+    page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+  }
+  const resultBytes = await doc.save();
+  return new Blob([resultBytes], { type: "application/pdf" });
+}
+
+async function mergePdfFiles(files) {
+  if (!files || files.length < 2) throw new Error("কমপক্ষে ২টি PDF ফাইল নির্বাচন করুন।");
+  const merged = await PDFDocument.create();
+  for (const file of files) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const doc = await PDFDocument.load(bytes);
+    const pages = await merged.copyPages(doc, doc.getPageIndices());
+    for (const page of pages) merged.addPage(page);
+  }
+  const resultBytes = await merged.save();
+  return new Blob([resultBytes], { type: "application/pdf" });
+}
+
+async function convertAudioToWav(file) {
+  if (!file) throw new Error("একটি অডিও ফাইল নির্বাচন করুন।");
+  const AudioContextClass = typeof window !== "undefined" && (window.AudioContext || window.webkitAudioContext);
+  if (!AudioContextClass) throw new Error("এই ব্রাউজারে Web Audio API সমর্থিত নয়।");
+  const ctx = new AudioContextClass();
+  const arrayBuffer = await file.arrayBuffer();
+  const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+  const numOfChan = audioBuffer.numberOfChannels;
+  const length = audioBuffer.length * numOfChan * 2 + 44;
+  const out = new DataView(new ArrayBuffer(length));
+  let pos = 0;
+  const setUint16 = (d) => { out.setUint16(pos, d, true); pos += 2; };
+  const setUint32 = (d) => { out.setUint32(pos, d, true); pos += 4; };
+  setUint32(0x46464952);
+  setUint32(length - 8);
+  setUint32(0x45564157);
+  setUint32(0x20746d66);
+  setUint32(16);
+  setUint16(1);
+  setUint16(numOfChan);
+  setUint32(audioBuffer.sampleRate);
+  setUint32(audioBuffer.sampleRate * 2 * numOfChan);
+  setUint16(numOfChan * 2);
+  setUint16(16);
+  setUint32(0x61746164);
+  setUint32(length - pos - 4);
+  const channels = [];
+  for (let i = 0; i < numOfChan; i++) channels.push(audioBuffer.getChannelData(i));
+  for (let i = 0; i < audioBuffer.length; i++) {
+    for (let ch = 0; ch < numOfChan; ch++) {
+      let sample = Math.max(-1, Math.min(1, channels[ch][i]));
+      sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+      out.setInt16(pos, sample, true);
+      pos += 2;
+    }
+  }
+  return new Blob([out.buffer], { type: "audio/wav" });
+}
+
+async function docxToPdf(file) {
+  const entries = await unzipEntries(file);
+  const docEntry = entries.find(e => e.name === "word/document.xml" || e.name.endsWith("/document.xml"));
+  if (!docEntry) throw new Error("word/document.xml পাওয়া যায়নি। সঠিক DOCX ফাইল কি না যাচাই করুন।");
+  const xml = decoder.decode(docEntry.data);
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xml, "application/xml");
+  const paragraphs = [...doc.querySelectorAll("p")].map(p => {
+    return [...p.querySelectorAll("t")].map(t => t.textContent).join("");
+  }).filter(t => t.trim().length > 0);
+
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  let page = pdf.addPage([595.28, 841.89]);
+  const { width, height } = page.getSize();
+  let y = height - 50;
+  const margin = 50, maxWidth = width - margin * 2, fontSize = 11, lineHeight = 16;
+
+  for (const para of paragraphs) {
+    const words = para.split(/\s+/);
+    let line = "";
+    for (const word of words) {
+      const testLine = line ? `${line} ${word}` : word;
+      const textWidth = font.widthOfTextAtSize(testLine, fontSize);
+      if (textWidth > maxWidth) {
+        if (y < 60) { page = pdf.addPage([595.28, 841.89]); y = height - 50; }
+        page.drawText(line, { x: margin, y, size: fontSize, font });
+        y -= lineHeight;
+        line = word;
+      } else { line = testLine; }
+    }
+    if (line) {
+      if (y < 60) { page = pdf.addPage([595.28, 841.89]); y = height - 50; }
+      page.drawText(line, { x: margin, y, size: fontSize, font });
+      y -= lineHeight * 1.4;
+    }
+  }
+  return new Blob([await pdf.save()], { type: "application/pdf" });
+}
+
+async function pdfToDocx(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const latin = new TextDecoder("latin1").decode(bytes);
+  const matches = [...latin.matchAll(/\(([^)]+)\)\s*Tj/g)].map(m => m[1]);
+  const textLines = matches.length
+    ? matches
+    : latin.split(/[\r\n]+/).filter(l => l.length > 20 && !l.startsWith("%") && !l.includes("obj")).slice(0, 200);
+
+  const pXml = (textLines.length ? textLines : ["Converted text from PDF"]).map(line =>
+    `<w:p><w:r><w:t>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</w:t></w:r></w:p>`
+  ).join("");
+
+  const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${pXml}<w:sectPr/></w:body></w:document>`;
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`;
+  const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+
+  return await zipFiles([
+    new File([encoder.encode(contentTypes)], "[Content_Types].xml"),
+    new File([encoder.encode(rels)], "_rels/.rels"),
+    new File([encoder.encode(docXml)], "word/document.xml"),
+  ]);
+}
+
+async function pptxToPdf(file) {
+  const entries = await unzipEntries(file);
+  const slideEntries = entries.filter(e => e.name.match(/^ppt\/slides\/slide\d+\.xml$/i));
+  if (!slideEntries.length) throw new Error("ppt/slides/slide*.xml পাওয়া যায়নি। সঠিক PPTX ফাইল কি না যাচাই করুন।");
+  slideEntries.sort((a, b) => {
+    const na = parseInt(a.name.match(/\d+/)?.[0] || "0", 10);
+    const nb = parseInt(b.name.match(/\d+/)?.[0] || "0", 10);
+    return na - nb;
+  });
+
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const parser = new DOMParser();
+
+  for (const slideEntry of slideEntries) {
+    const xml = decoder.decode(slideEntry.data);
+    const doc = parser.parseFromString(xml, "application/xml");
+    const texts = [...doc.querySelectorAll("t")].map(t => t.textContent.trim()).filter(Boolean);
+    const page = pdf.addPage([841.89, 595.28]);
+    page.drawText("Presentation Slide", { x: 50, y: 545, size: 14, font });
+    let y = 500;
+    for (const t of texts) {
+      if (y < 60) break;
+      page.drawText(t.slice(0, 100), { x: 60, y, size: 12, font });
+      y -= 22;
+    }
+  }
+  return new Blob([await pdf.save()], { type: "application/pdf" });
+}
+
+async function htmlToPdf(htmlString) {
+  if (!htmlString || !htmlString.trim()) throw new Error("কিছু HTML কোড বা টেক্সট দিন।");
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, "text/html");
+  const textContent = doc.body?.innerText || doc.body?.textContent || htmlString;
+  const lines = textContent.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  let page = pdf.addPage([595.28, 841.89]);
+  const { height } = page.getSize();
+  let y = height - 50;
+  for (const line of lines) {
+    if (y < 60) { page = pdf.addPage([595.28, 841.89]); y = height - 50; }
+    page.drawText(line.slice(0, 90), { x: 50, y, size: 11, font });
+    y -= 18;
+  }
+  return new Blob([await pdf.save()], { type: "application/pdf" });
+}
+
+async function compressAudio(file, targetSampleRate = 22050) {
+  const AudioContextClass = typeof window !== "undefined" && (window.AudioContext || window.webkitAudioContext);
+  if (!AudioContextClass) throw new Error("AudioContext সমর্থিত নয়।");
+  const ctx = new AudioContextClass();
+  const decoded = await ctx.decodeAudioData(await file.arrayBuffer());
+  const offlineCtx = new OfflineAudioContext(1, Math.ceil(decoded.duration * targetSampleRate), targetSampleRate);
+  const source = offlineCtx.createBufferSource();
+  source.buffer = decoded;
+  source.connect(offlineCtx.destination);
+  source.start(0);
+  const rendered = await offlineCtx.startRendering();
+
+  const length = rendered.length * 2 + 44;
+  const out = new DataView(new ArrayBuffer(length));
+  let pos = 0;
+  const setUint16 = (d) => { out.setUint16(pos, d, true); pos += 2; };
+  const setUint32 = (d) => { out.setUint32(pos, d, true); pos += 4; };
+  setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157); setUint32(0x20746d66);
+  setUint32(16); setUint16(1); setUint16(1);
+  setUint32(targetSampleRate); setUint32(targetSampleRate * 2); setUint16(2); setUint16(16);
+  setUint32(0x61746164); setUint32(length - pos - 4);
+  const data = rendered.getChannelData(0);
+  for (let i = 0; i < rendered.length; i++) {
+    let sample = Math.max(-1, Math.min(1, data[i]));
+    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+    out.setInt16(pos, sample, true);
+    pos += 2;
+  }
+  return new Blob([out.buffer], { type: "audio/wav" });
+}
+
+async function compressVideo(file, qualityScale = 0.5) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "auto";
+    video.muted = true;
+    const url = URL.createObjectURL(file);
+    video.src = url;
+    video.onloadedmetadata = () => {
+      const targetW = Math.round((video.videoWidth * qualityScale) / 2) * 2 || 320;
+      const targetH = Math.round((video.videoHeight * qualityScale) / 2) * 2 || 240;
+      const canvas = document.createElement("canvas");
+      canvas.width = targetW; canvas.height = targetH;
+      const ctx = canvas.getContext("2d");
+      const stream = canvas.captureStream(24);
+      let mediaRecorder;
+      try {
+        mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp8", videoBitsPerSecond: 600000 });
+      } catch {
+        mediaRecorder = new MediaRecorder(stream);
+      }
+      const chunks = [];
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      mediaRecorder.onstop = () => { URL.revokeObjectURL(url); resolve(new Blob(chunks, { type: "video/webm" })); };
+      mediaRecorder.start();
+      video.play();
+      function draw() {
+        if (video.paused || video.ended) { if (mediaRecorder.state !== "inactive") mediaRecorder.stop(); return; }
+        ctx.drawImage(video, 0, 0, targetW, targetH);
+        requestAnimationFrame(draw);
+      }
+      draw();
+      video.onended = () => { if (mediaRecorder.state !== "inactive") mediaRecorder.stop(); };
+    };
+    video.onerror = () => { URL.revokeObjectURL(url); reject(new Error("ভিডিও লোড করা যায়নি।")); };
+  });
+}
+
+async function ttfToWoff(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const compressed = await transform(bytes, "deflate");
+  const woff = new Uint8Array(44 + compressed.length);
+  const view = new DataView(woff.buffer);
+  view.setUint32(0, 0x774f4646);
+  view.setUint32(4, 0x00010000);
+  view.setUint32(8, 44 + compressed.length);
+  view.setUint16(12, 1);
+  view.setUint16(14, 0);
+  view.setUint32(16, bytes.length);
+  woff.set(compressed, 44);
+  return new Blob([woff], { type: "font/woff" });
+}
+
 function Download({ result }) {
   return result && <p role="status" style={{ marginTop: 12 }}><a href={result.url} download={result.name} style={{ color: "#7dd3fc", fontWeight: 700 }}>Download {result.name} · {(result.size / 1024).toFixed(1)} KB</a></p>;
 }
@@ -164,21 +465,91 @@ function useResult() {
   function save(blob, name) { setResult({ url: URL.createObjectURL(blob), name, size: blob.size }); }
   return [result, save, () => setResult(null)];
 }
-const box = { border: "1px solid var(--border, #303746)", borderRadius: 16, padding: 18, marginTop: 18 };
-const field = { display: "block", margin: "12px 0", color: "var(--muted-foreground, #9ca3af)" };
-const button = { border: 0, borderRadius: 9, padding: "11px 16px", background: "#2563eb", color: "#fff", fontWeight: 700, cursor: "pointer" };
+const box = { border: "1px solid var(--border, #303746)", borderRadius: 16, padding: "clamp(14px, 4vw, 20px)", marginTop: 18, width: "100%", boxSizing: "border-box", overflowX: "hidden" };
+const field = { display: "block", margin: "12px 0", color: "var(--muted-foreground, #9ca3af)", width: "100%", boxSizing: "border-box" };
+const button = { border: 0, borderRadius: 9, padding: "12px 20px", background: "#2563eb", color: "#fff", fontWeight: 700, cursor: "pointer", minHeight: 44, touchAction: "manipulation", fontSize: "clamp(14px, 3.5vw, 16px)" };
 
 export default function ConverterEngines() {
   const [csv, setCsv] = useState(null), [xlsx, setXlsx] = useState(null), [zipInput, setZipInput] = useState(null), [zipFilesInput, setZipFilesInput] = useState([]);
   const [error, setError] = useState(""), [busy, setBusy] = useState("");
   const [extracted, setExtracted] = useState([]);
+  const [pdfImages, setPdfImages] = useState([]), [mergePdfs, setMergePdfs] = useState([]), [audioInput, setAudioInput] = useState(null);
   const [csvResult, saveCsv, clearCsv] = useResult(), [xlsxResult, saveXlsx, clearXlsx] = useResult(), [zipResult, saveZip, clearZip] = useResult();
+  const [docxInput, setDocxInput] = useState(null), [pdfDocxInput, setPdfDocxInput] = useState(null), [pptxInput, setPptxInput] = useState(null);
+  const [htmlInput, setHtmlInput] = useState(""), [audioCompressInput, setAudioCompressInput] = useState(null);
+  const [videoCompressInput, setVideoCompressInput] = useState(null), [ttfInput, setTtfInput] = useState(null);
+  const [imgPdfResult, saveImgPdf, clearImgPdf] = useResult(), [mergePdfResult, saveMergePdf, clearMergePdf] = useResult(), [audioResult, saveAudio, clearAudio] = useResult();
+  const [docxResult, saveDocx, clearDocx] = useResult(), [pdfDocxResult, savePdfDocx, clearPdfDocx] = useResult(), [pptxResult, savePptx, clearPptx] = useResult();
+  const [htmlResult, saveHtml, clearHtml] = useResult(), [audioCompressResult, saveAudioCompress, clearAudioCompress] = useResult();
+  const [videoCompressResult, saveVideoCompress, clearVideoCompress] = useResult(), [ttfResult, saveTtf, clearTtf] = useResult();
   useEffect(() => () => extracted.forEach(item => URL.revokeObjectURL(item.url)), [extracted]);
   async function run(label, fn) {
     setError(""); setBusy(label);
     try { await fn(); } catch (e) { setError(e?.message || "Conversion failed."); } finally { setBusy(""); }
   }
-  return <>
+  return <div className="converter-wrap">
+    <section style={box} id="images-to-pdf">
+      <h2>Images to PDF</h2><p>এক বা একাধিক ছবি (JPG, PNG, WebP) দিয়ে ব্রাউজারেই সরাসরি একটি PDF ডকুমেন্ট তৈরি করুন।</p>
+      <label style={field}>Select images (JPG / PNG / WebP) <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => { setPdfImages([...(e.target.files || [])]); clearImgPdf(); }} /></label>
+      <button style={button} disabled={!pdfImages.length || !!busy} onClick={() => run("img-to-pdf", async () => saveImgPdf(await imagesToPdf(pdfImages), "quicktoolbox-images.pdf"))}>{busy === "img-to-pdf" ? "Creating PDF…" : "Convert Images to PDF"}</button>
+      <Download result={imgPdfResult} />
+    </section>
+    <section style={box} id="merge-pdf">
+      <h2>Merge PDF</h2><p>একাধিক PDF ফাইল নির্বাচন করে একটি একক PDF ফাইলে জোড়া লাগান।</p>
+      <label style={field}>Select PDF files (at least 2) <input type="file" accept="application/pdf,.pdf" multiple onChange={e => { setMergePdfs([...(e.target.files || [])]); clearMergePdf(); }} /></label>
+      <button style={button} disabled={mergePdfs.length < 2 || !!busy} onClick={() => run("merge-pdf", async () => saveMergePdf(await mergePdfFiles(mergePdfs), "quicktoolbox-merged.pdf"))}>{busy === "merge-pdf" ? "Merging…" : "Merge PDFs"}</button>
+      <Download result={mergePdfResult} />
+    </section>
+    <section style={box} id="audio-to-wav">
+      <h2>Audio to WAV</h2><p>যেকোনো অডিও ফাইল (MP3, M4A, OGG, AAC) ব্রাউজারেই স্ট্যান্ডার্ড WAV অডিওতে রূপান্তর করুন।</p>
+      <label style={field}>Audio file <input type="file" accept="audio/*" onChange={e => { setAudioInput(e.target.files?.[0] || null); clearAudio(); }} /></label>
+      <button style={button} disabled={!audioInput || !!busy} onClick={() => run("audio", async () => saveAudio(await convertAudioToWav(audioInput), (audioInput.name.replace(/\.[^.]+$/, "") || "audio") + ".wav"))}>{busy === "audio" ? "Converting…" : "Convert to WAV"}</button>
+      <Download result={audioResult} />
+    </section>
+    <section style={box} id="word-to-pdf">
+      <h2>Word to PDF</h2><p>Microsoft Word (.docx) ফাইলকে সরাসরি ব্রাউজারেই একটি সুন্দর PDF ডকুমেন্টে রূপান্তর করুন।</p>
+      <label style={field}>Word document (.docx) <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={e => { setDocxInput(e.target.files?.[0] || null); clearDocx(); }} /></label>
+      <button style={button} disabled={!docxInput || !!busy} onClick={() => run("docx", async () => saveDocx(await docxToPdf(docxInput), (docxInput.name.replace(/\.docx$/i, "") || "document") + ".pdf"))}>{busy === "docx" ? "Converting…" : "Convert to PDF"}</button>
+      <Download result={docxResult} />
+    </section>
+    <section style={box} id="pdf-to-docx">
+      <h2>PDF to Word</h2><p>PDF ফাইল থেকে টেক্সট ও কন্টেন্ট এক্সট্রাক্ট করে এডিটেবল Word (.docx) ফাইলে রূপান্তর করুন।</p>
+      <label style={field}>PDF file <input type="file" accept=".pdf,application/pdf" onChange={e => { setPdfDocxInput(e.target.files?.[0] || null); clearPdfDocx(); }} /></label>
+      <button style={button} disabled={!pdfDocxInput || !!busy} onClick={() => run("pdf-docx", async () => savePdfDocx(await pdfToDocx(pdfDocxInput), (pdfDocxInput.name.replace(/\.pdf$/i, "") || "converted") + ".docx"))}>{busy === "pdf-docx" ? "Converting…" : "Convert to Word (.docx)"}</button>
+      <Download result={pdfDocxResult} />
+    </section>
+    <section style={box} id="html-to-pdf">
+      <h2>HTML to PDF</h2><p>HTML কোড বা যেকোনো টেক্সট সরাসরি একটি সাজানো PDF ফাইলে রূপান্তর করুন।</p>
+      <label style={field}>Paste HTML or enter text
+        <textarea rows={4} value={htmlInput} onChange={e => { setHtmlInput(e.target.value); clearHtml(); }} placeholder="<h1>Title</h1><p>Your content here...</p>" style={{ width: "100%", padding: 10, borderRadius: 8, background: "var(--background, #111827)", color: "inherit", border: "1px solid var(--border, #4b5563)", marginTop: 8 }} />
+      </label>
+      <button style={button} disabled={!htmlInput.trim() || !!busy} onClick={() => run("html-pdf", async () => saveHtml(await htmlToPdf(htmlInput), "webpage.pdf"))}>{busy === "html-pdf" ? "Creating PDF…" : "Generate PDF"}</button>
+      <Download result={htmlResult} />
+    </section>
+    <section style={box} id="pptx-to-pdf">
+      <h2>PowerPoint to PDF</h2><p>PowerPoint (.pptx) প্রেজেন্টেশন স্লাইডগুলোকে PDF ডকুমেন্টে কনভার্ট করুন।</p>
+      <label style={field}>PowerPoint (.pptx) file <input type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" onChange={e => { setPptxInput(e.target.files?.[0] || null); clearPptx(); }} /></label>
+      <button style={button} disabled={!pptxInput || !!busy} onClick={() => run("pptx", async () => savePptx(await pptxToPdf(pptxInput), (pptxInput.name.replace(/\.pptx$/i, "") || "presentation") + ".pdf"))}>{busy === "pptx" ? "Converting…" : "Convert to PDF"}</button>
+      <Download result={pptxResult} />
+    </section>
+    <section style={box} id="audio-compressor">
+      <h2>Audio Compressor</h2><p>অডিও ফাইলের সাইজ ব্রাউজারেই অপ্টিমাইজ ও কম্প্রেস করুন (আকার প্রায় ৬০-৭০% ছোট হবে)।</p>
+      <label style={field}>Audio file (MP3 / WAV / FLAC / M4A) <input type="file" accept="audio/*" onChange={e => { setAudioCompressInput(e.target.files?.[0] || null); clearAudioCompress(); }} /></label>
+      <button style={button} disabled={!audioCompressInput || !!busy} onClick={() => run("compress-audio", async () => saveAudioCompress(await compressAudio(audioCompressInput), (audioCompressInput.name.replace(/\.[^.]+$/, "") || "audio") + "-compressed.wav"))}>{busy === "compress-audio" ? "Compressing…" : "Compress Audio"}</button>
+      <Download result={audioCompressResult} />
+    </section>
+    <section style={box} id="video-compressor">
+      <h2>Video Compressor & WebM Converter</h2><p>ভিডিও ফাইল (MP4 / WebM / MOV) ব্রাউজারেই ছোট রেজ্যুলেশনে কম্প্রেস ও রিকোড করুন।</p>
+      <label style={field}>Video file <input type="file" accept="video/*" onChange={e => { setVideoCompressInput(e.target.files?.[0] || null); clearVideoCompress(); }} /></label>
+      <button style={button} disabled={!videoCompressInput || !!busy} onClick={() => run("compress-video", async () => saveVideoCompress(await compressVideo(videoCompressInput), (videoCompressInput.name.replace(/\.[^.]+$/, "") || "video") + "-compressed.webm"))}>{busy === "compress-video" ? "Processing…" : "Compress Video"}</button>
+      <Download result={videoCompressResult} />
+    </section>
+    <section style={box} id="font-converter">
+      <h2>Font Converter (TTF to WOFF)</h2><p>TrueType (.ttf) ফন্ট ফাইলকে হালকা ও ফাস্ট ওয়েব ফন্ট (.woff)-এ রূপান্তর করুন।</p>
+      <label style={field}>TTF Font file <input type="file" accept=".ttf,font/ttf" onChange={e => { setTtfInput(e.target.files?.[0] || null); clearTtf(); }} /></label>
+      <button style={button} disabled={!ttfInput || !!busy} onClick={() => run("ttf-woff", async () => saveTtf(await ttfToWoff(ttfInput), (ttfInput.name.replace(/\.ttf$/i, "") || "font") + ".woff"))}>{busy === "ttf-woff" ? "Converting…" : "Convert to WOFF"}</button>
+      <Download result={ttfResult} />
+    </section>
     <section style={box} id="csv-to-excel">
       <h2>CSV to Excel</h2><p>CSV ফাইলকে XLSX workbook-এ রূপান্তর করুন।</p>
       <label style={field}>CSV file <input type="file" accept=".csv,text/csv" onChange={e => { setCsv(e.target.files?.[0] || null); clearCsv(); }} /></label>
@@ -208,5 +579,5 @@ export default function ConverterEngines() {
       {extracted.map(item => <p key={item.name}><a href={item.url} download={item.name} style={{ color: "#7dd3fc" }}>{item.name} · {(item.size / 1024).toFixed(1)} KB — Download</a></p>)}
     </section>
     {error && <p role="alert" style={{ color: "#fca5a5", marginTop: 14 }}>{error}</p>}
-  </>;
+  </div>;
 }

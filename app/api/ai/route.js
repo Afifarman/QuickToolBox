@@ -199,7 +199,10 @@ async function geminiChat(prompt) {
   // Only use model IDs advertised for this exact API key. Prefer stable Flash
   // models, but retain preview IDs as a last resort if the key exposes no stable
   // option. Try up to five model-specific candidates before falling back.
-  const models = selectGeminiModels(availableModels, process.env.GEMINI_MODEL, 5);
+  const discovered = selectGeminiModels(availableModels, process.env.GEMINI_MODEL, 5);
+  const models = discovered.length
+    ? discovered
+    : unique([process.env.GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'].filter(Boolean));
 
   if (!models.length) {
     console.warn('[QuickToolBox AI] Gemini API key could not list any generateContent Flash models.');
