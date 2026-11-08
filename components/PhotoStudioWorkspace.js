@@ -192,51 +192,52 @@ export default function PhotoStudioWorkspace() {
   }
 
   return (
-    <div className="qt-studio-workspace">
-      <div className="qt-studio-tabs" role="tablist" aria-label="Photo studio tools">
-        <button type="button" role="tab" aria-selected={mode === "passport"} className={mode === "passport" ? "active" : ""} onClick={() => { setMode("passport"); setError(""); setMessage(""); }}>📸 Passport Photo</button>
-        <button type="button" role="tab" aria-selected={mode === "id"} className={mode === "id" ? "active" : ""} onClick={() => { setMode("id"); setError(""); setMessage(""); }}>🪪 ID Card PDF</button>
-        <button type="button" role="tab" aria-selected={mode === "pdf"} className={mode === "pdf" ? "active" : ""} onClick={() => { setMode("pdf"); setError(""); setMessage(""); }}>📄 Images to PDF</button>
-      </div>
-
-      <div className="qt-studio-editor">
-        <section className="qt-studio-panel">
-          <div className="qt-studio-panel-heading"><div><small>WORKSPACE / {mode.toUpperCase()}</small><h2>{modeLabel}</h2></div><span className="qt-studio-local">● Browser processing</span></div>
-
+    <div className="qt-studio-workspace qt-studio-app">
+      <header className="qt-studio-appbar">
+        <div className="qt-studio-brand"><span className="qt-studio-brand-mark">Q</span><span>QuickToolBox <small>STUDIO</small></span></div>
+        <div className="qt-studio-appbar-center"><span className="qt-studio-save-dot" /> All changes stay in this browser</div>
+        <div className="qt-studio-appbar-right"><span className="qt-studio-free-chip">FREE WORKSPACE</span></div>
+      </header>
+      <div className="qt-studio-app-layout">
+        <nav className="qt-studio-rail" aria-label="Studio tools">
+          <div className="qt-studio-rail-label">CREATE</div>
+          <button type="button" className={mode === "passport" ? "selected" : ""} onClick={() => { setMode("passport"); setError(""); setMessage(""); }}><span>▧</span><small>Passport</small></button>
+          <button type="button" className={mode === "id" ? "selected" : ""} onClick={() => { setMode("id"); setError(""); setMessage(""); }}><span>▣</span><small>ID Card</small></button>
+          <button type="button" className={mode === "pdf" ? "selected" : ""} onClick={() => { setMode("pdf"); setError(""); setMessage(""); }}><span>▤</span><small>Image PDF</small></button>
+          <div className="qt-studio-rail-bottom"><span>●</span><small>LOCAL</small></div>
+        </nav>
+        <section className="qt-studio-canvas-area">
+          <div className="qt-studio-canvas-heading"><div><span>YOUR PROJECT</span><h2>{modeLabel}</h2></div><span className="qt-studio-dimension-chip">{mode === "passport" ? selectedPreset.label : mode === "id" ? "85.6 × 54 mm" : "A4 DOCUMENT"}</span></div>
+          <div className="qt-studio-canvas">
+            {mode === "passport" ? (photoPreview ? <div className="qt-studio-live-preview"><img src={photoPreview} alt="Uploaded portrait preview" /><span className="qt-studio-preview-caption">ORIGINAL PHOTO</span></div> : <div className="qt-studio-empty"><div className="qt-studio-empty-icon">▧</div><strong>Your photo appears here</strong><p>Upload a portrait to preview your print layout</p><small>JPG · PNG · WEBP</small></div>) : null}
+            {mode === "id" ? ((frontPreview || backPreview) ? <div className="qt-studio-id-preview">{frontPreview ? <div><img src={frontPreview} alt="ID card front preview" /><small>FRONT SIDE</small></div> : null}{backPreview ? <div><img src={backPreview} alt="ID card back preview" /><small>BACK SIDE</small></div> : null}</div> : <div className="qt-studio-empty"><div className="qt-studio-empty-icon">▣</div><strong>Your ID card layout</strong><p>Add front and back images to preview them here</p><small>JPG · PNG</small></div>) : null}
+            {mode === "pdf" ? (documents.length ? <div className="qt-studio-pdf-preview"><div className="qt-studio-pdf-sheet"><span>PDF PREVIEW</span><strong>{documents.length}</strong><small>PAGE{documents.length > 1 ? "S" : ""}</small></div><div><strong>{documents.length} image{documents.length > 1 ? "s" : ""} selected</strong><p>Each image will be placed on its own A4 page.</p></div></div> : <div className="qt-studio-empty"><div className="qt-studio-empty-icon">▤</div><strong>Your document preview</strong><p>Choose images to build a multi-page PDF</p><small>JPG · PNG</small></div>) : null}
+          </div>
+          <div className="qt-studio-canvas-footer"><span>⌘ &nbsp; PREVIEW AREA</span><span>{mode === "passport" && photoPreview ? "1 IMAGE LOADED" : mode === "id" ? [frontPreview, backPreview].filter(Boolean).length + " / 2 SIDES" : documents.length + " FILES SELECTED"}</span></div>
+        </section>
+        <aside className="qt-studio-inspector">
+          <div className="qt-studio-inspector-title"><span>EDIT PANEL</span><span>•••</span></div>
+          <h3>{mode === "passport" ? "Photo settings" : mode === "id" ? "Card layout" : "Document settings"}</h3>
           {mode === "passport" ? <>
-            <FilePicker label="Upload portrait photo" files={photo} onChange={(file) => chooseSingle(file, setPhoto, setPhotoPreview)} />
-            <div className="qt-studio-fields">
-              <label>Photo size<select value={preset} onChange={(event) => setPreset(event.target.value)}>{Object.entries(presets).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select></label>
-              <label>Copies on A4<input type="number" min="1" max="48" value={copies} onChange={(event) => setCopies(Math.max(1, Math.min(48, Number(event.target.value) || 1)))} /></label>
-            </div>
-            <p className="qt-studio-hint">The photo is center-cropped to the selected ratio, placed on a white background and arranged on an A4 PDF at 300 DPI. Check the crop before printing.</p>
-            {photoPreview ? <div className="qt-studio-preview"><img src={photoPreview} alt="Uploaded portrait preview" /></div> : null}
+            <div className="qt-studio-inspector-group"><label>Upload portrait</label><FilePicker label="Choose photo" files={photo} onChange={(file) => chooseSingle(file, setPhoto, setPhotoPreview)} /></div>
+            <div className="qt-studio-inspector-group"><label>Photo dimensions</label><select className="qt-studio-control" value={preset} onChange={(event) => setPreset(event.target.value)}>{Object.entries(presets).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select></div>
+            <div className="qt-studio-inspector-group"><label>Number of copies</label><input className="qt-studio-control" type="number" min="1" max="48" value={copies} onChange={(event) => setCopies(Math.max(1, Math.min(48, Number(event.target.value) || 1)))} /></div>
+            <div className="qt-studio-inspector-note"><b>PRINT SETTINGS</b><span>A4 paper · 300 DPI</span><span>White background · Center crop</span></div>
           </> : null}
-
           {mode === "id" ? <>
-            <div className="qt-studio-two-upload">
-              <FilePicker accept="image/jpeg,image/png" label="Front side" files={front} onChange={(file) => chooseSingle(file, setFront, setFrontPreview)} />
-              <FilePicker accept="image/jpeg,image/png" label="Back side" files={back} onChange={(file) => chooseSingle(file, setBack, setBackPreview)} />
-            </div>
-            <p className="qt-studio-hint">Places the front and back images on one A4 page using the standard 85.6 × 54 mm card footprint. This is a print layout, not an official identity-card generator.</p>
-            <div className="qt-studio-preview-row">{frontPreview ? <img src={frontPreview} alt="ID card front preview" /> : null}{backPreview ? <img src={backPreview} alt="ID card back preview" /> : null}</div>
+            <div className="qt-studio-inspector-group"><label>Front side image</label><FilePicker accept="image/jpeg,image/png" label="Upload front" files={front} onChange={(file) => chooseSingle(file, setFront, setFrontPreview)} /></div>
+            <div className="qt-studio-inspector-group"><label>Back side image</label><FilePicker accept="image/jpeg,image/png" label="Upload back" files={back} onChange={(file) => chooseSingle(file, setBack, setBackPreview)} /></div>
+            <div className="qt-studio-inspector-note"><b>CARD FORMAT</b><span>85.6 × 54 mm · A4 paper</span><span>Front and back on one page</span></div>
           </> : null}
-
           {mode === "pdf" ? <>
-            <FilePicker accept="image/jpeg,image/png" label="Choose document images" multiple files={documents} onChange={(files) => { setDocuments(files); setError(""); setMessage(""); }} />
-            <p className="qt-studio-hint">Each JPG or PNG image becomes a separate A4 PDF page, fitted without stretching. WebP is currently not supported in this export.</p>
-            {documents.length ? <ul className="qt-studio-file-list">{documents.map((file) => <li key={file.name + file.size}>{file.name}</li>)}</ul> : null}
+            <div className="qt-studio-inspector-group"><label>Choose image files</label><FilePicker accept="image/jpeg,image/png" label="Add images" multiple files={documents} onChange={(files) => { setDocuments(files); setError(""); setMessage(""); }} /></div>
+            {documents.length ? <div className="qt-studio-selected-files">{documents.map((file) => <span key={file.name + file.size}>▧ {file.name}</span>)}</div> : null}
+            <div className="qt-studio-inspector-note"><b>PAGE SETTINGS</b><span>A4 · One image per page</span><span>Fit to page without stretching</span></div>
           </> : null}
-
-          <button type="button" className="qt-studio-primary" disabled={busy} onClick={runAction}>{busy ? "Preparing PDF…" : "Generate & Download PDF →"}</button>
+          <div className="qt-studio-inspector-note qt-studio-privacy-note"><b>🔒 PRIVATE & FREE</b><span>Your files never leave this browser.</span></div>
+          <button type="button" className="qt-studio-primary" disabled={busy} onClick={runAction}>{busy ? "Preparing PDF…" : "↓  Export PDF"}</button>
           {error ? <p className="qt-studio-alert error" role="alert">{error}</p> : null}
           {message ? <p className="qt-studio-alert success" role="status">{message}</p> : null}
-        </section>
-
-        <aside className="qt-studio-side">
-          <div className="qt-studio-side-card"><span className="qt-studio-side-icon">🔒</span><h3>Private by default</h3><p>Files are processed locally in this browser. They are not uploaded to a QuickToolBox server by these tools.</p></div>
-          <div className="qt-studio-side-card"><span className="qt-studio-side-icon">🖨️</span><h3>Print ready</h3><p>PDF output uses A4 pages and millimetre-based sizing. Choose actual size / 100% in your print dialog.</p></div>
-          <div className="qt-studio-side-card"><span className="qt-studio-side-icon">₀</span><h3>Free to use</h3><p>No account, paid API or subscription is required. Browser and printer costs may still apply.</p></div>
         </aside>
       </div>
     </div>
