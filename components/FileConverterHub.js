@@ -295,21 +295,21 @@ export default function FileConverterHub() {
   const readyCount = tools.filter((tool) => tool.status === "ready").length;
 
   return (
-    <main style={styles.page}>
-      <div style={styles.hero}>
+    <main className="qt-file-converter" style={styles.page}>
+      <div className="qt-file-hero" style={styles.hero}>
         <span style={styles.eyebrow}>QUICKTOOLBOX · FREE FILE WORKSPACE</span>
         <h1 style={styles.title}>Convert files. Keep control.</h1>
         <p style={{ ...styles.muted, maxWidth: 720 }}>A free, no-login file conversion workspace. Start with PDF and image tools, with more format families being added in tested releases.</p>
         <p style={{ ...styles.muted, fontSize: 13 }}>{tools.length} tools in the directory · {readyCount} available now · No paid conversion API</p>
       </div>
-      <div style={styles.toolbar}>
+      <div className="qt-file-toolbar" style={styles.toolbar}>
         {categories.map((category) => <button key={category} type="button" onClick={() => setActive(category)} aria-pressed={active === category} style={{ ...styles.chip, ...(active === category ? { background: "#1d4ed8", borderColor: "#3b82f6", color: "white" } : {}) }}>{category}</button>)}
       </div>
-      <label style={{ ...styles.field, maxWidth: 480, marginBottom: 20 }}>Search converters
+      <label className="qt-file-search" style={{ ...styles.field, maxWidth: 480, marginBottom: 20 }}>Search converters
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Try PDF, WebP, MP4, ZIP…" style={styles.input} />
       </label>
-      <div style={styles.grid}>
-        {filtered.map((tool) => <article key={tool.name} style={styles.card}>
+      <div className="qt-file-grid" style={styles.grid}>
+        {filtered.map((tool) => <article className="qt-file-card" key={tool.name} style={styles.card}>
           <span style={styles.tag}>{tool.category} · {tool.status === "ready" ? "Available" : tool.status === "testing" ? "Testing" : "Planned"}</span>
           <h2 style={styles.cardTitle}>{tool.name}</h2>
           <p style={{ ...styles.muted, fontSize: 13, margin: 0 }}>{tool.description}</p>
@@ -319,7 +319,7 @@ export default function FileConverterHub() {
       </div>
       <ImageConverter />
       <SvgToPngConverter />
-      <section id="converter-engines" style={{ marginTop: 34 }}><ConverterEngines /></section>
+      <section className="qt-file-engines" id="converter-engines" style={{ marginTop: 34 }}><ConverterEngines /></section>
       <section id="roadmap" style={{ marginTop: 34 }}>
         <h2 style={styles.sectionTitle}>How the full platform will roll out</h2>
         <p style={styles.muted}>Format support will be enabled only when the conversion engine, output quality and failure cases pass tests. Planned cards are not active converters.</p>
