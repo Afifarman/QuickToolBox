@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -264,24 +264,24 @@ function SvgToPngConverter() {
 
 const styles = {
   page: { maxWidth: 1160, margin: "0 auto", padding: "clamp(20px,5vw,44px) clamp(12px,4vw,20px) 80px", color: "var(--foreground, #f7f8fc)", boxSizing: "border-box", width: "100%" },
-  hero: { padding: "38px 0 30px", borderBottom: "1px solid var(--border, #303746)" },
+  hero: { position: "relative", isolation: "isolate", overflow: "hidden", padding: "clamp(26px,5vw,54px)", border: "1px solid rgba(129,140,248,.28)", borderRadius: 28, background: "radial-gradient(ellipse at 78% 18%, rgba(124,58,237,.30), transparent 38%), radial-gradient(ellipse at 12% 90%, rgba(14,165,233,.20), transparent 42%), linear-gradient(135deg, #10152d 0%, #171b3b 52%, #111827 100%)", boxShadow: "0 24px 70px rgba(4,8,25,.35), inset 0 1px 0 rgba(255,255,255,.10)" },
   eyebrow: { color: "#7dd3fc", fontSize: 12, fontWeight: 800, letterSpacing: 1.4 },
-  title: { fontSize: "clamp(32px, 5vw, 52px)", lineHeight: 1.08, margin: "12px 0" },
+  title: { fontSize: "clamp(36px, 6vw, 66px)", lineHeight: 1.02, letterSpacing: "-.045em", margin: "16px 0", maxWidth: 760, color: "#fff", textShadow: "0 8px 35px rgba(99,102,241,.24)" },
   muted: { color: "var(--muted-foreground, #9ca3af)", lineHeight: 1.65 },
   toolbar: { display: "flex", flexWrap: "wrap", gap: 9, margin: "24px 0" },
   chip: { border: "1px solid var(--border, #394150)", borderRadius: 999, padding: "9px 14px", background: "transparent", color: "inherit", cursor: "pointer" },
   grid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 245px), 1fr))", gap: 14 },
-  card: { border: "1px solid var(--border, #303746)", borderRadius: 16, padding: 18, background: "var(--card, rgba(255,255,255,.025))", display: "flex", flexDirection: "column", gap: 9, minHeight: 178 },
+  card: { position: "relative", overflow: "hidden", border: "1px solid rgba(148,163,184,.20)", borderRadius: 20, padding: 20, background: "linear-gradient(145deg, rgba(30,41,72,.76), rgba(15,23,42,.72))", boxShadow: "0 12px 32px rgba(2,6,23,.16), inset 0 1px 0 rgba(255,255,255,.07)", display: "flex", flexDirection: "column", gap: 11, minHeight: 205, transition: "transform .28s ease, border-color .28s ease, box-shadow .28s ease" },
   cardTitle: { margin: 0, fontSize: 18 },
   tag: { fontSize: 11, color: "#7dd3fc", fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.8 },
   link: { color: "#7dd3fc", fontWeight: 700, textDecoration: "none", marginTop: "auto" },
   disabled: { color: "#9ca3af", fontSize: 13, marginTop: "auto" },
-  converter: { marginTop: 38, border: "1px solid var(--border, #303746)", borderRadius: 20, padding: "clamp(14px,4vw,22px)", background: "var(--card, rgba(255,255,255,.025))", width: "100%", boxSizing: "border-box", overflowX: "hidden" },
+  converter: { marginTop: 38, border: "1px solid rgba(129,140,248,.24)", borderRadius: 24, padding: "clamp(16px,4vw,28px)", background: "linear-gradient(145deg, rgba(30,41,72,.55), rgba(15,23,42,.48))", boxShadow: "0 18px 48px rgba(2,6,23,.18), inset 0 1px 0 rgba(255,255,255,.06)", width: "100%", boxSizing: "border-box", overflowX: "hidden" },
   sectionTitle: { fontSize: 25, margin: "8px 0" },
   field: { display: "flex", flexDirection: "column", gap: 8, fontSize: 13, fontWeight: 650, minWidth: 0 },
   input: { width: "100%", padding: 12, borderRadius: 10, border: "1px solid var(--border, #4b5563)", background: "var(--background, #111827)", color: "inherit", minHeight: 44 },
   controls: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 190px), 1fr))", gap: 14, margin: "18px 0" },
-  primary: { border: 0, borderRadius: 10, padding: "13px 20px", background: "#2563eb", color: "white", fontWeight: 800, cursor: "pointer", minHeight: 44, touchAction: "manipulation", width: "100%", maxWidth: 320, fontSize: "clamp(14px,3.5vw,16px)" },
+  primary: { border: "1px solid rgba(255,255,255,.24)", borderRadius: 14, padding: "14px 22px", background: "linear-gradient(110deg, #6366f1, #8b5cf6 55%, #0ea5e9)", color: "white", fontWeight: 850, cursor: "pointer", minHeight: 50, touchAction: "manipulation", width: "100%", maxWidth: 340, fontSize: "clamp(14px,3.5vw,16px)", boxShadow: "0 12px 28px rgba(99,102,241,.28), inset 0 1px 0 rgba(255,255,255,.25)" },
   error: { color: "#fca5a5" },
   success: { marginTop: 18, padding: 16, borderRadius: 12, background: "rgba(34,197,94,.09)", border: "1px solid rgba(34,197,94,.35)" },
   download: { display: "inline-block", padding: "10px 14px", borderRadius: 9, background: "#15803d", color: "white", textDecoration: "none", fontWeight: 750 },
@@ -296,11 +296,36 @@ export default function FileConverterHub() {
 
   return (
     <main className="qt-file-converter" style={styles.page}>
+      <style jsx global>{`
+        @keyframes qt-float { 0%,100% { transform: translateY(0) rotate(-7deg); } 50% { transform: translateY(-13px) rotate(3deg); } }
+        @keyframes qt-orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes qt-glow { 0%,100% { opacity:.45; transform:scale(.92); } 50% { opacity:.9; transform:scale(1.08); } }
+        @keyframes qt-shimmer { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+        .qt-file-converter .qt-studio-visual { position:absolute; right:clamp(8px,7vw,100px); top:50%; transform:translateY(-50%); width:clamp(130px,22vw,245px); aspect-ratio:1; display:grid; place-items:center; pointer-events:none; }
+        .qt-file-converter .qt-studio-core { width:48%; aspect-ratio:1; display:grid; place-items:center; border-radius:28%; color:white; font-size:clamp(38px,6vw,66px); background:linear-gradient(145deg,#a78bfa,#4f46e5 58%,#0284c7); box-shadow:0 24px 48px rgba(79,70,229,.48),inset 0 2px 3px rgba(255,255,255,.55),inset 0 -8px 15px rgba(15,23,42,.25); transform:rotate(-12deg) perspective(500px) rotateX(12deg); animation:qt-float 5s ease-in-out infinite; }
+        .qt-file-converter .qt-studio-orbit { position:absolute; inset:9%; border:1px solid rgba(196,181,253,.42); border-radius:50%; transform:rotateX(65deg); animation:qt-orbit 18s linear infinite; box-shadow:0 0 35px rgba(129,140,248,.14); }
+        .qt-file-converter .qt-studio-orbit:before,.qt-file-converter .qt-studio-orbit:after { content:""; position:absolute; width:17%; aspect-ratio:1; border-radius:12px; background:linear-gradient(145deg,#e0e7ff,#818cf8); box-shadow:0 8px 22px rgba(99,102,241,.45); }
+        .qt-file-converter .qt-studio-orbit:before { top:4%; left:16%; }.qt-file-converter .qt-studio-orbit:after { bottom:4%; right:16%; background:linear-gradient(145deg,#bae6fd,#0ea5e9); }
+        .qt-file-converter .qt-tool-symbol { width:46px;height:46px;display:grid;place-items:center;border-radius:15px;font-size:23px;background:linear-gradient(145deg,rgba(129,140,248,.24),rgba(14,165,233,.12));border:1px solid rgba(165,180,252,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.12); }
+        .qt-file-converter .qt-file-card:hover { transform:translateY(-5px); border-color:rgba(129,140,248,.55); box-shadow:0 20px 42px rgba(2,6,23,.28),0 0 28px rgba(99,102,241,.10); }
+        .qt-file-converter .qt-file-card:focus-within { outline:2px solid #818cf8; outline-offset:3px; }
+        .qt-file-converter .qt-file-chip[aria-pressed="true"] { background:linear-gradient(110deg,#4f46e5,#7c3aed)!important; border-color:#a5b4fc!important; box-shadow:0 7px 18px rgba(99,102,241,.22); }
+        .qt-file-converter .qt-file-search input:focus,.qt-file-converter input:focus,.qt-file-converter select:focus { outline:2px solid #818cf8; outline-offset:2px; }
+        @media(max-width:680px) { .qt-file-converter .qt-studio-visual { opacity:.22; right:-28px; top:25%; width:155px; } .qt-file-converter .qt-file-hero { padding:26px 20px!important; } .qt-file-converter .qt-file-toolbar { gap:7px!important; } .qt-file-converter .qt-file-chip { padding:8px 11px!important; font-size:12px; } }
+        @media(prefers-reduced-motion:reduce) { .qt-file-converter *,.qt-file-converter *:before,.qt-file-converter *:after { animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important; } }
+      `}</style>
       <div className="qt-file-hero" style={styles.hero}>
-        <span style={styles.eyebrow}>QUICKTOOLBOX · FREE FILE WORKSPACE</span>
-        <h1 style={styles.title}>Convert files. Keep control.</h1>
-        <p style={{ ...styles.muted, maxWidth: 720 }}>A free, no-login file conversion workspace. Start with PDF and image tools, with more format families being added in tested releases.</p>
-        <p style={{ ...styles.muted, fontSize: 13 }}>{tools.length} tools in the directory · {readyCount} available now · No paid conversion API</p>
+        <div className="qt-studio-visual" aria-hidden="true"><div className="qt-studio-orbit"></div><div className="qt-studio-core">⇄</div></div>
+        <div style={{ position: "relative", zIndex: 1, maxWidth: 760 }}>
+          <span style={{ ...styles.eyebrow, color: "#c4b5fd" }}>✦ QUICKTOOLBOX · FREE FILE WORKSPACE</span>
+          <h1 style={styles.title}>Your files.<br/><span style={{ background: "linear-gradient(90deg,#c4b5fd,#67e8f9,#a5b4fc,#c4b5fd)", backgroundSize: "200% auto", WebkitBackgroundClip: "text", color: "transparent", animation: "qt-shimmer 7s linear infinite" }}>Reimagined.</span></h1>
+          <p style={{ ...styles.muted, maxWidth: 610, color: "#cbd5e1", fontSize: 16 }}>A beautifully simple workspace to convert, compress and transform files — free, private and right in your browser.</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 22 }}>
+            <span style={{ ...styles.chip, color: "#e0e7ff", borderColor: "rgba(196,181,253,.3)", background: "rgba(99,102,241,.13)" }}>✧ {tools.length} format tools</span>
+            <span style={{ ...styles.chip, color: "#e0e7ff", borderColor: "rgba(196,181,253,.3)", background: "rgba(99,102,241,.13)" }}>⌁ {readyCount} ready now</span>
+            <span style={{ ...styles.chip, color: "#e0e7ff", borderColor: "rgba(196,181,253,.3)", background: "rgba(99,102,241,.13)" }}>◈ No paid API</span>
+          </div>
+        </div>
       </div>
       <div className="qt-file-toolbar" style={styles.toolbar}>
         {categories.map((category) => <button key={category} type="button" onClick={() => setActive(category)} aria-pressed={active === category} style={{ ...styles.chip, ...(active === category ? { background: "#1d4ed8", borderColor: "#3b82f6", color: "white" } : {}) }}>{category}</button>)}
@@ -311,7 +336,7 @@ export default function FileConverterHub() {
       <div className="qt-file-grid" style={styles.grid}>
         {filtered.map((tool) => <article className="qt-file-card" key={tool.name} style={styles.card}>
           <span style={styles.tag}>{tool.category} · {tool.status === "ready" ? "Available" : tool.status === "testing" ? "Testing" : "Planned"}</span>
-          <h2 style={styles.cardTitle}>{tool.name}</h2>
+          <h2 style={{ ...styles.cardTitle, letterSpacing: "-.02em" }}>{tool.name}</h2>
           <p style={{ ...styles.muted, fontSize: 13, margin: 0 }}>{tool.description}</p>
           <span style={{ ...styles.muted, fontSize: 12 }}>{tool.formats}</span>
           {tool.status === "ready" || tool.status === "testing" ? <Link href={tool.href} style={styles.link}>{tool.status === "testing" ? "Open test area ↓" : "Use converter ↓"}</Link> : <span style={styles.disabled}>Coming in a tested update</span>}
