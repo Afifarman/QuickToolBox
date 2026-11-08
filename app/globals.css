@@ -1219,3 +1219,102 @@ header nav a:last-child{border:1px solid var(--qt-border);border-radius:10px;pad
 :root[data-theme="dark"] .qt-studio-photo-front{background:#f8f7fb;color:#27213b}
 @media(max-width:850px){.qt-studio-hero{grid-template-columns:1fr;gap:30px;padding-top:55px}.qt-studio-visual{min-height:340px}.qt-studio-tool-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.qt-studio-editor{grid-template-columns:1fr}.qt-studio-side{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:600px){.qt-studio-hero{padding:42px 16px 38px;gap:24px}.qt-studio-hero h1{font-size:clamp(43px,12vw,58px)}.qt-studio-hero-copy>p{font-size:14px}.qt-studio-visual{min-height:320px;padding:17px}.qt-studio-photo-stack{height:235px}.qt-studio-photo-back{height:205px;width:160px}.qt-studio-photo-front{height:190px;width:148px}.qt-studio-portrait{height:112px;width:90px}.qt-studio-tools,.qt-studio-app-section{padding:28px 14px}.qt-studio-section-heading{align-items:flex-start;flex-direction:column;gap:8px}.qt-studio-tool-grid{grid-template-columns:1fr;gap:9px}.qt-studio-tool-card{min-height:0;padding:15px}.qt-studio-tool-card h3{margin-top:10px}.qt-studio-workspace{padding:12px}.qt-studio-panel-heading{align-items:flex-start;flex-direction:column}.qt-studio-side{grid-template-columns:1fr}.qt-studio-two-upload{grid-template-columns:1fr}.qt-studio-fields{grid-template-columns:1fr 1fr}.qt-studio-tabs button{flex:1 1 auto;font-size:11px;padding:10px 8px}.qt-studio-trust{gap:9px 14px;font-size:10px}}
+
+
+/* Studiozly-inspired full editor workspace */
+.qt-studio-page{background:#f4f5f8;color:#202333}
+.qt-studio-hero{max-width:1180px;padding:36px 26px 20px;display:block}
+.qt-studio-hero-copy{max-width:850px}
+.qt-studio-hero h1{font-size:clamp(36px,5vw,56px);line-height:1.02;margin:13px 0}
+.qt-studio-hero-copy>p{max-width:700px;font-size:14px}
+.qt-studio-visual{display:none}
+.qt-studio-hero-actions{margin-top:15px}
+.qt-studio-trust{margin-top:14px}
+.qt-studio-tools{max-width:1180px;padding:8px 26px 18px}
+.qt-studio-tools .qt-studio-section-heading{margin-bottom:12px}
+.qt-studio-tools .qt-studio-section-heading h2{font-size:21px}
+.qt-studio-tool-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.qt-studio-tool-card{min-height:0;padding:13px;display:grid;grid-template-columns:36px 1fr;column-gap:10px;align-items:center;border-radius:12px}
+.qt-studio-tool-card-top{grid-row:span 2}
+.qt-studio-tool-card-top>span{width:34px;height:34px;font-size:18px}
+.qt-studio-tool-card-top small{display:none}
+.qt-studio-tool-card h3{font-size:13px;margin:0}
+.qt-studio-tool-card p{font-size:11px}
+.qt-studio-app-section{max-width:1440px;padding:8px 26px 34px}
+.qt-studio-editor-heading{margin-bottom:12px}
+.qt-studio-editor-heading h2{font-size:22px}
+.qt-studio-editor-heading>p{display:none}
+.qt-studio-workspace.qt-studio-app{padding:0;border:1px solid #e2e5eb;border-radius:15px;background:#fff;overflow:hidden;box-shadow:0 12px 36px #17203312;color:#252a38}
+.qt-studio-appbar{height:54px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e9ebf0;background:#fff}
+.qt-studio-brand{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:850;letter-spacing:-.02em}
+.qt-studio-brand-mark{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:#6956d9;color:white;font-size:16px;font-weight:900}
+.qt-studio-brand small{font-size:9px;letter-spacing:.13em;color:#8176d8;margin-left:5px}
+.qt-studio-appbar-center{font-size:11px;color:#9298a6;display:flex;align-items:center;gap:7px}
+.qt-studio-save-dot{width:7px;height:7px;border-radius:50%;background:#2dbd88}
+.qt-studio-free-chip{font-size:9px;font-weight:900;letter-spacing:.1em;color:#6553cf;background:#f1efff;border-radius:6px;padding:7px 9px}
+.qt-studio-app-layout{display:grid;grid-template-columns:78px minmax(0,1fr) 300px;min-height:560px}
+.qt-studio-rail{padding:18px 9px 12px;border-right:1px solid #eceef2;display:flex;flex-direction:column;align-items:center;gap:7px;background:#fcfcfe}
+.qt-studio-rail-label{font-size:8px;letter-spacing:.16em;font-weight:900;color:#a3a7b2;margin:0 0 7px}
+.qt-studio-rail button{width:58px;min-height:61px;border:0;border-radius:10px;background:transparent;color:#858b99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer}
+.qt-studio-rail button>span{font-size:21px;line-height:1}
+.qt-studio-rail button small{font-size:9px;font-weight:750}
+.qt-studio-rail button:hover{background:#f2f0ff;color:#6553cf}
+.qt-studio-rail button.selected{background:#eeebff;color:#6654d6}
+.qt-studio-rail-bottom{margin-top:auto;display:grid;justify-items:center;gap:3px;color:#28ad7d}
+.qt-studio-rail-bottom small{font-size:8px;font-weight:900;letter-spacing:.1em}
+.qt-studio-canvas-area{min-width:0;padding:22px 24px 14px;background:#f4f5f8;display:flex;flex-direction:column}
+.qt-studio-canvas-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}
+.qt-studio-canvas-heading>div>span{font-size:9px;color:#999eaa;letter-spacing:.15em;font-weight:900}
+.qt-studio-canvas-heading h2{font-size:18px;color:#292d3a;letter-spacing:-.035em;margin:4px 0 0}
+.qt-studio-dimension-chip{font-size:10px;font-weight:800;color:#6d5bd1;background:#eeebff;border-radius:7px;padding:7px 9px}
+.qt-studio-canvas{flex:1;min-height:390px;display:grid;place-items:center;border:1px solid #e3e5eb;border-radius:11px;background-color:#fff;background-image:linear-gradient(45deg,#f5f6f8 25%,transparent 25%),linear-gradient(-45deg,#f5f6f8 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#f5f6f8 75%),linear-gradient(-45deg,transparent 75%,#f5f6f8 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;overflow:hidden}
+.qt-studio-empty{text-align:center;padding:28px;color:#858b99}
+.qt-studio-empty-icon{width:58px;height:58px;margin:0 auto 14px;border-radius:17px;display:grid;place-items:center;background:#f0edff;color:#7160d8;font-size:28px}
+.qt-studio-empty strong{display:block;color:#454a59;font-size:14px}
+.qt-studio-empty p{font-size:11px;margin:7px 0;color:#8c92a0}
+.qt-studio-empty small{font-size:9px;letter-spacing:.12em;color:#a6aab4;font-weight:800}
+.qt-studio-live-preview{height:100%;min-height:390px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:18px}
+.qt-studio-live-preview img{max-height:350px;max-width:90%;object-fit:contain;border-radius:3px;box-shadow:0 4px 20px #18203320}
+.qt-studio-preview-caption{font-size:8px;letter-spacing:.14em;font-weight:900;color:#858b99}
+.qt-studio-id-preview{display:flex;justify-content:center;align-items:center;gap:24px;flex-wrap:wrap;padding:24px}
+.qt-studio-id-preview>div{display:grid;gap:8px;justify-items:center}
+.qt-studio-id-preview img{width:min(260px,100%);aspect-ratio:1.586;object-fit:contain;background:white;border:1px solid #dfe2e9;border-radius:4px;box-shadow:0 6px 20px #18203318}
+.qt-studio-id-preview small{font-size:9px;letter-spacing:.12em;color:#8a8f9b;font-weight:900}
+.qt-studio-pdf-preview{display:flex;align-items:center;gap:20px;padding:24px}
+.qt-studio-pdf-sheet{width:135px;height:185px;background:white;border:1px solid #e0e2e8;box-shadow:0 8px 25px #18203318;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#6b5bd0}
+.qt-studio-pdf-sheet span{font-size:8px;letter-spacing:.12em}
+.qt-studio-pdf-sheet strong{font-size:45px;line-height:1.1}
+.qt-studio-pdf-sheet small{font-size:8px;letter-spacing:.15em}
+.qt-studio-pdf-preview>div:last-child strong{font-size:13px;color:#424756}
+.qt-studio-pdf-preview p{font-size:11px;color:#8a8f9b;max-width:180px;line-height:1.5}
+.qt-studio-canvas-footer{display:flex;justify-content:space-between;gap:10px;padding-top:12px;font-size:8px;letter-spacing:.12em;font-weight:850;color:#a1a5af}
+.qt-studio-inspector{border-left:1px solid #eceef2;background:#fff;padding:19px 17px;min-width:0}
+.qt-studio-inspector-title{display:flex;justify-content:space-between;color:#999eaa;font-size:9px;letter-spacing:.15em;font-weight:900}
+.qt-studio-inspector h3{font-size:17px;letter-spacing:-.03em;color:#2d3140;margin:10px 0 20px}
+.qt-studio-inspector-group{padding:0 0 15px;margin-bottom:14px;border-bottom:1px solid #eff0f4}
+.qt-studio-inspector-group>label{display:block;font-size:10px;font-weight:850;color:#5f6472;margin-bottom:8px}
+.qt-studio-inspector .qt-studio-upload{min-height:90px;padding:11px;border-radius:9px;border:1px dashed #d8d5ee;background:#faf9ff;gap:5px}
+.qt-studio-inspector .qt-studio-upload-icon{width:27px;height:27px;font-size:17px;border-radius:8px}
+.qt-studio-inspector .qt-studio-upload strong{font-size:11px;color:#6253c8}
+.qt-studio-inspector .qt-studio-upload small{font-size:9px}
+.qt-studio-inspector .qt-studio-file{font-size:9px}
+.qt-studio-control{width:100%;height:38px;padding:0 10px;border:1px solid #e3e5eb;border-radius:8px;background:#fff;color:#434858;font-size:11px}
+.qt-studio-inspector-note{display:grid;gap:6px;padding:12px;margin:0 0 12px;border-radius:9px;background:#f8f8fb;color:#858b99;font-size:10px;line-height:1.5}
+.qt-studio-inspector-note b{font-size:8px;letter-spacing:.13em;color:#777d8a}
+.qt-studio-privacy-note{background:#f2fbf7;color:#44836c}
+.qt-studio-privacy-note b{color:#328b68}
+.qt-studio-inspector .qt-studio-primary{margin-top:2px;border-radius:8px;background:#6956d9;height:43px;font-size:12px;box-shadow:0 5px 12px #6956d933}
+.qt-studio-selected-files{display:grid;gap:6px;margin:0 0 13px;max-height:95px;overflow:auto}
+.qt-studio-selected-files span{font-size:9px;color:#747a88;overflow-wrap:anywhere}
+.qt-studio-alert{font-size:10px;margin:10px 0 0}
+.qt-studio-disclaimer{max-width:1388px;background:#fff}
+:root[data-theme="dark"] .qt-studio-page{background:#171923;color:#ececf4}
+:root[data-theme="dark"] .qt-studio-workspace.qt-studio-app,:root[data-theme="dark"] .qt-studio-appbar,:root[data-theme="dark"] .qt-studio-inspector{background:#202330;color:#ececf4;border-color:#343849}
+:root[data-theme="dark"] .qt-studio-rail{background:#1d202c;border-color:#343849}
+:root[data-theme="dark"] .qt-studio-canvas-area{background:#171a24}
+:root[data-theme="dark"] .qt-studio-canvas{background-color:#252938;border-color:#3b4050;background-image:linear-gradient(45deg,#2b3040 25%,transparent 25%),linear-gradient(-45deg,#2b3040 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#2b3040 75%),linear-gradient(-45deg,transparent 75%,#2b3040 75%)}
+:root[data-theme="dark"] .qt-studio-canvas-heading h2,:root[data-theme="dark"] .qt-studio-inspector h3{color:#f0eff8}
+:root[data-theme="dark"] .qt-studio-control{background:#272b3a;border-color:#3a4051;color:#eee}
+:root[data-theme="dark"] .qt-studio-inspector-note{background:#292d3c;color:#b0b5c3}
+@media(max-width:980px){.qt-studio-app-layout{grid-template-columns:68px minmax(0,1fr) 260px}.qt-studio-canvas-area{padding:18px 16px 12px}.qt-studio-inspector{padding:16px 12px}}
+@media(max-width:700px){.qt-studio-hero{padding:30px 16px 12px}.qt-studio-hero h1{font-size:39px}.qt-studio-hero-copy>p{font-size:13px}.qt-studio-tools,.qt-studio-app-section{padding-left:12px;padding-right:12px}.qt-studio-tool-grid{grid-template-columns:1fr}.qt-studio-tool-card{display:grid;grid-template-columns:34px 1fr;min-height:0}.qt-studio-app-layout{grid-template-columns:1fr;min-height:0}.qt-studio-rail{order:0;flex-direction:row;justify-content:center;padding:7px;gap:5px;border-right:0;border-bottom:1px solid #eceef2}.qt-studio-rail-label,.qt-studio-rail-bottom{display:none}.qt-studio-rail button{width:auto;min-width:82px;min-height:48px;flex-direction:row;padding:0 9px}.qt-studio-rail button>span{font-size:17px}.qt-studio-rail button small{font-size:9px}.qt-studio-canvas-area{order:1;padding:14px 11px 10px}.qt-studio-canvas{min-height:280px}.qt-studio-live-preview{min-height:280px}.qt-studio-live-preview img{max-height:245px}.qt-studio-inspector{order:2;border-left:0;border-top:1px solid #eceef2;padding:15px}.qt-studio-inspector h3{margin-bottom:13px}.qt-studio-inspector-group{display:inline-block;vertical-align:top;width:calc(50% - 7px);margin-right:7px}.qt-studio-inspector .qt-studio-upload{min-height:85px}.qt-studio-appbar{padding:0 11px;height:48px}.qt-studio-appbar-center{display:none}.qt-studio-free-chip{font-size:8px}.qt-studio-disclaimer{margin:0 12px 25px}}
