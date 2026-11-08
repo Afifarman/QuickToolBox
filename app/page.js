@@ -7,7 +7,6 @@ const destinations = [
   { href: '/ai-prompts', title: 'AI Prompt Generator', description: 'Create prompts for your projects.', icon: '✧' },
   { href: '/cv-maker', title: 'CV Maker', description: 'Build a professional CV.', icon: '📄' },
   { href: '/file-converter', title: 'File Converter', description: 'Convert supported files in your browser.', icon: '🔄' },
-  { href: '/photo-studio', title: 'Photo Studio', description: 'Make passport photo sheets, ID layouts and document PDFs.', icon: '📸' },
 ];
 
 export default function Home() {
