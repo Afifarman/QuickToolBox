@@ -317,9 +317,6 @@ export default function FileConverterHub() {
           {tool.status === "ready" || tool.status === "testing" ? <Link href={tool.href} style={styles.link}>{tool.status === "testing" ? "Open test area ↓" : "Use converter ↓"}</Link> : <span style={styles.disabled}>Coming in a tested update</span>}
         </article>)}
       </div>
-      <div id="converter-engines" style={{ marginTop: 24 }}>
-        <ConverterEngines />
-      </div>
       <ImageConverter />
       <SvgToPngConverter />
       <section id="converter-engines" style={{ marginTop: 34 }}><ConverterEngines /></section>
