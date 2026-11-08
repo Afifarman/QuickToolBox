@@ -7,6 +7,7 @@ const links = [
   { href: '/', label: 'Home' },
   { href: '/ai-platform', label: 'AI Platform' },
   { href: '/ai', label: 'AI Assistant' },
+  { href: '/photo-studio', label: 'Photo Studio' },
 ];
 
 export default function SiteHeader() {
