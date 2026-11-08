@@ -1,37 +1,67 @@
 import Link from 'next/link';
 
 const destinations = [
-  { href: '/ai-platform', title: 'AI Platform', description: 'Explore the QuickToolBox AI workspace.', icon: '✦' },
-  { href: '/ai', title: 'AI Assistant', description: 'Ask questions, write, explain and summarize.', icon: '🤖' },
-  { href: '/ai-photo-editor', title: 'AI Photo Editor', description: 'Explore AI-assisted photo editing.', icon: '🖼️' },
-  { href: '/ai-prompts', title: 'AI Prompt Generator', description: 'Create prompts for your projects.', icon: '✧' },
-  { href: '/cv-maker', title: 'CV Maker', description: 'Build a professional CV.', icon: '📄' },
-  { href: '/file-converter', title: 'File Converter', description: 'Convert supported files in your browser.', icon: '🔄' },
-  { href: '/photo-studio', title: 'Photo Studio', description: 'Create passport photo sheets, ID card layouts and image PDFs.', icon: '📸' },
+  { href: '/ai-platform', title: 'AI Platform', description: 'Your workspace for exploring AI-powered tools.', icon: '✦', tag: 'AI WORKSPACE', tone: 'violet' },
+  { href: '/ai', title: 'AI Assistant', description: 'Ask, write, explain and summarize in one place.', icon: '✧', tag: 'AI', tone: 'blue' },
+  { href: '/ai-photo-editor', title: 'AI Photo Editor', description: 'Explore image editing tools and workflows.', icon: '◈', tag: 'IMAGE', tone: 'rose' },
+  { href: '/ai-prompts', title: 'AI Prompt Generator', description: 'Shape clearer prompts for your next idea.', icon: '⌘', tag: 'AI', tone: 'violet' },
+  { href: '/cv-maker', title: 'CV Maker', description: 'Create a polished, professional CV.', icon: '▤', tag: 'PRODUCTIVITY', tone: 'blue' },
+  { href: '/file-converter', title: 'File Converter', description: 'Convert supported files with a simple workflow.', icon: '⇄', tag: 'FILES', tone: 'cyan' },
+  { href: '/photo-studio', title: 'Photo Studio', description: 'Prepare passport photos, ID layouts and image PDFs.', icon: '▧', tag: 'IMAGE STUDIO', tone: 'rose' },
+];
+
+const highlights = [
+  { icon: '⚡', title: 'Quick workflows', copy: 'Get to useful tools without unnecessary steps.' },
+  { icon: '◉', title: 'Browser-first', copy: 'Use supported tools directly from your browser.' },
+  { icon: '▣', title: 'Works across screens', copy: 'A consistent experience on mobile, tablet and desktop.' },
 ];
 
 export default function Home() {
   return (
-    <main>
-      <section className="home-hero">
-        <div className="home-hero-copy">
-          <div className="home-eyebrow"><span className="home-live-dot" /> QUICKTOOLBOX</div>
-          <h1>Get things done.<br /><span>Without the hassle.</span></h1>
-          <p>Explore AI tools, file conversion and useful digital utilities in one simple place.</p>
-          <div className="home-hero-actions">
-            <Link className="btn home-primary" href="/ai-platform">Explore AI Platform <span aria-hidden="true">↗</span></Link>
-            <Link className="home-secondary" href="/file-converter">Open File Converter <span aria-hidden="true">↗</span></Link>
+    <main className="qt-home">
+      <section className="qt-home-hero">
+        <div className="qt-home-hero-glow" aria-hidden="true" />
+        <div className="qt-home-hero-copy">
+          <div className="qt-home-eyebrow"><span className="qt-pulse-dot" /> THE EVERYDAY DIGITAL WORKSPACE</div>
+          <h1>One toolbox.<br /><span>More possibilities.</span></h1>
+          <p>Useful AI, file and productivity tools come together in one focused workspace. Find what you need and get straight to work.</p>
+          <div className="qt-home-actions">
+            <Link className="qt-home-primary" href="/ai-platform">Explore the workspace <span aria-hidden="true">↗</span></Link>
+            <Link className="qt-home-secondary" href="/file-converter">Open File Converter <span aria-hidden="true">→</span></Link>
           </div>
-          <div className="home-proof"><span><b>✓</b> Free tools</span><span><b>✓</b> Works on mobile</span><span><b>✓</b> No install needed</span></div>
+          <div className="qt-home-trust"><span><i>✓</i> Free-to-use tools</span><span><i>✓</i> No installation</span><span><i>✓</i> Responsive design</span></div>
+        </div>
+        <div className="qt-home-visual" aria-hidden="true">
+          <div className="qt-orbit qt-orbit-one" /><div className="qt-orbit qt-orbit-two" />
+          <div className="qt-home-core"><span>Q</span><small>QUICK<br />TOOLBOX</small></div>
+          <div className="qt-float-card qt-float-ai"><b>✦</b><span>AI workspace</span><small>Ideas into action</small></div>
+          <div className="qt-float-card qt-float-file"><b>⇄</b><span>File tools</span><small>Convert with ease</small></div>
+          <div className="qt-float-card qt-float-image"><b>◈</b><span>Photo studio</span><small>Create & prepare</small></div>
         </div>
       </section>
-      <section className="tool-discovery" aria-label="Available QuickToolBox features">
-        <div className="tool-discovery-heading"><div><small>QUICKTOOLBOX WORKSPACE</small><h2>Choose what you want to do.</h2><p>AI and file tools available in QuickToolBox.</p></div><span className="tool-count">{destinations.length} features</span></div>
-        <div className="grid tool-discovery-grid">
-          {destinations.map((item) => <Link className="card" href={item.href} key={item.href}><span className="icon-wrap"><span className="tool-icon">{item.icon}</span></span><div><h3>{item.title}</h3><p>{item.description}</p></div><span className="card-arrow" aria-hidden="true">→</span></Link>)}
+
+      <section className="qt-home-tools" aria-label="QuickToolBox tools">
+        <div className="qt-section-heading">
+          <div><span className="qt-section-kicker">YOUR WORKSPACE</span><h2>What would you like to do?</h2><p>Choose a tool and jump right into your workflow.</p></div>
+          <span className="qt-feature-count">{destinations.length} featured tools <b>↗</b></span>
+        </div>
+        <div className="qt-tool-grid">
+          {destinations.map((item, index) => (
+            <Link className={`qt-tool-card qt-tone-${item.tone}`} href={item.href} key={item.href}>
+              <div className="qt-tool-card-top"><span className="qt-tool-icon">{item.icon}</span><span className="qt-tool-tag">{item.tag}</span></div>
+              <div className="qt-tool-card-copy"><h3>{item.title}</h3><p>{item.description}</p></div>
+              <span className="qt-tool-card-arrow" aria-hidden="true">↗</span>
+              <span className="qt-tool-index">{String(index + 1).padStart(2, '0')}</span>
+            </Link>
+          ))}
         </div>
       </section>
-      <section id="about" className="about"><small>WHY QUICKTOOLBOX?</small><h2>Fast, private and mobile-friendly.</h2><div className="features"><div>⚡ <b>Fast</b><p>Lightweight browser-first tools.</p></div><div>🔒 <b>Private</b><p>Local file tools process files in your browser.</p></div><div>📱 <b>Responsive</b><p>Designed for phones, tablets and computers.</p></div></div></section>
+
+      <section className="qt-home-benefits">
+        <div className="qt-benefit-heading"><span className="qt-section-kicker">BUILT FOR EVERYDAY WORK</span><h2>Less friction.<br /><span>More focus.</span></h2></div>
+        <div className="qt-benefit-list">{highlights.map((item) => <div className="qt-benefit" key={item.title}><span>{item.icon}</span><div><h3>{item.title}</h3><p>{item.copy}</p></div></div>)}</div>
+      </section>
+      <footer className="qt-home-footer"><Link className="qt-footer-brand" href="/"><span>Q</span> QuickToolBox</Link><p>Useful tools. Clear workflows. One place.</p><span>© {new Date().getFullYear()} QuickToolBox</span></footer>
     </main>
   );
 }
