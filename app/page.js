@@ -2,7 +2,6 @@ import Link from 'next/link';
 
 const destinations = [
   { href: '/ai-platform', title: 'AI Platform', description: 'Your workspace for exploring AI-powered tools.', icon: '✦', tag: 'AI WORKSPACE', tone: 'violet' },
-  { href: '/coding-agent', title: 'Coding Agent', description: 'Plan code changes and prepare guarded GitHub pull requests.', icon: '⌘', tag: 'DEVELOPER AI', tone: 'blue' },
   { href: '/ai', title: 'AI Assistant', description: 'Ask, write, explain and summarize in one place.', icon: '✧', tag: 'AI', tone: 'blue' },
   { href: '/ai-photo-editor', title: 'AI Photo Editor', description: 'Explore image editing tools and workflows.', icon: '◈', tag: 'IMAGE', tone: 'rose' },
   { href: '/ai-prompts', title: 'AI Prompt Generator', description: 'Shape clearer prompts for your next idea.', icon: '⌘', tag: 'AI', tone: 'violet' },
