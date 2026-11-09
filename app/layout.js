@@ -1,4 +1,5 @@
 import './globals.css';
+import './premium.css';
 import SiteProviders from './providers';
 import QuickToolboxAssistant from '../components/QuickToolboxAssistant';
 import SiteHeader from '../components/SiteHeader';

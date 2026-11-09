@@ -4,8 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 const ThemeContext = createContext(null);
 const THEMES = {
-  blue: { label: 'Ocean Blue', color: '#2563eb' },
-  violet: { label: 'Violet', color: '#7c3aed' },
+  blue: { label: 'Midnight Violet', color: '#8b5cf6' },
+  violet: { label: 'Electric Purple', color: '#a78bfa' },
   emerald: { label: 'Emerald', color: '#059669' },
   rose: { label: 'Rose', color: '#e11d48' },
 };

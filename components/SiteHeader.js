@@ -15,7 +15,8 @@ export default function SiteHeader() {
   return (
     <header className="qt-site-header">
       <Link className="qt-site-brand" href="/" aria-label="QuickToolBox home">
-        <span className="qt-site-mark">Q</span><span>QuickToolBox</span><span className="qt-brand-dot" />
+        <span className="qt-site-mark"><img src="/quicktoolbox-mark.svg" alt="" width="42" height="42" /></span>
+        <span>QuickToolBox</span><span className="qt-brand-dot" />
       </Link>
       <nav className="qt-site-nav" aria-label="Main navigation">
         {links.map(({ href, label }) => {
