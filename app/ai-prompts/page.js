@@ -31,7 +31,7 @@ export default function AIPrompts() {
         body: JSON.stringify({ prompt: `You are an expert prompt engineer. Category: ${category}. Goal: ${goal}. ${categories[category]} Return one polished copy-ready prompt followed by 3 short optional variations.` })
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || typeof data.text !== 'string' || !data.text.trim()) {
+      if (!res.ok || typeof data.text !== 'string' || !data.text.trim() || !data.source || data.source === 'local') {
         throw new Error(data.error || 'AI এখন prompt তৈরি করতে পারেনি। API key, quota ও deployment logs যাচাই করুন।');
       }
       setResult(data.text.trim());
