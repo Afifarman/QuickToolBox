@@ -72,7 +72,6 @@ export default function AIPhotoEditor() {
         body: JSON.stringify({ image, mimeType: file.type, prompt: prompt.trim() }),
       });
       const data = await response.json().catch(() => ({}));
-      if (response.status === 401) throw new Error('AI দিয়ে ছবি সম্পাদনা করতে আগে লগইন করুন। লগইন করে আবার চেষ্টা করুন।');
       if (!response.ok || !data.image || !data.mimeType) throw new Error(data.error || 'AI সম্পাদিত ছবি ফেরত দেয়নি।');
       setEditedSrc(`data:${data.mimeType};base64,${data.image}`);
       setNotice(`AI দিয়ে ছবি সম্পাদিত হয়েছে • ${data.model || 'Gemini'}`);
@@ -82,9 +81,11 @@ export default function AIPhotoEditor() {
     } finally { setBusy(false); }
   }
 
-  function download(url, name) {
+  function download(url, name, mimeType) {
     if (!url) return;
-    const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+    const extension = mimeType === 'image/jpeg' ? 'jpg' : mimeType === 'image/webp' ? 'webp' : 'png';
+    const safeName = name.replace(/\\.(png|jpe?g|webp)$/i, '') + '.' + extension;
+    const a = document.createElement('a'); a.href = url; a.download = safeName; a.click();
   }
 
   return <>
@@ -103,11 +104,11 @@ export default function AIPhotoEditor() {
         <textarea id="photo-prompt" rows={4} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="যেমন: ব্যাকগ্রাউন্ড পরিষ্কার করো, আলো বাড়াও…" />
         <div className="ai-actions">
           <button className="btn" type="button" onClick={editWithAI} disabled={busy || !file || !prompt.trim()}>{busy ? 'AI ছবি এডিট করছে…' : '✨ Edit image with AI'}</button>
-          <button className="btn light" type="button" onClick={() => download(editedSrc, 'quicktoolbox-ai-edited.png')} disabled={!editedSrc}>Download AI Image</button>
+          <button className="btn light" type="button" onClick={() => download(editedSrc, 'quicktoolbox-ai-edited', editedSrc.match(/^data:(image\\/[^;]+)/)?.[1])} disabled={!editedSrc}>Download AI Image</button>
         </div>
         {notice && <p role="status" style={{color:'#067647',whiteSpace:'pre-wrap'}}>{notice}</p>}
         {error && <p role="alert" style={{color:'#b42318',whiteSpace:'pre-wrap'}}>{error}</p>}
-        <p style={{color:'#667085',fontSize:13}}>AI দিয়ে ছবি সম্পাদনা করতে আগে <Link href="/login">লগইন করুন</Link>। ছবি AI সম্পাদনার জন্য Google Gemini API-তে পাঠানো হবে; সংবেদনশীল ছবি আপলোড করবেন না।</p>
+        <p style={{color:'#667085',fontSize:13}}>AI দিয়ে ছবি সম্পাদনা করতে সার্ভারে configured Gemini image model প্রয়োজন। ছবি AI সম্পাদনার জন্য Google Gemini API-তে পাঠানো হবে; সংবেদনশীল ছবি আপলোড করবেন না।</p>
       </section>
       {src && <section className="result">
         <h2>Original / local adjustments</h2>
