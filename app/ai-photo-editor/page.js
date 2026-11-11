@@ -84,7 +84,7 @@ export default function AIPhotoEditor() {
   function download(url, name, mimeType) {
     if (!url) return;
     const extension = mimeType === 'image/jpeg' ? 'jpg' : mimeType === 'image/webp' ? 'webp' : 'png';
-    const safeName = name.replace(/\\.(png|jpe?g|webp)$/i, '') + '.' + extension;
+    const safeName = name.replace(/\.(png|jpe?g|webp)$/i, '') + '.' + extension;
     const a = document.createElement('a'); a.href = url; a.download = safeName; a.click();
   }
 
@@ -104,7 +104,7 @@ export default function AIPhotoEditor() {
         <textarea id="photo-prompt" rows={4} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="যেমন: ব্যাকগ্রাউন্ড পরিষ্কার করো, আলো বাড়াও…" />
         <div className="ai-actions">
           <button className="btn" type="button" onClick={editWithAI} disabled={busy || !file || !prompt.trim()}>{busy ? 'AI ছবি এডিট করছে…' : '✨ Edit image with AI'}</button>
-          <button className="btn light" type="button" onClick={() => download(editedSrc, 'quicktoolbox-ai-edited', editedSrc.match(/^data:(image\\/[^;]+)/)?.[1])} disabled={!editedSrc}>Download AI Image</button>
+          <button className="btn light" type="button" onClick={() => download(editedSrc, 'quicktoolbox-ai-edited', editedSrc.match(/^data:(image\/[^;]+)/)?.[1])} disabled={!editedSrc}>Download AI Image</button>
         </div>
         {notice && <p role="status" style={{color:'#067647',whiteSpace:'pre-wrap'}}>{notice}</p>}
         {error && <p role="alert" style={{color:'#b42318',whiteSpace:'pre-wrap'}}>{error}</p>}
