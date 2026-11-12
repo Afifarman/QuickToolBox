@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PDFDocument, StandardFonts } from "pdf-lib";
+import { mergePdfBuffers, splitPdfBuffer } from "../lib/pdf-tools";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -35,7 +36,7 @@ async function zipFiles(files) {
     const local = new Uint8Array(30 + name.length + data.length);
     const lv = new DataView(local.buffer);
     u32(lv, 0, 0x04034b50); u16(lv, 4, 20); u16(lv, 6, 0x0800); u16(lv, 8, 0);
-    u16(lv, 12, 0); u16(lv, 14, 0x0021); u32(lv, 14, crc); u32(lv, 18, data.length); u32(lv, 22, data.length);
+    u16(lv, 10, 0); u16(lv, 12, 0x0021); u32(lv, 14, crc); u32(lv, 18, data.length); u32(lv, 22, data.length);
     u16(lv, 26, name.length); local.set(name, 30); local.set(data, 30 + name.length);
     const central = new Uint8Array(46 + name.length);
     const cv = new DataView(central.buffer);
@@ -210,15 +211,14 @@ async function imagesToPdf(files) {
 
 async function mergePdfFiles(files) {
   if (!files || files.length < 2) throw new Error("কমপক্ষে ২টি PDF ফাইল নির্বাচন করুন।");
-  const merged = await PDFDocument.create();
-  for (const file of files) {
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const doc = await PDFDocument.load(bytes);
-    const pages = await merged.copyPages(doc, doc.getPageIndices());
-    for (const page of pages) merged.addPage(page);
-  }
-  const resultBytes = await merged.save();
+  const buffers = await Promise.all(files.map((file) => file.arrayBuffer()));
+  const resultBytes = await mergePdfBuffers(buffers);
   return new Blob([resultBytes], { type: "application/pdf" });
+}
+async function splitPdfToZip(file) {
+  if (!file) throw new Error("একটি PDF ফাইল নির্বাচন করুন।");
+  const pages = await splitPdfBuffer(await file.arrayBuffer());
+  return zipFiles(pages.map((page) => new File([page.bytes], page.name, { type: "application/pdf" })));
 }
 
 async function convertAudioToWav(file) {
@@ -474,11 +474,13 @@ export default function ConverterEngines() {
   const [error, setError] = useState(""), [busy, setBusy] = useState("");
   const [extracted, setExtracted] = useState([]);
   const [pdfImages, setPdfImages] = useState([]), [mergePdfs, setMergePdfs] = useState([]), [audioInput, setAudioInput] = useState(null);
+  const [pdfSplitInput, setPdfSplitInput] = useState(null);
   const [csvResult, saveCsv, clearCsv] = useResult(), [xlsxResult, saveXlsx, clearXlsx] = useResult(), [zipResult, saveZip, clearZip] = useResult();
   const [docxInput, setDocxInput] = useState(null), [pdfDocxInput, setPdfDocxInput] = useState(null), [pptxInput, setPptxInput] = useState(null);
   const [htmlInput, setHtmlInput] = useState(""), [audioCompressInput, setAudioCompressInput] = useState(null);
   const [videoCompressInput, setVideoCompressInput] = useState(null), [ttfInput, setTtfInput] = useState(null);
   const [imgPdfResult, saveImgPdf, clearImgPdf] = useResult(), [mergePdfResult, saveMergePdf, clearMergePdf] = useResult(), [audioResult, saveAudio, clearAudio] = useResult();
+  const [splitPdfResult, saveSplitPdf, clearSplitPdf] = useResult();
   const [docxResult, saveDocx, clearDocx] = useResult(), [pdfDocxResult, savePdfDocx, clearPdfDocx] = useResult(), [pptxResult, savePptx, clearPptx] = useResult();
   const [htmlResult, saveHtml, clearHtml] = useResult(), [audioCompressResult, saveAudioCompress, clearAudioCompress] = useResult();
   const [videoCompressResult, saveVideoCompress, clearVideoCompress] = useResult(), [ttfResult, saveTtf, clearTtf] = useResult();
@@ -499,6 +501,12 @@ export default function ConverterEngines() {
       <label style={field}>Select PDF files (at least 2) <input type="file" accept="application/pdf,.pdf" multiple onChange={e => { setMergePdfs([...(e.target.files || [])]); clearMergePdf(); }} /></label>
       <button style={button} disabled={mergePdfs.length < 2 || !!busy} onClick={() => run("merge-pdf", async () => saveMergePdf(await mergePdfFiles(mergePdfs), "quicktoolbox-merged.pdf"))}>{busy === "merge-pdf" ? "Merging…" : "Merge PDFs"}</button>
       <Download result={mergePdfResult} />
+    </section>
+    <section style={box} id="split-pdf">
+      <h2>Split PDF</h2><p>একটি PDF-এর প্রতিটি পৃষ্ঠা আলাদা PDF ফাইলে ভাগ করে ZIP হিসেবে ডাউনলোড করুন। সর্বোচ্চ ১০০ MB এবং ২০০ পৃষ্ঠা।</p>
+      <label style={field}>Select PDF file <input type="file" accept="application/pdf,.pdf" onChange={e => { setPdfSplitInput(e.target.files?.[0] || null); clearSplitPdf(); }} /></label>
+      <button style={button} disabled={!pdfSplitInput || !!busy} onClick={() => run("split-pdf", async () => saveSplitPdf(await splitPdfToZip(pdfSplitInput), (pdfSplitInput.name.replace(/\.pdf$/i, "") || "document") + "-pages.zip"))}>{busy === "split-pdf" ? "Splitting…" : "Split PDF into pages"}</button>
+      <Download result={splitPdfResult} />
     </section>
     <section style={box} id="audio-to-wav">
       <h2>Audio to WAV</h2><p>যেকোনো অডিও ফাইল (MP3, M4A, OGG, AAC) ব্রাউজারেই স্ট্যান্ডার্ড WAV অডিওতে রূপান্তর করুন।</p>
