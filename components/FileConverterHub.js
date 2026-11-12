@@ -10,6 +10,7 @@ const tools = [
   { name: "SVG to PNG", category: "Vector", description: "Rasterize a local SVG file to a downloadable PNG in your browser.", href: "#svg-converter", status: "ready", formats: "SVG → PNG" },
   { name: "Images to PDF", category: "Documents", description: "Convert one or more JPG, PNG or WebP images into a combined PDF file in your browser.", href: "#images-to-pdf", status: "ready", formats: "JPG / PNG / WebP → PDF" },
   { name: "Merge PDF", category: "Documents", description: "Combine two or more PDF documents into a single PDF without uploading to a server.", href: "#merge-pdf", status: "ready", formats: "PDF + PDF → PDF" },
+  { name: "Split PDF", category: "Documents", description: "Export each page of a PDF as a separate PDF in one ZIP download.", href: "#split-pdf", status: "ready", formats: "PDF → ZIP of pages" },
   { name: "Audio to WAV", category: "Audio", description: "Convert any audio format (MP3, M4A, OGG, AAC) to high-quality uncompressed WAV in your browser.", href: "#audio-to-wav", status: "ready", formats: "MP3 / M4A / OGG → WAV" },
   ...[
     ["PDF to Word", "Documents", "PDF → DOCX", "testing", "#pdf-to-docx"], ["Word to PDF", "Documents", "DOCX → PDF", "testing", "#word-to-pdf"], ["PDF to JPG", "Documents", "PDF → JPG", "testing", "#images-to-pdf"],
