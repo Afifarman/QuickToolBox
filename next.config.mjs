@@ -14,8 +14,6 @@ const nextConfig = {
     return [
       { source: '/tools', destination: '/', permanent: true },
       { source: '/tools/:path*', destination: '/', permanent: true },
-      { source: '/student-tools', destination: '/', permanent: true },
-      { source: '/student-tools/:path*', destination: '/', permanent: true },
     ];
   },
   async headers() {
