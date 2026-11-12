@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 const studentTools = [
   ['grade-calculator', '📊', 'Grade & Percentage Calculator', 'Calculate your percentage and grade from obtained and total marks.'],
   ['study-timetable', '📅', 'Study Timetable Generator', 'Organize your subjects into a clear, practical weekly study plan.'],
