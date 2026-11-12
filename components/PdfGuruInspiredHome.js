@@ -13,6 +13,23 @@ const tools = [
   { name: "AI Prompt Generator", description: "Create clearer prompts for AI workflows.", href: "/ai-prompts", category: "AI & Writing", icon: "⌘", tags: "prompt generator ai" },
   { name: "Local AI Chat", description: "Explore browser-based local AI where your device supports it.", href: "/ai/local", category: "AI & Writing", icon: "◉", tags: "local offline browser ai" },
   { name: "AI Agent", description: "Open the AI agent workspace.", href: "/ai-agent", category: "AI & Writing", icon: "⌁", tags: "agent automate assistant" },
+  { name: "Grade & Percentage Calculator", description: "Calculate marks, percentage and grade.", href: "/student-tools/grade-calculator", category: "Student Tools", icon: "📊", tags: "grade calculation marks percentage" },
+  { name: "Study Timetable Generator", description: "Build a simple weekly study plan.", href: "/student-tools/study-timetable", category: "Student Tools", icon: "📅", tags: "study planner schedule timetable" },
+  { name: "Study Time Calculator", description: "Divide study hours into daily targets.", href: "/student-tools/study-time-calculator", category: "Student Tools", icon: "⏰", tags: "study hours time" },
+  { name: "Scientific Calculator", description: "Calculate supported arithmetic and scientific expressions.", href: "/student-tools/scientific-calculator", category: "Student Tools", icon: "🔢", tags: "math calculator sin sqrt" },
+  { name: "Math Problem Solver", description: "Solve supported percentage and linear equation questions.", href: "/student-tools/math-problem-solver", category: "Student Tools", icon: "📐", tags: "math equation percentage" },
+  { name: "Citation Generator", description: "Format basic APA, MLA and Chicago citations.", href: "/student-tools/citation-generator", category: "Student Tools", icon: "📚", tags: "citation reference bibliography" },
+  { name: "Essay Outline Generator", description: "Create a structured essay outline.", href: "/student-tools/essay-outline-generator", category: "Student Tools", icon: "✍️", tags: "essay writing outline" },
+  { name: "Quiz Generator", description: "Turn study notes into practice questions.", href: "/student-tools/quiz-generator", category: "Student Tools", icon: "❓", tags: "quiz questions revision" },
+  { name: "Notes Summarizer", description: "Condense notes for faster revision.", href: "/student-tools/notes-summarizer", category: "Student Tools", icon: "📄", tags: "notes summary study" },
+  { name: "Grammar Checker", description: "Review common punctuation and capitalization issues.", href: "/student-tools/grammar-checker", category: "Student Tools", icon: "🔤", tags: "grammar spelling punctuation" },
+  { name: "Student Translator", description: "Translate text when the configured AI service is available.", href: "/student-tools/student-translator", category: "Student Tools", icon: "🌐", tags: "translate language" },
+  { name: "PDF Study Notes Extractor", description: "Extract selectable text from PDF files.", href: "/student-tools/pdf-notes-extractor", category: "Student Tools", icon: "📑", tags: "pdf extract notes" },
+  { name: "Semester Result Calculator", description: "Calculate weighted semester GPA.", href: "/student-tools/semester-result-calculator", category: "Student Tools", icon: "📈", tags: "semester result gpa grade" },
+  { name: "Exam Countdown", description: "Track the time remaining until an exam.", href: "/student-tools/exam-countdown", category: "Student Tools", icon: "🎓", tags: "exam date countdown" },
+  { name: "Student Budget Calculator", description: "Compare income, expenses and remaining budget.", href: "/student-tools/student-budget-calculator", category: "Student Tools", icon: "💰", tags: "student budget money expenses" },
+  { name: "Assignment Checklist", description: "Track assignment tasks and due dates in this browser.", href: "/student-tools/assignment-checklist", category: "Student Tools", icon: "☑️", tags: "assignment checklist task" },
+  { name: "Study Notes Organizer", description: "Save and organize notes by subject.", href: "/student-tools/study-notes-organizer", category: "Student Tools", icon: "🗂️", tags: "study notes organizer" },
 ];
 
 const categories = [
@@ -21,6 +38,7 @@ const categories = [
   { name: "Image Tools", icon: "▧", note: "Photo editing and image workflows" },
   { name: "AI & Writing", icon: "✦", note: "AI assistance and writing" },
   { name: "Productivity", icon: "◷", note: "Everyday work utilities" },
+  { name: "Student Tools", icon: "🎓", note: "Calculators, study planning and revision utilities" },
 ];
 
 const benefits = [
