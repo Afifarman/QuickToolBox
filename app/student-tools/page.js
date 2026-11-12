@@ -1,5 +1,3 @@
-import Link from 'next/link';
-
 const studentTools = [
   ['grade-calculator', '📊', 'Grade & Percentage Calculator', 'Calculate your percentage and grade from obtained and total marks.'],
   ['study-timetable', '📅', 'Study Timetable Generator', 'Organize your subjects into a clear, practical weekly study plan.'],
@@ -23,15 +21,6 @@ const studentTools = [
 export default function StudentToolsPage() {
   return (
     <>
-      <header>
-        <Link className="brand" href="/">
-          <b>Q</b> QuickToolBox
-        </Link>
-        <nav>
-          <Link href="/ai">AI Assistant</Link>
-          <Link href="/">← All tools</Link>
-        </nav>
-      </header>
       <main className="student-tools-directory" style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 20px 80px' }}>
         <small className="student-tools-eyebrow">STUDENT TOOLKIT</small>
         <h1>Study smarter with the right tools.</h1>
