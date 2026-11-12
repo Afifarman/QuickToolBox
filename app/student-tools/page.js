@@ -23,13 +23,13 @@ const studentTools = [
 export default function StudentToolsPage() {
   return (
     <>
-      <main className="student-tools-directory" style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 20px 80px' }}>
+      <main className="qt-student-directory" style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 20px 80px' }}>
         <small className="student-tools-eyebrow">STUDENT TOOLKIT</small>
         <h1>Study smarter with the right tools.</h1>
         <p>Plan your study time, solve calculations, organize notes and prepare for exams—all in one place.</p>
-        <div className="grid" style={{ marginTop: 28 }}>
+        <div className="qt-student-directory-grid" style={{ marginTop: 28 }}>
           {studentTools.map(([slug, icon, title, desc]) => (
-            <Link className="card" href={`/student-tools/${slug}`} key={slug}>
+            <Link className="qt-student-directory-card" href={`/student-tools/${slug}`} key={slug}>
               <i>{icon}</i>
               <div>
                 <h3>{title}</h3>
