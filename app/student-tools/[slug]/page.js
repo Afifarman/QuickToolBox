@@ -1,0 +1,120 @@
+'use client';
+
+import {use,useEffect,useMemo,useState} from 'react';
+import {notFound} from 'next/navigation';
+
+const META={
+'gpa-cgpa-calculator':['🎓','GPA / CGPA Calculator','Add each course with its credit value and grade point to calculate your weighted GPA.'],
+'grade-calculator':['📊','Grade & Percentage Calculator','Enter your obtained marks and the full marks to calculate your percentage and grade.'],
+'study-timetable':['📅','Study Timetable Generator','List your subjects and study preferences to build a simple weekly timetable.'],
+'study-time-calculator':['⏰','Study Time Calculator','Enter your total study hours and number of days to find a manageable daily target.'],
+'scientific-calculator':['🔢','Scientific Calculator','Enter an arithmetic or supported scientific expression to calculate its result.'],
+'math-problem-solver':['📐','Math Problem Solver','Try a percentage question or a basic linear equation and view the calculated answer.'],
+'word-character-counter':['📖','Word & Character Counter','Count words, characters, lines and reading time.'],
+'citation-generator':['📚','Citation Generator','Enter the author, title, year and publisher or website to format a basic citation.'],
+'essay-outline-generator':['✍️','Essay Outline Generator','Enter your essay topic to create a structured outline with an introduction, key points and conclusion.'],
+'quiz-generator':['❓','Quiz Generator','Add one topic or fact per line to turn your notes into practice questions.'],
+'notes-summarizer':['📄','Notes Summarizer','Paste your notes to create a shorter version for quick revision.'],
+'grammar-checker':['🔤','Grammar Checker','Paste text to review common spacing, capitalization and punctuation issues.'],
+'student-translator':['🌐','Student Translator','Use the browser translation API when supported, or copy text for translation.'],
+'pdf-notes-extractor':['📑','PDF Study Notes Extractor','Extract text from a selectable PDF using the browser File API.'],
+'semester-result-calculator':['📈','Semester Result Calculator','Enter course credits and grade points to calculate your weighted semester GPA.'],
+'exam-countdown':['🎓','Exam Countdown','Choose your exam date and time to see how long remains.'],
+'student-budget-calculator':['💰','Student Budget Calculator','Enter your monthly income and expenses to see your remaining balance.'],
+'notes-qr-generator':['🔗','Notes QR Generator','Create a QR-ready link using the browser share/copy tools.'],
+'assignment-checklist':['☑️','Assignment Checklist','Add assignments, set due dates and track completed tasks. Your list is saved in this browser.'],
+'study-notes-organizer':['🗂️','Study Notes Organizer','Save notes by subject and title. Your notes stay in this browser.']
+};
+
+
+function evaluateSafeMath(input) {
+  const source = String(input).trim();
+  const tokens = source.match(/(?:\d+(?:\.\d*)?|\.\d+)|(?:[a-zA-Z]+)|(?:\*\*|[()+\-*/%^])/g) || [];
+  if (!tokens.length || tokens.join('') !== source.replace(/\s+/g, '')) throw new Error('Invalid expression');
+  let position = 0;
+  const peek = () => tokens[position];
+  const take = () => tokens[position++];
+  const expect = (token) => { if (take() !== token) throw new Error('Invalid expression'); };
+  const functions = { sin: Math.sin, cos: Math.cos, tan: Math.tan, sqrt: Math.sqrt, abs: Math.abs, log: Math.log10, ln: Math.log, floor: Math.floor, ceil: Math.ceil, round: Math.round };
+  function primary() {
+    const token = take();
+    if (token === '(') { const value = expression(); expect(')'); return value; }
+    if (token && (/^\d/.test(token) || token.startsWith('.'))) return Number(token);
+    if (token && /^[a-zA-Z]+$/.test(token)) {
+      const name = token.toLowerCase();
+      if (name === 'pi') return Math.PI;
+      if (name === 'e') return Math.E;
+      if (!functions[name]) throw new Error('Unsupported function');
+      expect('('); const value = expression(); expect(')');
+      return functions[name](value);
+    }
+    throw new Error('Invalid expression');
+  }
+  function unary() {
+    if (peek() === '+') { take(); return unary(); }
+    if (peek() === '-') { take(); return -unary(); }
+    return power();
+  }
+  function power() { let value = primary(); if (peek() === '^' || peek() === '**') { take(); value = value ** unary(); } return value; }
+  function term() {
+    let value = unary();
+    while (peek() === '*' || peek() === '/' || peek() === '%') {
+      const op = take(), right = unary();
+      value = op === '*' ? value * right : op === '/' ? value / right : value % right;
+    }
+    return value;
+  }
+  function expression() {
+    let value = term();
+    while (peek() === '+' || peek() === '-') { const op = take(), right = term(); value = op === '+' ? value + right : value - right; }
+    return value;
+  }
+  const result = expression();
+  if (position !== tokens.length || !Number.isFinite(result)) throw new Error('Invalid result');
+  return result;
+}
+
+function Card({children}){return <section style={{padding:22,border:'1px solid #ddd',borderRadius:16,marginTop:18}}>{children}</section>}
+const btn={padding:'10px 14px',border:0,borderRadius:10,cursor:'pointer'};
+
+export default function StudentTool({params}){
+ const resolvedParams=use(params); const slug=resolvedParams?.slug||''; if(!META[slug]) notFound(); const [value,setValue]=useState(''); const [result,setResult]=useState(''); const [items,setItems]=useState([]); const [seconds,setSeconds]=useState(1500);
+ const [name,setName]=useState(''); const [deadline,setDeadline]=useState(''); const [task,setTask]=useState(''); const [notes,setNotes]=useState('');
+ const meta=META[slug]||['🎓','Student Tool','Useful student utility.'];
+ useEffect(()=>{try{const k='qt-'+slug; const saved=JSON.parse(localStorage.getItem(k)||'[]'); if(Array.isArray(saved))setItems(saved)}catch{}},[slug]);
+ useEffect(()=>{if(slug!=='pomodoro-timer'||seconds<=0)return; const id=setInterval(()=>setSeconds(s=>s-1),1000); return()=>clearInterval(id)},[slug,seconds]);
+ const save=(next)=>{setItems(next);try{localStorage.setItem('qt-'+slug,JSON.stringify(next))}catch{}};
+ const gpa=useMemo(()=>{if(!value)return null; let c=0,p=0; value.split(/\n|,/).forEach(x=>{const [cr,pt]=x.trim().split(/\s*[:|]\s*/).map(Number);if(cr>0&&Number.isFinite(pt)){c+=cr;p+=cr*pt}});return c?p/c:null},[value]);
+ const calculate=()=>{
+  if(slug==='gpa-cgpa-calculator'||slug==='semester-result-calculator'){setResult(gpa?`Weighted GPA: ${gpa.toFixed(2)}`:'Use format: 3:4.0, 3:3.5, 4:3.0');return}
+  if(slug==='grade-calculator'){const [m,t]=value.split(/[,/]/).map(Number);const pct=t?m/t*100:0;const grade=pct>=80?'A+':pct>=70?'A':pct>=60?'A-':pct>=50?'B':pct>=40?'C':'F';setResult(`${pct.toFixed(2)}% — Grade ${grade}`);return}
+  if(slug==='study-time-calculator'){const [h,d]=value.split(/[,/]/).map(Number);setResult(h&&d?`${(h/d).toFixed(2)} hours/day`:'Use: total hours,days');return}
+  if(slug==='student-budget-calculator'){const [income,...costs]=value.split(/[,/]/).map(Number);const total=costs.reduce((a,b)=>a+(b||0),0);setResult(`Expenses: ${total.toFixed(2)} | Balance: ${(income-total).toFixed(2)}`);return}
+  if(slug==='scientific-calculator'){try{setResult(String(evaluateSafeMath(value)))}catch{setResult('Invalid expression. Supported: arithmetic, parentheses, ^, pi, e, sin(), cos(), tan(), sqrt(), abs(), log(), ln(), floor(), ceil(), round().')}}
+  if(slug==='math-problem-solver'){const x=value.trim(); const pct=x.match(/([0-9.]+)\s*%\s*of\s*([0-9.]+)/i); const eq=x.match(/^([0-9.]+)x\s*([+-])\s*([0-9.]+)\s*=\s*([0-9.]+)$/i); if(pct)setResult(String(Number(pct[1])*Number(pct[2])/100)); else if(eq){const a=Number(eq[1]),b=(eq[2]==='+'?1:-1)*Number(eq[3]),c=Number(eq[4]);setResult(`x = ${((c-b)/a).toFixed(6)}`)} else setResult('Try “15% of 240” or “2x + 4 = 10”')}
+ };
+ const add=()=>{if(!task.trim())return;save([...items,{id:Date.now(),text:task,deadline,done:false}]);setTask('');setDeadline('')};
+ const toggle=id=>save(items.map(x=>x.id===id?{...x,done:!x.done}:x));
+ const remove=id=>save(items.filter(x=>x.id!==id));
+ const summarize=()=>{const s=notes.trim(); if(!s)return setResult('Paste notes first.'); const sentences=s.split(/(?<=[.!?])\s+/).filter(Boolean);setResult(sentences.slice(0,Math.max(3,Math.ceil(sentences.length/3))).join(' '))};
+ const outline=()=>setResult(value?`Introduction: ${value}\n\n1. Background and context\n2. Main argument / key points\n3. Evidence and examples\n4. Counterpoint and response\n5. Conclusion and recommendation`:'Enter an essay topic.');
+ const citation=()=>{const [author,title,year,site]=value.split('|').map(s=>s?.trim());setResult(`APA: ${author||'Author'}. (${year||'Year'}). ${title||'Title'}. ${site||'Publisher'}.\n\nMLA: ${author||'Author'}. “${title||'Title'}.” ${site||'Publisher'}, ${year||'Year'}.\n\nChicago: ${author||'Author'}. “${title||'Title'}.” ${site||'Publisher'}, ${year||'Year'}.`)};
+ const flashcards=()=>save(notes.split(/\n/).filter(Boolean).map((x,i)=>{const [q,a]=x.split(/\s*::\s*/);return{id:i,text:q||x,answer:a||'Add answer'}}));
+ const quiz=()=>setResult(notes.split(/\n/).filter(Boolean).slice(0,10).map((x,i)=>`${i+1}. Explain: ${x.replace(/[?!.]+$/,'')}?`).join('\n'));
+ const grammar=()=>{let s=notes.replace(/\s+/g,' ').replace(/\s+([,.!?])/g,'$1').replace(/(^|[.!?]\s+)([a-z])/g,(_,a,b)=>a+b.toUpperCase());setResult(s)};
+ const ai=async()=>{setResult('Thinking…');try{const r=await fetch('/api/ai',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({prompt:notes||value||'Explain this topic for a student in simple language.'})});const j=await r.json();setResult(j.text||j.error||'AI response unavailable.')}catch{setResult('AI request failed. Try again.')}};
+ const wordStats=()=>{const s=notes||value;setResult(`Words: ${(s.trim().match(/\S+/g)||[]).length}\nCharacters: ${s.length}\nLines: ${s?s.split('\n').length:0}\nReading time: ${Math.max(1,Math.ceil((s.trim().match(/\S+/g)||[]).length/200))} min`)};
+ const countdown=()=>{const d=new Date(value); if(Number.isNaN(d.getTime()))return setResult('Enter a valid exam date/time.'); const diff=d-Date.now();setResult(diff<=0?'Exam time has arrived.':`${Math.floor(diff/86400000)} days, ${Math.floor(diff%86400000/3600000)} hours, ${Math.floor(diff%3600000/60000)} minutes remaining.`)};
+ const genericAction=slug==='notes-summarizer'?summarize:slug==='essay-outline-generator'?outline:slug==='citation-generator'?citation:slug==='flashcard-generator'?flashcards:slug==='quiz-generator'?quiz:slug==='grammar-checker'?grammar:slug==='ai-study-assistant'?ai:slug==='word-character-counter'?wordStats:slug==='exam-countdown'?countdown:calculate;
+ return <main className={'student-tool-page student-tool-' + slug} style={{maxWidth:900,margin:'0 auto',padding:'40px 18px'}}><header className="student-tool-hero"><span className="student-tool-icon" aria-hidden="true">{meta[0]}</span><div><small>QUICKTOOLBOX / STUDENT STUDIO</small><h1>{meta[1]}</h1><p>{meta[2]}</p><span className="student-tool-note">Made for focused study · Your work stays in this browser where supported</span></div></header>
+  {(slug==='assignment-planner'||slug==='assignment-checklist')&&<Card><input placeholder="Assignment" value={task} onChange={e=>setTask(e.target.value)} style={{padding:12,width:'55%',marginRight:8}}/><input type="date" value={deadline} onChange={e=>setDeadline(e.target.value)} style={{padding:12}}/><button onClick={add} style={{...btn,marginLeft:8}}>Add</button>{items.map(x=><div key={x.id} style={{padding:10,borderBottom:'1px solid #eee'}}><input type="checkbox" checked={!!x.done} onChange={()=>toggle(x.id)}/> <span style={{textDecoration:x.done?'line-through':'none'}}>{x.text}</span> {x.deadline&&<small> — {x.deadline}</small>} <button onClick={()=>remove(x.id)} style={{float:'right'}}>×</button></div>)}</Card>}
+  {slug==='pomodoro-timer'&&<Card><h2>{String(Math.floor(seconds/60)).padStart(2,'0')}:{String(seconds%60).padStart(2,'0')}</h2><button onClick={()=>setSeconds(1500)} style={btn}>25 min</button> <button onClick={()=>setSeconds(300)} style={btn}>5 min break</button></Card>}
+  {slug==='study-timetable'&&<Card><textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Math, Physics, English..." rows={6} style={{width:'100%',padding:12}}/><button onClick={()=>setResult(notes.split(/[,\n]/).filter(Boolean).map((s,i)=>`${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][i%7]}: ${s.trim()} — 1 hour`).join('\n'))} style={{...btn,marginTop:10}}>Generate timetable</button></Card>}
+  {slug==='pdf-notes-extractor'&&<Card><input type="file" accept="application/pdf,text/plain" onChange={async e=>{const f=e.target.files?.[0];if(!f)return;setResult('Extracting text…');try{if(f.type==='text/plain'){setResult((await f.text()).slice(0,30000));return}const pdfjs=await (async()=>{if(window.pdfjsLib)return window.pdfjsLib;await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=resolve;s.onerror=()=>reject(new Error('PDF library could not load.'));document.head.appendChild(s)});if(!window.pdfjsLib)throw new Error('PDF library unavailable.');window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';return window.pdfjsLib})();const doc=await pdfjs.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise;let output='';for(let n=1;n<=doc.numPages;n++){const page=await doc.getPage(n),content=await page.getTextContent();output+=`\n\n--- Page ${n} ---\n`+content.items.map(x=>x.str).join(' ')}setResult(output.trim().slice(0,30000)||'No selectable text found. This may be a scanned PDF and needs OCR.')}catch(err){setResult(err?.message||'Could not extract text from this PDF.')}}}/><p>Extracts selectable text from PDF pages in your browser. Scanned/image-only PDFs require OCR and are not supported yet.</p></Card>}
+  {slug==='notes-qr-generator'&&<Card><input value={value} onChange={e=>setValue(e.target.value)} placeholder="Paste a notes URL" style={{padding:12,width:'100%'}}/><button onClick={async()=>{try{await navigator.clipboard.writeText(value);setResult('Link copied. Paste it into any QR generator or share it.')}catch{setResult('Copy the link manually.')}}} style={{...btn,marginTop:10}}>Copy Link</button></Card>}
+  {slug==='student-translator'&&<Card><label>Translate to</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Bengali, English, Hindi" style={{width:'100%',padding:12,margin:'8px 0 14px'}}/><textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Enter text to translate…" rows={7} style={{width:'100%',padding:14}}/><button onClick={async()=>{if(!notes.trim()||!name.trim())return setResult('Enter text and a target language.');setResult('Translating…');try{const response=await fetch('/api/ai',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({prompt:`Translate the following text into ${name}. Preserve meaning and formatting. Return only the translation.\\n\\n${notes}`})});const data=await response.json();if(!response.ok||data.error)throw new Error(data.error||'Translation service unavailable.');setResult(data.text||data.output||'No translation was returned.')}catch(err){setResult(err.message||'Translation failed. Check AI provider configuration and try again.')}}} style={{...btn,marginTop:10}}>Translate</button>{result&&<pre style={{whiteSpace:'pre-wrap',marginTop:16,padding:16,background:'#f5f5f5',borderRadius:12}}>{result}</pre>}</Card>}
+  {slug==='study-notes-organizer'&&<Card><input value={name} onChange={e=>setName(e.target.value)} placeholder="Subject (e.g. Physics)" style={{width:'100%',padding:12,marginBottom:10}}/><input value={task} onChange={e=>setTask(e.target.value)} placeholder="Note title" style={{width:'100%',padding:12,marginBottom:10}}/><textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Write your study notes…" rows={7} style={{width:'100%',padding:14}}/><button onClick={()=>{if(!task.trim()||!notes.trim())return setResult('Add a title and note content first.');save([...items,{id:Date.now(),subject:name.trim()||'General',title:task.trim(),content:notes.trim(),createdAt:new Date().toISOString()}]);setTask('');setNotes('');setResult('Note saved in this browser.')}} style={{...btn,marginTop:10}}>Save Note</button><h3 style={{marginTop:22}}>Saved notes ({items.length})</h3>{items.length===0?<p>No notes saved yet.</p>:items.map(item=><article key={item.id} style={{border:'1px solid #ddd',borderRadius:10,padding:12,marginTop:10}}><strong>{item.title||item.text}</strong><small style={{display:'block',opacity:.7}}>{item.subject||'General'}</small><p style={{whiteSpace:'pre-wrap'}}>{item.content||item.text}</p><button onClick={()=>{setName(item.subject||'');setTask(item.title||'');setNotes(item.content||'');}} style={btn}>Edit / Load</button><button onClick={()=>save(items.filter(x=>x.id!==item.id))} style={{...btn,marginLeft:8}}>Delete</button></article>)}</Card>}
+  {!['assignment-planner','assignment-checklist','pomodoro-timer','study-timetable','pdf-notes-extractor','notes-qr-generator','student-translator','study-notes-organizer'].includes(slug)&&<Card><textarea value={notes||value} onChange={e=>{setNotes(e.target.value);setValue(e.target.value)}} placeholder={slug==='gpa-cgpa-calculator'||slug==='semester-result-calculator'?'3:4.0, 3:3.5, 4:3.0':slug==='citation-generator'?'Author | Title | Year | Publisher/Website':'Enter your text, values or topic…'} rows={8} style={{width:'100%',padding:14,borderRadius:10,border:'1px solid #ccc'}}/><button onClick={genericAction} style={{...btn,marginTop:10}}>Run Tool</button>{result&&<pre style={{whiteSpace:'pre-wrap',marginTop:16,padding:16,background:'#f5f5f5',borderRadius:12}}>{result}</pre>}</Card>}
+  {slug==='notes-qr-generator'&&result&&<Card><pre style={{whiteSpace:'pre-wrap'}}>{result}</pre></Card>}
+ </main>
+}
