@@ -209,6 +209,61 @@ async function imagesToPdf(files) {
   return new Blob([resultBytes], { type: "application/pdf" });
 }
 
+
+let pdfJsLoader;
+async function loadPdfJs() {
+  if (typeof window !== "undefined" && window.pdfjsLib) return window.pdfjsLib;
+  if (!pdfJsLoader) {
+    pdfJsLoader = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+      script.onload = () => {
+        if (!window.pdfjsLib) return reject(new Error("PDF renderer did not initialize."));
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        resolve(window.pdfjsLib);
+      };
+      script.onerror = () => reject(new Error("Could not load the PDF rendering library. Check your connection and retry."));
+      document.head.appendChild(script);
+    });
+  }
+  return pdfJsLoader;
+}
+
+async function compressPdfRaster(file, quality = 0.62) {
+  if (!file) throw new Error("একটি PDF ফাইল নির্বাচন করুন।");
+  if (file.size > 50 * 1024 * 1024) throw new Error("PDF Compressor সর্বোচ্চ ৫০ MB input সমর্থন করে।");
+  if (!Number.isFinite(quality) || quality < 0.35 || quality > 0.9) throw new Error("Compression quality must be between 35% and 90%.");
+  const sourceBytes = new Uint8Array(await file.arrayBuffer());
+  const sourcePdf = await PDFDocument.load(sourceBytes);
+  const renderer = await loadPdfJs();
+  const renderedPdf = await renderer.getDocument({ data: new Uint8Array(sourceBytes) }).promise;
+  if (renderedPdf.numPages < 1 || renderedPdf.numPages > 100) throw new Error("PDF compression supports 1–100 pages.");
+  const output = await PDFDocument.create();
+  for (let index = 0; index < renderedPdf.numPages; index += 1) {
+    const sourcePage = sourcePdf.getPage(index);
+    const pdfPage = await renderedPdf.getPage(index + 1);
+    const viewport = pdfPage.getViewport({ scale: 1 });
+    const pixels = Math.ceil(viewport.width) * Math.ceil(viewport.height);
+    if (pixels > 16000000) throw new Error("A PDF page exceeds the 16-megapixel processing limit.");
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    const context = canvas.getContext("2d", { alpha: false });
+    if (!context) throw new Error("Your browser could not start PDF image processing.");
+    await pdfPage.render({ canvasContext: context, viewport }).promise;
+    const jpeg = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", quality));
+    if (!jpeg || jpeg.type !== "image/jpeg") throw new Error("Your browser could not export a compressed page image.");
+    const image = await output.embedJpg(await jpeg.arrayBuffer());
+    const page = output.addPage([sourcePage.getWidth(), sourcePage.getHeight()]);
+    page.drawImage(image, { x: 0, y: 0, width: sourcePage.getWidth(), height: sourcePage.getHeight() });
+    canvas.width = 1;
+    canvas.height = 1;
+    pdfPage.cleanup();
+  }
+  const bytes = await output.save({ useObjectStreams: true });
+  return new Blob([bytes], { type: "application/pdf" });
+}
+
 async function mergePdfFiles(files) {
   if (!files || files.length < 2) throw new Error("কমপক্ষে ২টি PDF ফাইল নির্বাচন করুন।");
   const buffers = await Promise.all(files.map((file) => file.arrayBuffer()));
@@ -474,13 +529,14 @@ export default function ConverterEngines() {
   const [error, setError] = useState(""), [busy, setBusy] = useState("");
   const [extracted, setExtracted] = useState([]);
   const [pdfImages, setPdfImages] = useState([]), [mergePdfs, setMergePdfs] = useState([]), [audioInput, setAudioInput] = useState(null);
-  const [pdfSplitInput, setPdfSplitInput] = useState(null);
+  const [pdfSplitInput, setPdfSplitInput] = useState(null), [pdfCompressInput, setPdfCompressInput] = useState(null);
+  const [pdfCompressQuality, setPdfCompressQuality] = useState("0.62");
   const [csvResult, saveCsv, clearCsv] = useResult(), [xlsxResult, saveXlsx, clearXlsx] = useResult(), [zipResult, saveZip, clearZip] = useResult();
   const [docxInput, setDocxInput] = useState(null), [pdfDocxInput, setPdfDocxInput] = useState(null), [pptxInput, setPptxInput] = useState(null);
   const [htmlInput, setHtmlInput] = useState(""), [audioCompressInput, setAudioCompressInput] = useState(null);
   const [videoCompressInput, setVideoCompressInput] = useState(null), [ttfInput, setTtfInput] = useState(null);
   const [imgPdfResult, saveImgPdf, clearImgPdf] = useResult(), [mergePdfResult, saveMergePdf, clearMergePdf] = useResult(), [audioResult, saveAudio, clearAudio] = useResult();
-  const [splitPdfResult, saveSplitPdf, clearSplitPdf] = useResult();
+  const [splitPdfResult, saveSplitPdf, clearSplitPdf] = useResult(), [pdfCompressResult, savePdfCompress, clearPdfCompress] = useResult();
   const [docxResult, saveDocx, clearDocx] = useResult(), [pdfDocxResult, savePdfDocx, clearPdfDocx] = useResult(), [pptxResult, savePptx, clearPptx] = useResult();
   const [htmlResult, saveHtml, clearHtml] = useResult(), [audioCompressResult, saveAudioCompress, clearAudioCompress] = useResult();
   const [videoCompressResult, saveVideoCompress, clearVideoCompress] = useResult(), [ttfResult, saveTtf, clearTtf] = useResult();
@@ -495,6 +551,23 @@ export default function ConverterEngines() {
       <label style={field}>Select images (JPG / PNG / WebP) <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => { setPdfImages([...(e.target.files || [])]); clearImgPdf(); }} /></label>
       <button style={button} disabled={!pdfImages.length || !!busy} onClick={() => run("img-to-pdf", async () => saveImgPdf(await imagesToPdf(pdfImages), "quicktoolbox-images.pdf"))}>{busy === "img-to-pdf" ? "Creating PDF…" : "Convert Images to PDF"}</button>
       <Download result={imgPdfResult} />
+    </section>
+    <section style={box} id="pdf-compressor">
+      <h2>PDF Compressor</h2>
+      <p>প্রতিটি PDF page-কে JPEG image-এ রূপান্তর করে file size কমানোর চেষ্টা করে। Processing আপনার browser-এ হয়।</p>
+      <label style={field}>PDF file (up to 50 MB, maximum 100 pages)
+        <input type="file" accept="application/pdf,.pdf" onChange={e => { setPdfCompressInput(e.target.files?.[0] || null); clearPdfCompress(); }} />
+      </label>
+      <label style={field}>Image quality
+        <select value={pdfCompressQuality} onChange={e => setPdfCompressQuality(e.target.value)}>
+          <option value="0.78">Higher quality</option>
+          <option value="0.62">Balanced</option>
+          <option value="0.45">Smaller file</option>
+        </select>
+      </label>
+      <button style={button} disabled={!pdfCompressInput || !!busy} onClick={() => run("compress-pdf", async () => savePdfCompress(await compressPdfRaster(pdfCompressInput, Number(pdfCompressQuality)), (pdfCompressInput.name.replace(/\\.pdf$/i, "") || "document") + "-compressed.pdf"))}>{busy === "compress-pdf" ? "Compressing…": "Compress PDF"}</button>
+      <Download result={pdfCompressResult} />
+      <p style={{ color: "var(--muted-foreground, #9ca3af)", fontSize: 13, lineHeight: 1.6 }}>Important: this is lossy compression. Pages are flattened into images, so selectable text, links, forms and accessibility structure are not preserved. File size may increase for some PDFs; compare the output before using it.</p>
     </section>
     <section style={box} id="merge-pdf">
       <h2>Merge PDF</h2><p>একাধিক PDF ফাইল নির্বাচন করে একটি একক PDF ফাইলে জোড়া লাগান।</p>

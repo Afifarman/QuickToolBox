@@ -13,6 +13,7 @@ const tools = [
   { name: "Split PDF", category: "Documents", description: "Export each page of a PDF as a separate PDF in one ZIP download.", href: "#split-pdf", status: "ready", formats: "PDF → ZIP of pages" },
   { name: "Audio to WAV", category: "Audio", description: "Convert any audio format (MP3, M4A, OGG, AAC) to high-quality uncompressed WAV in your browser.", href: "#audio-to-wav", status: "ready", formats: "MP3 / M4A / OGG → WAV" },
   ...[
+    ["PDF Compressor", "Documents", "PDF → compressed PDF", "testing", "#pdf-compressor"],
     ["PDF to Word", "Documents", "PDF → DOCX", "testing", "#pdf-to-docx"], ["Word to PDF", "Documents", "DOCX → PDF", "testing", "#word-to-pdf"], ["PDF to JPG", "Documents", "PDF → JPG", "testing", "#images-to-pdf"],
     ["HTML to PDF", "Documents", "HTML → PDF", "testing", "#html-to-pdf"], ["PDF OCR", "Documents", "Scanned PDF → searchable PDF"],
     ["MP4 Converter", "Video", "MP4 / MOV / MKV", "testing", "#video-compressor"], ["Video Compressor", "Video", "MP4 / WebM", "testing", "#video-compressor"], ["Video to GIF", "Video", "Video → GIF", "testing", "#video-compressor"],
