@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import sitemap from "../app/sitemap.js";
+import { generateMetadata } from "../app/student-tools/[slug]/layout.js";
 
 test("sitemap includes the Student Tools directory and implemented tool routes", () => {
   const paths = sitemap().map((entry) => new URL(entry.url).pathname);
@@ -26,4 +27,15 @@ test("all implemented student tool routes are discoverable from both directories
     assert.ok(directory.includes(`['${slug}'`), `Student Tools directory is missing ${slug}`);
     assert.ok(home.includes(`href: "/student-tools/${slug}"`), `Homepage is missing ${slug}`);
   }
+});
+
+test("Student Tool detail pages use a route-specific canonical URL", async () => {
+  const metadata = await generateMetadata({ params: Promise.resolve({ slug: "grade-calculator" }) });
+  assert.equal(new URL(metadata.alternates.canonical).pathname, "/student-tools/grade-calculator");
+  assert.equal(metadata.title, "Grade & Percentage Calculator");
+});
+
+test("Student Tools directory defines its own canonical URL", async () => {
+  const source = await readFile(new URL("../app/student-tools/page.js", import.meta.url), "utf8");
+  assert.ok(source.includes("canonical: `${SITE_URL}/student-tools`"));
 });
