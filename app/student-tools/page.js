@@ -2,9 +2,11 @@ import Link from 'next/link';
 
 const studentTools = [
   ['grade-calculator', '📊', 'Grade & Percentage Calculator', 'Calculate your percentage and grade from obtained and total marks.'],
+  ['gpa-cgpa-calculator', '🎓', 'GPA / CGPA Calculator', 'Calculate credit-weighted GPA from course results.'],
   ['study-timetable', '📅', 'Study Timetable Generator', 'Organize your subjects into a clear, practical weekly study plan.'],
   ['study-time-calculator', '⏰', 'Study Time Calculator', 'Divide your study goal into manageable daily sessions.'],
   ['scientific-calculator', '🔢', 'Scientific Calculator', 'Work through everyday calculations and common scientific expressions.'],
+  ['word-character-counter', '🔤', 'Word & Character Counter', 'Count words, characters, lines and estimated reading time.'],
   ['math-problem-solver', '📐', 'Math Problem Solver', 'Get help with arithmetic, percentages and basic linear equations.'],
   ['citation-generator', '📚', 'Citation Generator', 'Format a basic reference in APA, MLA or Chicago style.'],
   ['essay-outline-generator', '✍️', 'Essay Outline Generator', 'Turn an essay topic into a structured outline with key sections.'],
