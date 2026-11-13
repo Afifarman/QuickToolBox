@@ -4,40 +4,40 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import ConverterEngines from "./ConverterEngines";
 
+// `status` drives the badge and the call to action:
+//   ready   — shipped and exercised in the browser
+//   testing — engine exists but still needs real-file and cross-browser checks
+//   planned — no engine yet; listed for transparency
 const tools = [
   { name: "Image Converter", category: "Images", description: "Convert images between PNG, JPEG and WebP in your browser.", href: "#image-converter", status: "ready", formats: "PNG ↔ JPEG ↔ WebP" },
-  { name: "Image Compressor", category: "Images", description: "Resize and compress an image with a quality setting.", href: "#image-converter", status: "ready", formats: "PNG / JPEG / WebP" },
-  { name: "SVG to PNG", category: "Vector", description: "Rasterize a local SVG file to a downloadable PNG in your browser.", href: "#svg-converter", status: "ready", formats: "SVG → PNG" },
-  { name: "Images to PDF", category: "Documents", description: "Convert one or more JPG, PNG or WebP images into a combined PDF file in your browser.", href: "#images-to-pdf", status: "ready", formats: "JPG / PNG / WebP → PDF" },
-  { name: "Merge PDF", category: "Documents", description: "Combine two or more PDF documents into a single PDF without uploading to a server.", href: "#merge-pdf", status: "ready", formats: "PDF + PDF → PDF" },
-  { name: "Split PDF", category: "Documents", description: "Export each page of a PDF as a separate PDF in one ZIP download.", href: "#split-pdf", status: "ready", formats: "PDF → ZIP of pages" },
-  { name: "Audio to WAV", category: "Audio", description: "Convert any audio format (MP3, M4A, OGG, AAC) to high-quality uncompressed WAV in your browser.", href: "#audio-to-wav", status: "ready", formats: "MP3 / M4A / OGG → WAV" },
-  ...[
-    ["PDF Compressor", "Documents", "PDF → compressed PDF", "testing", "#pdf-compressor"],
-    ["PDF to Word", "Documents", "PDF → DOCX", "testing", "#pdf-to-docx"], ["Word to PDF", "Documents", "DOCX → PDF", "testing", "#word-to-pdf"], ["PDF to JPG", "Documents", "PDF → JPG", "testing", "#images-to-pdf"],
-    ["HTML to PDF", "Documents", "HTML → PDF", "testing", "#html-to-pdf"], ["PDF OCR", "Documents", "Scanned PDF → searchable PDF"],
-    ["MP4 Converter", "Video", "MP4 / MOV / MKV", "testing", "#video-compressor"], ["Video Compressor", "Video", "MP4 / WebM", "testing", "#video-compressor"], ["Video to GIF", "Video", "Video → GIF", "testing", "#video-compressor"],
-    ["MP3 Converter", "Audio", "MP3 / WAV / M4A", "testing", "#audio-to-wav"], ["Audio Compressor", "Audio", "MP3 / WAV / FLAC", "testing", "#audio-compressor"],
-    ["CSV to Excel", "Spreadsheets", "CSV → XLSX", "testing"], ["Excel to CSV", "Spreadsheets", "XLSX → CSV", "testing"],
-    ["PowerPoint to PDF", "Presentations", "PPTX → PDF", "testing", "#pptx-to-pdf"], ["PDF to PowerPoint", "Presentations", "PDF → PPTX"],
-    ["EPUB Converter", "E-books", "EPUB / MOBI / PDF"], ["ZIP Extractor", "Archives", "ZIP → files", "testing"], ["ZIP Creator", "Archives", "Files → ZIP", "testing"],
-    ["EPS Converter", "Vector", "EPS / SVG / PDF"],
-    ["DWG / DXF Converter", "CAD", "DWG / DXF"], ["Font Converter", "Fonts", "TTF / OTF / WOFF", "testing", "#font-converter"],
-  ].map(([name, category, formats, status, targetHref]) => (status ? {
-    name,
-    category,
-    formats,
-    description: "Browser-local engine added; real-file and Preview tests are pending.",
-    status,
-    href: targetHref || "#converter-engines",
-  } : {
-    name,
-    category,
-    formats,
-    description: "Planned for a later free, browser-first release.",
-    status: "planned",
-    href: "#roadmap",
-  })),
+  { name: "Image Compressor", category: "Images", description: "Resize and re-encode an image with a quality setting.", href: "#image-converter", status: "ready", formats: "PNG / JPEG / WebP" },
+  { name: "SVG to PNG", category: "Vector", description: "Rasterise a local SVG file to a downloadable PNG in your browser.", href: "#svg-converter", status: "ready", formats: "SVG → PNG" },
+  { name: "Images to PDF", category: "Documents", description: "Combine one or more JPG, PNG or WebP images into a single PDF.", href: "#images-to-pdf", status: "ready", formats: "JPG / PNG / WebP → PDF" },
+  { name: "Merge PDF", category: "Documents", description: "Combine two or more PDF documents into one file, without uploading.", href: "#merge-pdf", status: "ready", formats: "PDF + PDF → PDF" },
+  { name: "Split PDF", category: "Documents", description: "Export every page of a PDF as a separate file in one ZIP download.", href: "#split-pdf", status: "ready", formats: "PDF → ZIP of pages" },
+  { name: "Audio to WAV", category: "Audio", description: "Decode an audio file and save it as uncompressed WAV in your browser.", href: "#audio-to-wav", status: "ready", formats: "MP3 / M4A / OGG → WAV" },
+
+  { name: "PDF Compressor", category: "Documents", description: "Rasterise each page to a JPEG to shrink a PDF. Text, links and forms are not preserved.", href: "#pdf-compressor", status: "testing", formats: "PDF → smaller PDF" },
+  { name: "PDF to Word", category: "Documents", description: "Extract selectable text from a PDF into a simple .docx file.", href: "#pdf-to-docx", status: "testing", formats: "PDF → DOCX" },
+  { name: "Word to PDF", category: "Documents", description: "Read the text of a .docx and lay it out as a plain PDF.", href: "#word-to-pdf", status: "testing", formats: "DOCX → PDF" },
+  { name: "HTML to PDF", category: "Documents", description: "Strip HTML tags and lay the remaining text out as a plain PDF.", href: "#html-to-pdf", status: "testing", formats: "HTML / text → PDF" },
+  { name: "PowerPoint to PDF", category: "Presentations", description: "Extract slide text into a simple PDF. Slide design is not preserved.", href: "#pptx-to-pdf", status: "testing", formats: "PPTX → PDF" },
+  { name: "Audio Compressor", category: "Audio", description: "Re-encode audio to mono WAV at a lower sample rate.", href: "#audio-compressor", status: "testing", formats: "Audio → mono WAV" },
+  { name: "Video Compressor", category: "Video", description: "Downscale a video and record it as WebM. The output has no audio track.", href: "#video-compressor", status: "testing", formats: "MP4 / MOV / WebM → WebM" },
+  { name: "CSV to Excel", category: "Spreadsheets", description: "Turn a CSV file into a real .xlsx workbook.", href: "#csv-to-excel", status: "testing", formats: "CSV → XLSX" },
+  { name: "Excel to CSV", category: "Spreadsheets", description: "Export the first worksheet of an .xlsx file to CSV.", href: "#excel-to-csv", status: "testing", formats: "XLSX → CSV" },
+  { name: "Font Converter", category: "Fonts", description: "Repackage a TrueType font (.ttf) as a compressed WOFF web font.", href: "#font-converter", status: "testing", formats: "TTF → WOFF" },
+  { name: "ZIP Creator", category: "Archives", description: "Pack several local files into one uncompressed ZIP archive.", href: "#zip-creator", status: "testing", formats: "Files → ZIP" },
+  { name: "ZIP Extractor", category: "Archives", description: "Verify and unpack a ZIP archive in your browser.", href: "#zip-extractor", status: "testing", formats: "ZIP → files" },
+
+  { name: "PDF to JPG", category: "Documents", description: "Render PDF pages as JPG images. Not implemented yet.", status: "planned", formats: "PDF → JPG" },
+  { name: "PDF OCR", category: "Documents", description: "Make scanned PDFs searchable. Not implemented yet.", status: "planned", formats: "Scanned PDF → searchable PDF" },
+  { name: "MP4 Converter", category: "Video", description: "Encode video to MP4 (H.264). Not implemented yet.", status: "planned", formats: "MOV / MKV → MP4" },
+  { name: "Video to GIF", category: "Video", description: "Turn a video clip into an animated GIF. Not implemented yet.", status: "planned", formats: "Video → GIF" },
+  { name: "PDF to PowerPoint", category: "Presentations", description: "Rebuild a PDF as editable slides. Not implemented yet.", status: "planned", formats: "PDF → PPTX" },
+  { name: "EPUB Converter", category: "E-books", description: "Convert between EPUB, MOBI and PDF. Not implemented yet.", status: "planned", formats: "EPUB / MOBI / PDF" },
+  { name: "EPS Converter", category: "Vector", description: "Convert EPS artwork. Not implemented yet.", status: "planned", formats: "EPS / SVG / PDF" },
+  { name: "DWG / DXF Converter", category: "CAD", description: "Convert CAD drawings. Not implemented yet.", status: "planned", formats: "DWG / DXF" },
 ];
 
 const categories = ["All tools", "Available now", "Documents", "Images", "Audio", "Spreadsheets", "Archives", "Vector", "Video", "Presentations", "E-books", "CAD", "Fonts"];
@@ -295,6 +295,7 @@ export default function FileConverterHub() {
   const [query, setQuery] = useState("");
   const filtered = useMemo(() => tools.filter((tool) => (active === "All tools" ? true : active === "Available now" ? (tool.status === "ready" || tool.status === "testing") : tool.category === active) && (tool.name + " " + tool.description + " " + tool.formats).toLowerCase().includes(query.toLowerCase())), [active, query]);
   const readyCount = tools.filter((tool) => tool.status === "ready").length;
+  const testingCount = tools.filter((tool) => tool.status === "testing").length;
 
   return (
     <main className="qt-file-converter" style={styles.page}>
@@ -324,7 +325,7 @@ export default function FileConverterHub() {
           <p style={{ ...styles.muted, maxWidth: 610, color: "#cbd5e1", fontSize: 16 }}>A beautifully simple workspace to convert, compress and transform files — free, private and right in your browser.</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 22 }}>
             <span style={{ ...styles.chip, color: "#e0e7ff", borderColor: "rgba(196,181,253,.3)", background: "rgba(99,102,241,.13)" }}>✧ {tools.length} format tools</span>
-            <span style={{ ...styles.chip, color: "#e0e7ff", borderColor: "rgba(196,181,253,.3)", background: "rgba(99,102,241,.13)" }}>⌁ {readyCount} ready now</span>
+            <span style={{ ...styles.chip, color: "#e0e7ff", borderColor: "rgba(196,181,253,.3)", background: "rgba(99,102,241,.13)" }}>⌁ {readyCount} ready · {testingCount} testing</span>
             <span style={{ ...styles.chip, color: "#e0e7ff", borderColor: "rgba(196,181,253,.3)", background: "rgba(99,102,241,.13)" }}>◈ No paid API</span>
           </div>
         </div>
@@ -341,7 +342,7 @@ export default function FileConverterHub() {
           <h2 style={{ ...styles.cardTitle, letterSpacing: "-.02em" }}>{tool.name}</h2>
           <p style={{ ...styles.muted, fontSize: 13, margin: 0 }}>{tool.description}</p>
           <span style={{ ...styles.muted, fontSize: 12 }}>{tool.formats}</span>
-          {tool.status === "ready" || tool.status === "testing" ? <Link href={tool.href} style={styles.link}>{tool.status === "testing" ? "Open test area ↓" : "Use converter ↓"}</Link> : <span style={styles.disabled}>Coming in a tested update</span>}
+          {tool.status === "ready" || tool.status === "testing" ? <Link href={tool.href} style={styles.link}>{tool.status === "testing" ? "Open test area ↓" : "Use converter ↓"}</Link> : <span style={styles.disabled}>Planned — not available yet</span>}
         </article>)}
       </div>
       <ImageConverter />

@@ -1,8 +1,9 @@
-﻿﻿"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { mergePdfBuffers, splitPdfBuffer } from "../lib/pdf-tools";
+import { ttfToWoffBytes } from "../lib/woff";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -21,7 +22,7 @@ function read16(view, offset) { return view.getUint16(offset, true); }
 function read32(view, offset) { return view.getUint32(offset, true); }
 async function transform(bytes, format, decompress = false) {
   const Ctor = decompress ? DecompressionStream : CompressionStream;
-  if (typeof Ctor !== "function") throw new Error("এই ব্রাউজারে ZIP compression API নেই। Chrome বা Edge-এর নতুন সংস্করণ ব্যবহার করুন।");
+  if (typeof Ctor !== "function") throw new Error("This browser does not support the compression API needed for ZIP files. Use a current version of Chrome, Edge or Firefox.");
   const stream = new Blob([bytes]).stream().pipeThrough(new Ctor(format));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
@@ -58,9 +59,9 @@ async function unzipEntries(file) {
   for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 65557); i--) {
     if (read32(view, i) === 0x06054b50) { eocd = i; break; }
   }
-  if (eocd < 0) throw new Error("এটি valid ZIP archive নয় বা ZIP directory পাওয়া যায়নি।");
+  if (eocd < 0) throw new Error("This is not a valid ZIP archive, or its directory could not be found.");
   const count = read16(view, eocd + 10);
-  if (count > 2000) throw new Error("একটি ZIP-এ সর্বোচ্চ ২,০০০টি entry সমর্থিত।");
+  if (count > 2000) throw new Error("A ZIP archive can contain at most 2,000 entries here.");
   let cursor = read32(view, eocd + 16);
   const output = [];
   let total = 0;
@@ -104,7 +105,7 @@ function parseCsv(text) {
       row.push(field); rows.push(row); row = []; field = "";
     } else field += ch;
   }
-  if (quoted) throw new Error("CSV-তে closing quote নেই।");
+  if (quoted) throw new Error("The CSV contains an unclosed quote.");
   if (field !== "" || row.length) { row.push(field); rows.push(row); }
   return rows;
 }
@@ -118,9 +119,9 @@ function colName(index) {
 }
 function xmlEscape(value) { return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;"); }
 async function csvToXlsx(file) {
-  if (file.size > 20 * 1024 * 1024) throw new Error("CSV সর্বোচ্চ ২০ MB হতে পারবে।");
+  if (file.size > 20 * 1024 * 1024) throw new Error("CSV files must be 20 MB or smaller.");
   const rows = parseCsv((await file.text()).replace(/^\uFEFF/, ""));
-  if (rows.length > 50000 || rows.some(r => r.length > 500)) throw new Error("সীমা: ৫০,০০০ row এবং ৫০০ column।");
+  if (rows.length > 50000 || rows.some(r => r.length > 500)) throw new Error("Limit: 50,000 rows and 500 columns.");
   const sheetRows = rows.map((row, r) => '<row r="' + (r + 1) + '">' + row.map((cell, c) => '<c r="' + colName(c) + (r + 1) + '" t="inlineStr"><is><t xml:space="preserve">' + xmlEscape(cell) + '</t></is></c>').join("") + '</row>').join("");
   const files = [
     { name: "[Content_Types].xml", text: '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>' },
@@ -132,10 +133,10 @@ async function csvToXlsx(file) {
   return zipFiles(files.map(f => new File([f.text], f.name, { type: "application/xml" })));
 }
 async function xlsxToCsv(file) {
-  if (file.size > 50 * 1024 * 1024) throw new Error("XLSX সর্বোচ্চ ৫০ MB হতে পারবে।");
+  if (file.size > 50 * 1024 * 1024) throw new Error("XLSX files must be 50 MB or smaller.");
   const entries = await unzipEntries(file);
   const sheet = entries.find(e => /^xl\/worksheets\/sheet\d+\.xml$/.test(e.name));
-  if (!sheet) throw new Error("এই workbook-এ worksheet পাওয়া যায়নি।");
+  if (!sheet) throw new Error("No worksheet was found in this workbook.");
   const sharedEntry = entries.find(e => e.name === "xl/sharedStrings.xml");
   const shared = sharedEntry ? [...new DOMParser().parseFromString(decoder.decode(sharedEntry.data), "application/xml").querySelectorAll("si")].map(si => [...si.querySelectorAll("t")].map(t => t.textContent).join("")) : [];
   const doc = new DOMParser().parseFromString(decoder.decode(sheet.data), "application/xml");
@@ -177,14 +178,14 @@ function rasterizeToJpgBytes(file) {
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("ছবির ফরম্যাট লোড করা যায়নি।"));
+      reject(new Error("The image could not be decoded. Try another file."));
     };
     img.src = url;
   });
 }
 
 async function imagesToPdf(files) {
-  if (!files || !files.length) throw new Error("কমপক্ষে একটি ছবি নির্বাচন করুন।");
+  if (!files || !files.length) throw new Error("Select at least one image.");
   const doc = await PDFDocument.create();
   for (const file of files) {
     let bytes = new Uint8Array(await file.arrayBuffer());
@@ -230,8 +231,8 @@ async function loadPdfJs() {
 }
 
 async function compressPdfRaster(file, quality = 0.62) {
-  if (!file) throw new Error("একটি PDF ফাইল নির্বাচন করুন।");
-  if (file.size > 50 * 1024 * 1024) throw new Error("PDF Compressor সর্বোচ্চ ৫০ MB input সমর্থন করে।");
+  if (!file) throw new Error("Select a PDF file.");
+  if (file.size > 50 * 1024 * 1024) throw new Error("The PDF compressor accepts files up to 50 MB.");
   if (!Number.isFinite(quality) || quality < 0.35 || quality > 0.9) throw new Error("Compression quality must be between 35% and 90%.");
   const sourceBytes = new Uint8Array(await file.arrayBuffer());
   const sourcePdf = await PDFDocument.load(sourceBytes);
@@ -265,21 +266,21 @@ async function compressPdfRaster(file, quality = 0.62) {
 }
 
 async function mergePdfFiles(files) {
-  if (!files || files.length < 2) throw new Error("কমপক্ষে ২টি PDF ফাইল নির্বাচন করুন।");
+  if (!files || files.length < 2) throw new Error("Select at least 2 PDF files.");
   const buffers = await Promise.all(files.map((file) => file.arrayBuffer()));
   const resultBytes = await mergePdfBuffers(buffers);
   return new Blob([resultBytes], { type: "application/pdf" });
 }
 async function splitPdfToZip(file) {
-  if (!file) throw new Error("একটি PDF ফাইল নির্বাচন করুন।");
+  if (!file) throw new Error("Select a PDF file.");
   const pages = await splitPdfBuffer(await file.arrayBuffer());
   return zipFiles(pages.map((page) => new File([page.bytes], page.name, { type: "application/pdf" })));
 }
 
 async function convertAudioToWav(file) {
-  if (!file) throw new Error("একটি অডিও ফাইল নির্বাচন করুন।");
+  if (!file) throw new Error("Select an audio file.");
   const AudioContextClass = typeof window !== "undefined" && (window.AudioContext || window.webkitAudioContext);
-  if (!AudioContextClass) throw new Error("এই ব্রাউজারে Web Audio API সমর্থিত নয়।");
+  if (!AudioContextClass) throw new Error("This browser does not support the Web Audio API.");
   const ctx = new AudioContextClass();
   const arrayBuffer = await file.arrayBuffer();
   const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
@@ -318,7 +319,7 @@ async function convertAudioToWav(file) {
 async function docxToPdf(file) {
   const entries = await unzipEntries(file);
   const docEntry = entries.find(e => e.name === "word/document.xml" || e.name.endsWith("/document.xml"));
-  if (!docEntry) throw new Error("word/document.xml পাওয়া যায়নি। সঠিক DOCX ফাইল কি না যাচাই করুন।");
+  if (!docEntry) throw new Error("word/document.xml was not found. Check that this is a valid .docx file.");
   const xml = decoder.decode(docEntry.data);
   const parser = new DOMParser();
   const doc = parser.parseFromString(xml, "application/xml");
@@ -381,7 +382,7 @@ async function pdfToDocx(file) {
 async function pptxToPdf(file) {
   const entries = await unzipEntries(file);
   const slideEntries = entries.filter(e => e.name.match(/^ppt\/slides\/slide\d+\.xml$/i));
-  if (!slideEntries.length) throw new Error("ppt/slides/slide*.xml পাওয়া যায়নি। সঠিক PPTX ফাইল কি না যাচাই করুন।");
+  if (!slideEntries.length) throw new Error("No slides were found. Check that this is a valid .pptx file.");
   slideEntries.sort((a, b) => {
     const na = parseInt(a.name.match(/\d+/)?.[0] || "0", 10);
     const nb = parseInt(b.name.match(/\d+/)?.[0] || "0", 10);
@@ -409,7 +410,7 @@ async function pptxToPdf(file) {
 }
 
 async function htmlToPdf(htmlString) {
-  if (!htmlString || !htmlString.trim()) throw new Error("কিছু HTML কোড বা টেক্সট দিন।");
+  if (!htmlString || !htmlString.trim()) throw new Error("Paste some HTML or text first.");
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlString, "text/html");
   const textContent = doc.body?.innerText || doc.body?.textContent || htmlString;
@@ -430,7 +431,7 @@ async function htmlToPdf(htmlString) {
 
 async function compressAudio(file, targetSampleRate = 22050) {
   const AudioContextClass = typeof window !== "undefined" && (window.AudioContext || window.webkitAudioContext);
-  if (!AudioContextClass) throw new Error("AudioContext সমর্থিত নয়।");
+  if (!AudioContextClass) throw new Error("The Web Audio API is not available in this browser.");
   const ctx = new AudioContextClass();
   const decoded = await ctx.decodeAudioData(await file.arrayBuffer());
   const offlineCtx = new OfflineAudioContext(1, Math.ceil(decoded.duration * targetSampleRate), targetSampleRate);
@@ -492,23 +493,13 @@ async function compressVideo(file, qualityScale = 0.5) {
       draw();
       video.onended = () => { if (mediaRecorder.state !== "inactive") mediaRecorder.stop(); };
     };
-    video.onerror = () => { URL.revokeObjectURL(url); reject(new Error("ভিডিও লোড করা যায়নি।")); };
+    video.onerror = () => { URL.revokeObjectURL(url); reject(new Error("The video could not be loaded.")); };
   });
 }
 
 async function ttfToWoff(file) {
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const compressed = await transform(bytes, "deflate");
-  const woff = new Uint8Array(44 + compressed.length);
-  const view = new DataView(woff.buffer);
-  view.setUint32(0, 0x774f4646);
-  view.setUint32(4, 0x00010000);
-  view.setUint32(8, 44 + compressed.length);
-  view.setUint16(12, 1);
-  view.setUint16(14, 0);
-  view.setUint32(16, bytes.length);
-  woff.set(compressed, 44);
-  return new Blob([woff], { type: "font/woff" });
+  return new Blob([await ttfToWoffBytes(bytes)], { type: "font/woff" });
 }
 
 function Download({ result }) {
@@ -546,15 +537,21 @@ export default function ConverterEngines() {
     try { await fn(); } catch (e) { setError(e?.message || "Conversion failed."); } finally { setBusy(""); }
   }
   return <div className="converter-wrap">
+    <div className="qt-engine-intro">
+      <span className="qt-engine-badge">TESTING · RUNS IN YOUR BROWSER</span>
+      <h2>More converter engines</h2>
+      <p>These tools process files locally and never upload them. They are labelled Testing because real-file and cross-browser checks are still in progress, so open the output and confirm it is correct before you rely on it.</p>
+    </div>
     <section style={box} id="images-to-pdf">
-      <h2>Images to PDF</h2><p>এক বা একাধিক ছবি (JPG, PNG, WebP) দিয়ে ব্রাউজারেই সরাসরি একটি PDF ডকুমেন্ট তৈরি করুন।</p>
+      <h2>Images to PDF</h2>
+      <p>Combine one or more JPG, PNG or WebP images into a single PDF. Each image becomes one page at its own pixel size.</p>
       <label style={field}>Select images (JPG / PNG / WebP) <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => { setPdfImages([...(e.target.files || [])]); clearImgPdf(); }} /></label>
       <button style={button} disabled={!pdfImages.length || !!busy} onClick={() => run("img-to-pdf", async () => saveImgPdf(await imagesToPdf(pdfImages), "quicktoolbox-images.pdf"))}>{busy === "img-to-pdf" ? "Creating PDF…" : "Convert Images to PDF"}</button>
       <Download result={imgPdfResult} />
     </section>
     <section style={box} id="pdf-compressor">
       <h2>PDF Compressor</h2>
-      <p>প্রতিটি PDF page-কে JPEG image-এ রূপান্তর করে file size কমানোর চেষ্টা করে। Processing আপনার browser-এ হয়।</p>
+      <p>Rasterises every page to a JPEG image to try to shrink the file. Processing happens in your browser.</p>
       <label style={field}>PDF file (up to 50 MB, maximum 100 pages)
         <input type="file" accept="application/pdf,.pdf" onChange={e => { setPdfCompressInput(e.target.files?.[0] || null); clearPdfCompress(); }} />
       </label>
@@ -565,42 +562,48 @@ export default function ConverterEngines() {
           <option value="0.45">Smaller file</option>
         </select>
       </label>
-      <button style={button} disabled={!pdfCompressInput || !!busy} onClick={() => run("compress-pdf", async () => savePdfCompress(await compressPdfRaster(pdfCompressInput, Number(pdfCompressQuality)), (pdfCompressInput.name.replace(/\\.pdf$/i, "") || "document") + "-compressed.pdf"))}>{busy === "compress-pdf" ? "Compressing…": "Compress PDF"}</button>
+      <button style={button} disabled={!pdfCompressInput || !!busy} onClick={() => run("compress-pdf", async () => savePdfCompress(await compressPdfRaster(pdfCompressInput, Number(pdfCompressQuality)), (pdfCompressInput.name.replace(/\.pdf$/i, "") || "document") + "-compressed.pdf"))}>{busy === "compress-pdf" ? "Compressing…" : "Compress PDF"}</button>
       <Download result={pdfCompressResult} />
       <p style={{ color: "var(--muted-foreground, #9ca3af)", fontSize: 13, lineHeight: 1.6 }}>Important: this is lossy compression. Pages are flattened into images, so selectable text, links, forms and accessibility structure are not preserved. File size may increase for some PDFs; compare the output before using it.</p>
     </section>
     <section style={box} id="merge-pdf">
-      <h2>Merge PDF</h2><p>একাধিক PDF ফাইল নির্বাচন করে একটি একক PDF ফাইলে জোড়া লাগান।</p>
+      <h2>Merge PDF</h2>
+      <p>Select two or more PDF files and join them into one document, in the order you select them.</p>
       <label style={field}>Select PDF files (at least 2) <input type="file" accept="application/pdf,.pdf" multiple onChange={e => { setMergePdfs([...(e.target.files || [])]); clearMergePdf(); }} /></label>
       <button style={button} disabled={mergePdfs.length < 2 || !!busy} onClick={() => run("merge-pdf", async () => saveMergePdf(await mergePdfFiles(mergePdfs), "quicktoolbox-merged.pdf"))}>{busy === "merge-pdf" ? "Merging…" : "Merge PDFs"}</button>
       <Download result={mergePdfResult} />
     </section>
     <section style={box} id="split-pdf">
-      <h2>Split PDF</h2><p>একটি PDF-এর প্রতিটি পৃষ্ঠা আলাদা PDF ফাইলে ভাগ করে ZIP হিসেবে ডাউনলোড করুন। সর্বোচ্চ ১০০ MB এবং ২০০ পৃষ্ঠা।</p>
+      <h2>Split PDF</h2>
+      <p>Split a PDF into one file per page and download them together as a ZIP. Up to 100 MB and 200 pages.</p>
       <label style={field}>Select PDF file <input type="file" accept="application/pdf,.pdf" onChange={e => { setPdfSplitInput(e.target.files?.[0] || null); clearSplitPdf(); }} /></label>
       <button style={button} disabled={!pdfSplitInput || !!busy} onClick={() => run("split-pdf", async () => saveSplitPdf(await splitPdfToZip(pdfSplitInput), (pdfSplitInput.name.replace(/\.pdf$/i, "") || "document") + "-pages.zip"))}>{busy === "split-pdf" ? "Splitting…" : "Split PDF into pages"}</button>
       <Download result={splitPdfResult} />
     </section>
     <section style={box} id="audio-to-wav">
-      <h2>Audio to WAV</h2><p>যেকোনো অডিও ফাইল (MP3, M4A, OGG, AAC) ব্রাউজারেই স্ট্যান্ডার্ড WAV অডিওতে রূপান্তর করুন।</p>
+      <h2>Audio to WAV</h2>
+      <p>Decode an audio file and export uncompressed WAV. The output is usually larger than a compressed source such as MP3.</p>
       <label style={field}>Audio file <input type="file" accept="audio/*" onChange={e => { setAudioInput(e.target.files?.[0] || null); clearAudio(); }} /></label>
       <button style={button} disabled={!audioInput || !!busy} onClick={() => run("audio", async () => saveAudio(await convertAudioToWav(audioInput), (audioInput.name.replace(/\.[^.]+$/, "") || "audio") + ".wav"))}>{busy === "audio" ? "Converting…" : "Convert to WAV"}</button>
       <Download result={audioResult} />
     </section>
     <section style={box} id="word-to-pdf">
-      <h2>Word to PDF</h2><p>Microsoft Word (.docx) ফাইলকে সরাসরি ব্রাউজারেই একটি সুন্দর PDF ডকুমেন্টে রূপান্তর করুন।</p>
+      <h2>Word to PDF</h2>
+      <p>Read the text of a .docx file and lay it out as a plain PDF. Fonts, images, tables and page layout are not preserved.</p>
       <label style={field}>Word document (.docx) <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={e => { setDocxInput(e.target.files?.[0] || null); clearDocx(); }} /></label>
       <button style={button} disabled={!docxInput || !!busy} onClick={() => run("docx", async () => saveDocx(await docxToPdf(docxInput), (docxInput.name.replace(/\.docx$/i, "") || "document") + ".pdf"))}>{busy === "docx" ? "Converting…" : "Convert to PDF"}</button>
       <Download result={docxResult} />
     </section>
     <section style={box} id="pdf-to-docx">
-      <h2>PDF to Word</h2><p>PDF ফাইল থেকে টেক্সট ও কন্টেন্ট এক্সট্রাক্ট করে এডিটেবল Word (.docx) ফাইলে রূপান্তর করুন।</p>
+      <h2>PDF to Word</h2>
+      <p>Extract selectable text from a PDF into an editable .docx file. Scanned PDFs need OCR, which is not included.</p>
       <label style={field}>PDF file <input type="file" accept=".pdf,application/pdf" onChange={e => { setPdfDocxInput(e.target.files?.[0] || null); clearPdfDocx(); }} /></label>
       <button style={button} disabled={!pdfDocxInput || !!busy} onClick={() => run("pdf-docx", async () => savePdfDocx(await pdfToDocx(pdfDocxInput), (pdfDocxInput.name.replace(/\.pdf$/i, "") || "converted") + ".docx"))}>{busy === "pdf-docx" ? "Converting…" : "Convert to Word (.docx)"}</button>
       <Download result={pdfDocxResult} />
     </section>
     <section style={box} id="html-to-pdf">
-      <h2>HTML to PDF</h2><p>HTML কোড বা যেকোনো টেক্সট সরাসরি একটি সাজানো PDF ফাইলে রূপান্তর করুন।</p>
+      <h2>HTML to PDF</h2>
+      <p>Strip HTML tags and lay the remaining text out as a plain PDF. Styling, images and scripts are ignored.</p>
       <label style={field}>Paste HTML or enter text
         <textarea rows={4} value={htmlInput} onChange={e => { setHtmlInput(e.target.value); clearHtml(); }} placeholder="<h1>Title</h1><p>Your content here...</p>" style={{ width: "100%", padding: 10, borderRadius: 8, background: "var(--background, #111827)", color: "inherit", border: "1px solid var(--border, #4b5563)", marginTop: 8 }} />
       </label>
@@ -608,53 +611,61 @@ export default function ConverterEngines() {
       <Download result={htmlResult} />
     </section>
     <section style={box} id="pptx-to-pdf">
-      <h2>PowerPoint to PDF</h2><p>PowerPoint (.pptx) প্রেজেন্টেশন স্লাইডগুলোকে PDF ডকুমেন্টে কনভার্ট করুন।</p>
+      <h2>PowerPoint to PDF</h2>
+      <p>Extract the text from each slide and lay it out as a plain PDF. Slide design, images and animations are not preserved.</p>
       <label style={field}>PowerPoint (.pptx) file <input type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" onChange={e => { setPptxInput(e.target.files?.[0] || null); clearPptx(); }} /></label>
       <button style={button} disabled={!pptxInput || !!busy} onClick={() => run("pptx", async () => savePptx(await pptxToPdf(pptxInput), (pptxInput.name.replace(/\.pptx$/i, "") || "presentation") + ".pdf"))}>{busy === "pptx" ? "Converting…" : "Convert to PDF"}</button>
       <Download result={pptxResult} />
     </section>
     <section style={box} id="audio-compressor">
-      <h2>Audio Compressor</h2><p>অডিও ফাইলের সাইজ ব্রাউজারেই অপ্টিমাইজ ও কম্প্রেস করুন (আকার প্রায় ৬০-৭০% ছোট হবে)।</p>
+      <h2>Audio Compressor</h2>
+      <p>Re-encode audio as mono WAV at a lower sample rate. This can shrink a large lossless file, but the result may be bigger than the original MP3 or M4A.</p>
       <label style={field}>Audio file (MP3 / WAV / FLAC / M4A) <input type="file" accept="audio/*" onChange={e => { setAudioCompressInput(e.target.files?.[0] || null); clearAudioCompress(); }} /></label>
       <button style={button} disabled={!audioCompressInput || !!busy} onClick={() => run("compress-audio", async () => saveAudioCompress(await compressAudio(audioCompressInput), (audioCompressInput.name.replace(/\.[^.]+$/, "") || "audio") + "-compressed.wav"))}>{busy === "compress-audio" ? "Compressing…" : "Compress Audio"}</button>
       <Download result={audioCompressResult} />
     </section>
     <section style={box} id="video-compressor">
-      <h2>Video Compressor & WebM Converter</h2><p>ভিডিও ফাইল (MP4 / WebM / MOV) ব্রাউজারেই ছোট রেজ্যুলেশনে কম্প্রেস ও রিকোড করুন।</p>
+      <h2>Video Compressor &amp; WebM Converter</h2>
+      <p>Downscale the video and record the canvas as WebM. The output is video only — the audio track is dropped.</p>
       <label style={field}>Video file <input type="file" accept="video/*" onChange={e => { setVideoCompressInput(e.target.files?.[0] || null); clearVideoCompress(); }} /></label>
       <button style={button} disabled={!videoCompressInput || !!busy} onClick={() => run("compress-video", async () => saveVideoCompress(await compressVideo(videoCompressInput), (videoCompressInput.name.replace(/\.[^.]+$/, "") || "video") + "-compressed.webm"))}>{busy === "compress-video" ? "Processing…" : "Compress Video"}</button>
       <Download result={videoCompressResult} />
     </section>
     <section style={box} id="font-converter">
-      <h2>Font Converter (TTF to WOFF)</h2><p>TrueType (.ttf) ফন্ট ফাইলকে হালকা ও ফাস্ট ওয়েব ফন্ট (.woff)-এ রূপান্তর করুন।</p>
+      <h2>Font Converter (TTF to WOFF)</h2>
+      <p>Repackage a TrueType (.ttf) font as a compressed WOFF file for the web. Each font table is deflated as the WOFF specification requires.</p>
       <label style={field}>TTF Font file <input type="file" accept=".ttf,font/ttf" onChange={e => { setTtfInput(e.target.files?.[0] || null); clearTtf(); }} /></label>
       <button style={button} disabled={!ttfInput || !!busy} onClick={() => run("ttf-woff", async () => saveTtf(await ttfToWoff(ttfInput), (ttfInput.name.replace(/\.ttf$/i, "") || "font") + ".woff"))}>{busy === "ttf-woff" ? "Converting…" : "Convert to WOFF"}</button>
       <Download result={ttfResult} />
     </section>
     <section style={box} id="csv-to-excel">
-      <h2>CSV to Excel</h2><p>CSV ফাইলকে XLSX workbook-এ রূপান্তর করুন।</p>
+      <h2>CSV to Excel</h2>
+      <p>Convert a CSV file into an XLSX workbook with a single worksheet.</p>
       <label style={field}>CSV file <input type="file" accept=".csv,text/csv" onChange={e => { setCsv(e.target.files?.[0] || null); clearCsv(); }} /></label>
       <button style={button} disabled={!csv || !!busy} onClick={() => run("csv", async () => saveCsv(await csvToXlsx(csv), csv.name.replace(/\.csv$/i, "") + ".xlsx"))}>{busy === "csv" ? "Converting…" : "Convert to Excel"}</button>
       <Download result={csvResult} />
     </section>
     <section style={box} id="excel-to-csv">
-      <h2>Excel to CSV</h2><p>প্রথম worksheet-এর data CSV-তে export করুন।</p>
+      <h2>Excel to CSV</h2>
+      <p>Export the first worksheet of an XLSX file to CSV.</p>
       <label style={field}>XLSX file <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={e => { setXlsx(e.target.files?.[0] || null); clearXlsx(); }} /></label>
       <button style={button} disabled={!xlsx || !!busy} onClick={() => run("xlsx", async () => saveXlsx(await xlsxToCsv(xlsx), xlsx.name.replace(/\.xlsx$/i, "") + ".csv"))}>{busy === "xlsx" ? "Converting…" : "Convert to CSV"}</button>
       <Download result={xlsxResult} />
     </section>
     <section style={box} id="zip-creator">
-      <h2>ZIP Creator</h2><p>একাধিক local file একটি ZIP archive-এ প্যাক করুন (Store/no compression)।</p>
+      <h2>ZIP Creator</h2>
+      <p>Pack multiple local files into one ZIP archive. Files are stored without compression.</p>
       <label style={field}>Files <input type="file" multiple onChange={e => { setZipFilesInput([...e.target.files || []]); clearZip(); }} /></label>
       <button style={button} disabled={!zipFilesInput.length || !!busy} onClick={() => run("zip-create", async () => saveZip(await zipFiles(zipFilesInput), "quicktoolbox-archive.zip"))}>{busy === "zip-create" ? "Creating…" : "Create ZIP"}</button>
       <Download result={zipResult} />
     </section>
     <section style={box} id="zip-extractor">
-      <h2>ZIP Extractor</h2><p>ZIP-এর file integrity যাচাই করে browser-এ extract করুন।</p>
+      <h2>ZIP Extractor</h2>
+      <p>Verify and unpack a ZIP archive in your browser, then download each entry.</p>
       <label style={field}>ZIP file <input type="file" accept=".zip,application/zip" onChange={e => { setZipInput(e.target.files?.[0] || null); setExtracted([]); }} /></label>
       <button style={button} disabled={!zipInput || !!busy} onClick={() => run("unzip", async () => {
         const entries = await unzipEntries(zipInput);
-        if (!entries.length) throw new Error("ZIP-এ extract করার মতো file নেই।");
+        if (!entries.length) throw new Error("This ZIP contains no files to extract.");
         setExtracted(entries.map(entry => ({ name: entry.name, size: entry.data.length, url: URL.createObjectURL(new Blob([entry.data])) })));
       })}>{busy === "unzip" ? "Extracting…" : "Extract files"}</button>
       {extracted.map(item => <p key={item.name}><a href={item.url} download={item.name} style={{ color: "#7dd3fc" }}>{item.name} · {(item.size / 1024).toFixed(1)} KB — Download</a></p>)}
