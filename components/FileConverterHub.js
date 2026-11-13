@@ -30,14 +30,13 @@ const tools = [
   { name: "ZIP Creator", category: "Archives", description: "Pack several local files into one uncompressed ZIP archive.", href: "#zip-creator", status: "testing", formats: "Files → ZIP" },
   { name: "ZIP Extractor", category: "Archives", description: "Verify and unpack a ZIP archive in your browser.", href: "#zip-extractor", status: "testing", formats: "ZIP → files" },
 
-  { name: "PDF to JPG", category: "Documents", description: "Render PDF pages as JPG images. Not implemented yet.", status: "planned", formats: "PDF → JPG" },
-  { name: "PDF OCR", category: "Documents", description: "Make scanned PDFs searchable. Not implemented yet.", status: "planned", formats: "Scanned PDF → searchable PDF" },
-  { name: "MP4 Converter", category: "Video", description: "Encode video to MP4 (H.264). Not implemented yet.", status: "planned", formats: "MOV / MKV → MP4" },
-  { name: "Video to GIF", category: "Video", description: "Turn a video clip into an animated GIF. Not implemented yet.", status: "planned", formats: "Video → GIF" },
-  { name: "PDF to PowerPoint", category: "Presentations", description: "Rebuild a PDF as editable slides. Not implemented yet.", status: "planned", formats: "PDF → PPTX" },
-  { name: "EPUB Converter", category: "E-books", description: "Convert between EPUB, MOBI and PDF. Not implemented yet.", status: "planned", formats: "EPUB / MOBI / PDF" },
-  { name: "EPS Converter", category: "Vector", description: "Convert EPS artwork. Not implemented yet.", status: "planned", formats: "EPS / SVG / PDF" },
-  { name: "DWG / DXF Converter", category: "CAD", description: "Convert CAD drawings. Not implemented yet.", status: "planned", formats: "DWG / DXF" },
+  { name: "PDF to JPG", category: "Documents", description: "Render each page of a PDF as a downloadable JPG image.", href: "#pdf-to-jpg", status: "testing", formats: "PDF → JPG (ZIP)" },
+  { name: "PDF to Text", category: "Documents", description: "Extract the selectable text of a PDF into a plain .txt file.", href: "#pdf-to-text", status: "testing", formats: "PDF → TXT" },
+  { name: "Video to GIF", category: "Video", description: "Record a short video as an animated GIF in your browser.", href: "#video-to-gif", status: "testing", formats: "Video → GIF" },
+  { name: "PDF to PowerPoint", category: "Presentations", description: "Extract slide text into a simple PPTX file. Slide design is not preserved.", href: "#pdf-to-pptx", status: "testing", formats: "PDF → PPTX" },
+  { name: "EPUB to PDF", category: "E-books", description: "Extract the text of an EPUB book and lay it out as a PDF.", href: "#epub-to-pdf", status: "testing", formats: "EPUB → PDF" },
+  { name: "DXF to SVG", category: "Vector", description: "Render the geometry of an ASCII DXF file as an SVG drawing.", href: "#dxf-to-svg", status: "testing", formats: "DXF → SVG" },
+  { name: "MP4 Converter", category: "Video", description: "Re-encode a video to MP4 when the browser supports MP4 recording.", href: "#mp4-converter", status: "testing", formats: "Video → MP4" },
 ];
 
 const categories = ["All tools", "Available now", "Documents", "Images", "Audio", "Spreadsheets", "Archives", "Vector", "Video", "Presentations", "E-books", "CAD", "Fonts"];
@@ -342,7 +341,7 @@ export default function FileConverterHub() {
           <h2 style={{ ...styles.cardTitle, letterSpacing: "-.02em" }}>{tool.name}</h2>
           <p style={{ ...styles.muted, fontSize: 13, margin: 0 }}>{tool.description}</p>
           <span style={{ ...styles.muted, fontSize: 12 }}>{tool.formats}</span>
-          {tool.status === "ready" || tool.status === "testing" ? <Link href={tool.href} style={styles.link}>{tool.status === "testing" ? "Open test area ↓" : "Use converter ↓"}</Link> : <span style={styles.disabled}>Planned — not available yet</span>}
+          {tool.status === "ready" || tool.status === "testing" ? <Link href={tool.href} style={styles.link}>Use converter ↓</Link> : <span style={styles.disabled}>Planned — not available yet</span>}
         </article>)}
       </div>
       <ImageConverter />

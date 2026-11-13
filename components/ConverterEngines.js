@@ -502,6 +502,372 @@ async function ttfToWoff(file) {
   return new Blob([await ttfToWoffBytes(bytes)], { type: "font/woff" });
 }
 
+async function pdfToJpgZip(file) {
+  if (!file) throw new Error("Select a PDF file.");
+  if (file.size > 50 * 1024 * 1024) throw new Error("PDF files must be 50 MB or smaller.");
+  const sourceBytes = new Uint8Array(await file.arrayBuffer());
+  const renderer = await loadPdfJs();
+  const pdf = await renderer.getDocument({ data: new Uint8Array(sourceBytes) }).promise;
+  if (pdf.numPages < 1 || pdf.numPages > 100) throw new Error("PDF to JPG supports 1–100 pages.");
+  const zipEntries = [];
+  for (let index = 0; index < pdf.numPages; index += 1) {
+    const page = await pdf.getPage(index + 1);
+    const viewport = page.getViewport({ scale: 2 });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    const context = canvas.getContext("2d", { alpha: false });
+    if (!context) throw new Error("Your browser could not start image processing.");
+    await page.render({ canvasContext: context, viewport }).promise;
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+    if (!blob || blob.type !== "image/jpeg") throw new Error("Your browser could not export a page image.");
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    zipEntries.push(new File([bytes], (file.name.replace(/\.pdf$/i, "") || "page") + "-" + (index + 1) + ".jpg", { type: "image/jpeg" }));
+    canvas.width = 1; canvas.height = 1;
+    page.cleanup();
+  }
+  return zipFiles(zipEntries);
+}
+
+async function pdfToText(file) {
+  if (!file) throw new Error("Select a PDF file.");
+  if (file.size > 50 * 1024 * 1024) throw new Error("PDF files must be 50 MB or smaller.");
+  const sourceBytes = new Uint8Array(await file.arrayBuffer());
+  const renderer = await loadPdfJs();
+  const pdf = await renderer.getDocument({ data: new Uint8Array(sourceBytes) }).promise;
+  if (pdf.numPages < 1 || pdf.numPages > 100) throw new Error("PDF to text supports 1–100 pages.");
+  const lines = [];
+  for (let index = 0; index < pdf.numPages; index += 1) {
+    const page = await pdf.getPage(index + 1);
+    const content = await page.getTextContent();
+    const text = content.items.map((item) => (item.str || "")).join(" ").replace(/\s+/g, " ").trim();
+    if (text) lines.push("— Page " + (index + 1) + " —\n" + text);
+    page.cleanup();
+  }
+  const output = lines.length ? lines.join("\n\n") : "No selectable text was found in this PDF. Scanned pages need OCR.";
+  return new Blob([output], { type: "text/plain;charset=utf-8" });
+}
+
+async function pdfToPptx(file) {
+  if (!file) throw new Error("Select a PDF file.");
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const latin = new TextDecoder("latin1").decode(bytes);
+  const matches = [...latin.matchAll(/\(([^)]+)\)\s*Tj/g)].map((m) => m[1]);
+  const textLines = matches.length ? matches : latin.split(/[\r\n]+/).filter((l) => l.length > 20 && !l.startsWith("%") && !l.includes("obj")).slice(0, 200);
+  const slides = textLines.length ? textLines : ["Converted text from PDF"];
+  const slideXml = (text) => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">' +
+    '<p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>' +
+    '<p:sp><p:nvSpPr><p:cNvPr id="2" name="Title"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/>' +
+    '<a:p><a:r><a:t>' + xmlEscape(text.slice(0, 200)) + '</a:t></a:r></a:p></p:txBody></p:sp>' +
+    '</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>';
+  const slideEntries = slides.map((text, index) => ({ name: "ppt/slides/slide" + (index + 1) + ".xml", text }));
+  const contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' +
+    '<Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>' +
+    slides.map((_, i) => '<Override PartName="/ppt/slides/slide' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>').join("") +
+    '</Types>';
+  const rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>';
+  const presRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    slides.map((_, i) => '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide' + (i + 1) + '.xml"/>').join("") + '</Relationships>';
+  const presentation = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:sldMasterIdLst/><p:sldIdLst>' +
+    slides.map((_, i) => '<p:sldId id="' + (256 + i) + '" r:id="rId' + (i + 1) + '"/>').join("") + '</p:sldIdLst><p:sldSz cx="9144000" cy="6858000" type="screen4x3"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>';
+  const files = [
+    new File([encoder.encode(contentTypes)], "[Content_Types].xml"),
+    new File([encoder.encode(rels)], "_rels/.rels"),
+    new File([encoder.encode(presentation)], "ppt/presentation.xml"),
+    new File([encoder.encode(presRels)], "ppt/_rels/presentation.xml.rels"),
+  ];
+  for (const entry of slideEntries) files.push(new File([encoder.encode(slideXml(entry.text))], entry.name));
+  return zipFiles(files);
+}
+
+async function epubToPdf(file) {
+  if (!file) throw new Error("Select an EPUB file.");
+  const entries = await unzipEntries(file);
+  const htmlEntries = entries.filter((e) => /\.(xhtml|html|htm)$/i.test(e.name));
+  if (!htmlEntries.length) throw new Error("No readable content was found in this EPUB.");
+  const parser = new DOMParser();
+  const texts = [];
+  for (const entry of htmlEntries) {
+    const doc = parser.parseFromString(decoder.decode(entry.data), "application/xhtml+xml");
+    const bodyText = (doc.body?.innerText || doc.body?.textContent || "").trim();
+    if (bodyText) texts.push(bodyText);
+  }
+  const allText = texts.join("\n\n");
+  if (!allText.trim()) throw new Error("This EPUB contains no readable text.");
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const pageWidth = 595.28, pageHeight = 841.89, margin = 50, maxWidth = pageWidth - margin * 2, fontSize = 11, lineHeight = 16;
+  let page = pdf.addPage([pageWidth, pageHeight]);
+  let y = pageHeight - 50;
+  for (const para of allText.split(/\n{2,}/)) {
+    const words = para.replace(/\s+/g, " ").trim().split(" ");
+    let line = "";
+    for (const word of words) {
+      const testLine = line ? line + " " + word : word;
+      if (font.widthOfTextAtSize(testLine, fontSize) > maxWidth) {
+        if (y < 60) { page = pdf.addPage([pageWidth, pageHeight]); y = pageHeight - 50; }
+        page.drawText(line, { x: margin, y, size: fontSize, font });
+        y -= lineHeight;
+        line = word;
+      } else { line = testLine; }
+    }
+    if (line) {
+      if (y < 60) { page = pdf.addPage([pageWidth, pageHeight]); y = pageHeight - 50; }
+      page.drawText(line, { x: margin, y, size: fontSize, font });
+      y -= lineHeight * 1.4;
+    }
+  }
+  return new Blob([await pdf.save()], { type: "application/pdf" });
+}
+
+function dxfNumber(value) { const n = Number(value); return Number.isFinite(n) ? n : 0; }
+async function dxfToSvg(file) {
+  if (!file) throw new Error("Select a DXF file.");
+  if (file.size > 20 * 1024 * 1024) throw new Error("DXF files must be 20 MB or smaller.");
+  const text = await file.text();
+  const lines = text.split(/\r?\n/);
+  // DXF is a flat sequence of group code / value pairs.
+  const pairs = [];
+  for (let i = 0; i + 1 < lines.length; i += 2) {
+    const code = lines[i].trim();
+    const value = lines[i + 1];
+    if (code === "") continue;
+    pairs.push([Number(code), value]);
+  }
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const elements = [];
+  let i = 0;
+  while (i < pairs.length) {
+    if (pairs[i][0] !== 0) { i += 1; continue; }
+    const type = pairs[i][1].trim().toUpperCase();
+    // Find the next section/entity boundary.
+    let j = i + 1;
+    const props = {};
+    while (j < pairs.length && pairs[j][0] !== 0) {
+      const code = pairs[j][0];
+      const value = pairs[j][1];
+      if (code === 10) props.x = dxfNumber(value);
+      else if (code === 20) props.y = dxfNumber(value);
+      else if (code === 11) props.x2 = dxfNumber(value);
+      else if (code === 21) props.y2 = dxfNumber(value);
+      else if (code === 40) props.r = dxfNumber(value);
+      else if (code === 50) props.a1 = dxfNumber(value);
+      else if (code === 51) props.a2 = dxfNumber(value);
+      else if (code === 90) props.count = dxfNumber(value);
+      else if (code === 70) props.closed = dxfNumber(value);
+      j += 1;
+    }
+    if (type === "LINE" && props.x !== undefined) {
+      elements.push('<line x1="' + props.x + '" y1="' + (-props.y) + '" x2="' + props.x2 + '" y2="' + (-props.y2) + '" stroke="black" stroke-width="1"/>');
+      for (const v of [props.x, props.y, props.x2, props.y2]) {}
+      minX = Math.min(minX, props.x, props.x2); maxX = Math.max(maxX, props.x, props.x2);
+      minY = Math.min(minY, props.y, props.y2); maxY = Math.max(maxY, props.y, props.y2);
+    } else if (type === "CIRCLE" && props.x !== undefined) {
+      elements.push('<circle cx="' + props.x + '" cy="' + (-props.y) + '" r="' + props.r + '" fill="none" stroke="black" stroke-width="1"/>');
+      minX = Math.min(minX, props.x - props.r); maxX = Math.max(maxX, props.x + props.r);
+      minY = Math.min(minY, props.y - props.r); maxY = Math.max(maxY, props.y + props.r);
+    } else if (type === "LWPOLYLINE" || type === "POLYLINE") {
+      // Collect subsequent vertices until the next entity.
+      const verts = [];
+      let k = i + 1;
+      let cx, cy;
+      while (k < pairs.length && pairs[k][0] !== 0) {
+        if (pairs[k][0] === 10) cx = dxfNumber(pairs[k][1]);
+        else if (pairs[k][0] === 20) { cy = dxfNumber(pairs[k][1]); if (cx !== undefined) { verts.push([cx, cy]); cx = undefined; } }
+        k += 1;
+      }
+      if (verts.length) {
+        const d = verts.map((v, idx) => (idx === 0 ? "M" : "L") + v[0] + " " + (-v[1])).join(" ") + (props.closed ? " Z" : "");
+        elements.push('<path d="' + d + '" fill="none" stroke="black" stroke-width="1"/>');
+        for (const v of verts) { minX = Math.min(minX, v[0]); maxX = Math.max(maxX, v[0]); minY = Math.min(minY, v[1]); maxY = Math.max(maxY, v[1]); }
+      }
+    }
+    i = j;
+  }
+  if (!elements.length) throw new Error("No supported geometry (LINE, CIRCLE, LWPOLYLINE) was found in this DXF file.");
+  const pad = 10;
+  const w = (maxX - minX) || 100, h = (maxY - minY) || 100;
+  const svg = '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="' + (minX - pad) + " " + (-(maxY + pad)) + " " + (w + pad * 2) + " " + (h + pad * 2) + '" width="' + (w + pad * 2) + '" height="' + (h + pad * 2) + '">' + elements.join("") + '</svg>';
+  return new Blob([svg], { type: "image/svg+xml" });
+}
+
+async function mp4Converter(file) {
+  if (!file) throw new Error("Select a video file.");
+  const supported = typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported("video/mp4;codecs=avc1.42E01E,mp4a.40.2");
+  if (!supported) throw new Error("This browser cannot encode MP4. Use Chrome 126+ or the WebM converter instead.");
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "auto"; video.muted = true;
+    const url = URL.createObjectURL(file);
+    video.src = url;
+    video.onloadedmetadata = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext("2d");
+      const stream = canvas.captureStream(24);
+      // Add an audio track only if the source has one; otherwise output silent MP4.
+      let mediaRecorder;
+      try { mediaRecorder = new MediaRecorder(stream, { mimeType: "video/mp4;codecs=avc1.42E01E,mp4a.40.2", videoBitsPerSecond: 1000000 }); }
+      catch { mediaRecorder = new MediaRecorder(stream, { mimeType: "video/mp4", videoBitsPerSecond: 1000000 }); }
+      const chunks = [];
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      mediaRecorder.onstop = () => { URL.revokeObjectURL(url); resolve(new Blob(chunks, { type: "video/mp4" })); };
+      mediaRecorder.onerror = (e) => { URL.revokeObjectURL(url); reject(new Error("MP4 encoding failed: " + (e?.error?.message || "unknown error"))); };
+      mediaRecorder.start();
+      video.play();
+      function draw() {
+        if (video.paused || video.ended) { if (mediaRecorder.state !== "inactive") mediaRecorder.stop(); return; }
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        requestAnimationFrame(draw);
+      }
+      draw();
+      video.onended = () => { if (mediaRecorder.state !== "inactive") mediaRecorder.stop(); };
+    };
+    video.onerror = () => { URL.revokeObjectURL(url); reject(new Error("The video could not be loaded.")); };
+  });
+}
+
+async function videoToGif(file) {
+  if (!file) throw new Error("Select a video file.");
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "auto"; video.muted = true;
+    const url = URL.createObjectURL(file);
+    video.src = url;
+    video.onloadedmetadata = async () => {
+      try {
+        const frames = [];
+        const targetW = Math.min(320, video.videoWidth || 320);
+        const scale = targetW / (video.videoWidth || 320);
+        const targetH = Math.round((video.videoHeight || 240) * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = targetW; canvas.height = targetH;
+        const ctx = canvas.getContext("2d");
+        const duration = Math.min(video.duration || 4, 4);
+        const fps = 8;
+        const frameCount = Math.max(1, Math.round(duration * fps));
+        for (let f = 0; f < frameCount; f++) {
+          video.currentTime = (f / frameCount) * duration;
+          await new Promise((r) => { video.onseeked = r; });
+          ctx.drawImage(video, 0, 0, targetW, targetH);
+          const imgData = ctx.getImageData(0, 0, targetW, targetH);
+          frames.push({ data: imgData.data, delay: Math.round(100 / fps) });
+        }
+        URL.revokeObjectURL(url);
+        const gif = encodeGif(targetW, targetH, frames);
+        resolve(new Blob([gif], { type: "image/gif" }));
+      } catch (e) { URL.revokeObjectURL(url); reject(e); }
+    };
+    video.onerror = () => { URL.revokeObjectURL(url); reject(new Error("The video could not be loaded.")); };
+  });
+}
+
+// Minimal GIF89a encoder with a 256-colour (median-cut-ish) palette per frame is
+// out of scope; use a fixed web-safe palette and nearest-colour quantisation.
+function encodeGif(width, height, frames) {
+  const palette = [];
+  for (let r = 0; r < 6; r++) for (let g = 0; g < 6; g++) for (let b = 0; b < 6; b++) {
+    palette.push([r * 51, g * 51, b * 51]);
+  }
+  // Pad to 256.
+  while (palette.length < 256) palette.push([0, 0, 0]);
+  const out = [];
+  const push = (b) => out.push(b & 0xff);
+  const pushStr = (s) => { for (let i = 0; i < s.length; i++) push(s.charCodeAt(i)); };
+  // Header
+  pushStr("GIF89a");
+  push(width & 0xff); push((width >> 8) & 0xff);
+  push(height & 0xff); push((height >> 8) & 0xff);
+  push(0xf7); push(0); push(0); // packed, bg index, aspect ratio
+  for (const c of palette) { push(c[0]); push(c[1]); push(c[2]); }
+  // Netscape loop extension
+  push(0x21); push(0xff); push(0x0b); pushStr("NETSCAPE2.0"); push(0x03); push(0x01); push(0x00); push(0x00); push(0x00);
+  for (const frame of frames) {
+    push(0x21); push(0xf9); push(0x04); push(0x04); // disposal, transparent flag off
+    push(frame.delay & 0xff); push((frame.delay >> 8) & 0xff);
+    push(0x00); push(0x00);
+    push(0x2c);
+    push(0x00); push(0x00); push(0x00); push(0x00);
+    push(width & 0xff); push((width >> 8) & 0xff);
+    push(height & 0xff); push((height >> 8) & 0xff);
+    push(0x00); // no local colour table
+    // LZW
+    const indices = new Uint8Array(width * height);
+    for (let p = 0; p < width * height; p++) {
+      const off = p * 4;
+      const r = frame.data[off], g = frame.data[off + 1], b = frame.data[off + 2];
+      let best = 0, bestDist = Infinity;
+      for (let ci = 0; ci < palette.length; ci++) {
+        const c = palette[ci];
+        const d = (r - c[0]) ** 2 + (g - c[1]) ** 2 + (b - c[2]) ** 2;
+        if (d < bestDist) { bestDist = d; best = ci; }
+      }
+      indices[p] = best;
+    }
+    // LZW encode with 8-bit min code size.
+    const minCodeSize = 8;
+    push(minCodeSize);
+    const clearCode = 1 << minCodeSize;
+    const endCode = clearCode + 1;
+    let codeSize = minCodeSize + 1;
+    let nextCode = endCode + 1;
+    const dict = new Map();
+    function resetDict() {
+      dict.clear();
+      for (let c = 0; c < clearCode; c++) dict.set(String.fromCharCode(c), c);
+      nextCode = endCode + 1;
+      codeSize = minCodeSize + 1;
+    }
+    resetDict();
+    const subBlocks = [];
+    let current = "";
+    let bitBuffer = 0, bitCount = 0;
+    function emit(code) {
+      bitBuffer |= code << bitCount;
+      bitCount += codeSize;
+      while (bitCount >= 8) {
+        subBlocks.push(bitBuffer & 0xff);
+        bitBuffer >>= 8;
+        bitCount -= 8;
+      }
+    }
+    emit(clearCode);
+    for (let p = 0; p < indices.length; p++) {
+      const k = String.fromCharCode(indices[p]);
+      const combined = current + k;
+      if (dict.has(combined)) { current = combined; }
+      else {
+        emit(dict.get(current));
+        if (nextCode < 4096) {
+          dict.set(combined, nextCode++);
+          if (nextCode === (1 << codeSize) && codeSize < 12) codeSize += 1;
+        } else {
+          emit(clearCode);
+          resetDict();
+        }
+        current = k;
+      }
+    }
+    if (current) emit(dict.get(current));
+    emit(endCode);
+    if (bitCount > 0) subBlocks.push(bitBuffer & 0xff);
+    // Write sub-blocks.
+    let pos = 0;
+    while (pos < subBlocks.length) {
+      const chunk = Math.min(255, subBlocks.length - pos);
+      push(chunk);
+      for (let c = 0; c < chunk; c++) push(subBlocks[pos + c]);
+      pos += chunk;
+    }
+    push(0); // block terminator
+  }
+  push(0x3b); // trailer
+  return new Uint8Array(out);
+}
+
 function Download({ result }) {
   return result && <p role="status" style={{ marginTop: 12 }}><a href={result.url} download={result.name} style={{ color: "#7dd3fc", fontWeight: 700 }}>Download {result.name} · {(result.size / 1024).toFixed(1)} KB</a></p>;
 }
@@ -526,11 +892,17 @@ export default function ConverterEngines() {
   const [docxInput, setDocxInput] = useState(null), [pdfDocxInput, setPdfDocxInput] = useState(null), [pptxInput, setPptxInput] = useState(null);
   const [htmlInput, setHtmlInput] = useState(""), [audioCompressInput, setAudioCompressInput] = useState(null);
   const [videoCompressInput, setVideoCompressInput] = useState(null), [ttfInput, setTtfInput] = useState(null);
+  const [pdfJpgInput, setPdfJpgInput] = useState(null), [pdfTextInput, setPdfTextInput] = useState(null);
+  const [pptxPdfInput, setPptxPdfInput] = useState(null), [epubInput, setEpubInput] = useState(null);
+  const [dxfInput, setDxfInput] = useState(null), [mp4Input, setMp4Input] = useState(null), [gifInput, setGifInput] = useState(null);
   const [imgPdfResult, saveImgPdf, clearImgPdf] = useResult(), [mergePdfResult, saveMergePdf, clearMergePdf] = useResult(), [audioResult, saveAudio, clearAudio] = useResult();
   const [splitPdfResult, saveSplitPdf, clearSplitPdf] = useResult(), [pdfCompressResult, savePdfCompress, clearPdfCompress] = useResult();
   const [docxResult, saveDocx, clearDocx] = useResult(), [pdfDocxResult, savePdfDocx, clearPdfDocx] = useResult(), [pptxResult, savePptx, clearPptx] = useResult();
   const [htmlResult, saveHtml, clearHtml] = useResult(), [audioCompressResult, saveAudioCompress, clearAudioCompress] = useResult();
   const [videoCompressResult, saveVideoCompress, clearVideoCompress] = useResult(), [ttfResult, saveTtf, clearTtf] = useResult();
+  const [pdfJpgResult, savePdfJpg, clearPdfJpg] = useResult(), [pdfTextResult, savePdfText, clearPdfText] = useResult();
+  const [pptxPdfResult, savePptxPdf, clearPptxPdf] = useResult(), [epubResult, saveEpub, clearEpub] = useResult();
+  const [dxfResult, saveDxf, clearDxf] = useResult(), [mp4Result, saveMp4, clearMp4] = useResult(), [gifResult, saveGif, clearGif] = useResult();
   useEffect(() => () => extracted.forEach(item => URL.revokeObjectURL(item.url)), [extracted]);
   async function run(label, fn) {
     setError(""); setBusy(label);
@@ -669,6 +1041,55 @@ export default function ConverterEngines() {
         setExtracted(entries.map(entry => ({ name: entry.name, size: entry.data.length, url: URL.createObjectURL(new Blob([entry.data])) })));
       })}>{busy === "unzip" ? "Extracting…" : "Extract files"}</button>
       {extracted.map(item => <p key={item.name}><a href={item.url} download={item.name} style={{ color: "#7dd3fc" }}>{item.name} · {(item.size / 1024).toFixed(1)} KB — Download</a></p>)}
+    </section>
+    <section style={box} id="pdf-to-jpg">
+      <h2>PDF to JPG</h2>
+      <p>Render every page of a PDF as a JPG image and download them together in a ZIP.</p>
+      <label style={field}>PDF file <input type="file" accept="application/pdf,.pdf" onChange={e => { setPdfJpgInput(e.target.files?.[0] || null); clearPdfJpg(); }} /></label>
+      <button style={button} disabled={!pdfJpgInput || !!busy} onClick={() => run("pdf-jpg", async () => savePdfJpg(await pdfToJpgZip(pdfJpgInput), (pdfJpgInput.name.replace(/\.pdf$/i, "") || "pages") + ".zip"))}>{busy === "pdf-jpg" ? "Rendering…" : "Convert to JPG (ZIP)"}</button>
+      <Download result={pdfJpgResult} />
+    </section>
+    <section style={box} id="pdf-to-text">
+      <h2>PDF to Text</h2>
+      <p>Extract the selectable text of a PDF into a plain .txt file. Scanned pages need OCR, which is not included.</p>
+      <label style={field}>PDF file <input type="file" accept="application/pdf,.pdf" onChange={e => { setPdfTextInput(e.target.files?.[0] || null); clearPdfText(); }} /></label>
+      <button style={button} disabled={!pdfTextInput || !!busy} onClick={() => run("pdf-text", async () => savePdfText(await pdfToText(pdfTextInput), (pdfTextInput.name.replace(/\.pdf$/i, "") || "document") + ".txt"))}>{busy === "pdf-text" ? "Extracting…" : "Extract Text"}</button>
+      <Download result={pdfTextResult} />
+    </section>
+    <section style={box} id="pdf-to-pptx">
+      <h2>PDF to PowerPoint</h2>
+      <p>Extract the text of a PDF into a simple PPTX file. Slide design, images and layout are not preserved.</p>
+      <label style={field}>PDF file <input type="file" accept="application/pdf,.pdf" onChange={e => { setPptxPdfInput(e.target.files?.[0] || null); clearPptxPdf(); }} /></label>
+      <button style={button} disabled={!pptxPdfInput || !!busy} onClick={() => run("pdf-pptx", async () => savePptxPdf(await pdfToPptx(pptxPdfInput), (pptxPdfInput.name.replace(/\.pdf$/i, "") || "presentation") + ".pptx"))}>{busy === "pdf-pptx" ? "Converting…" : "Convert to PPTX"}</button>
+      <Download result={pptxPdfResult} />
+    </section>
+    <section style={box} id="epub-to-pdf">
+      <h2>EPUB to PDF</h2>
+      <p>Extract the text of an EPUB book and lay it out as a plain PDF.</p>
+      <label style={field}>EPUB file <input type="file" accept=".epub,application/epub+zip" onChange={e => { setEpubInput(e.target.files?.[0] || null); clearEpub(); }} /></label>
+      <button style={button} disabled={!epubInput || !!busy} onClick={() => run("epub", async () => saveEpub(await epubToPdf(epubInput), (epubInput.name.replace(/\.epub$/i, "") || "book") + ".pdf"))}>{busy === "epub" ? "Converting…" : "Convert to PDF"}</button>
+      <Download result={epubResult} />
+    </section>
+    <section style={box} id="dxf-to-svg">
+      <h2>DXF to SVG</h2>
+      <p>Render the geometry (lines, circles, polylines) of an ASCII DXF file as an SVG drawing.</p>
+      <label style={field}>DXF file <input type="file" accept=".dxf,text/plain" onChange={e => { setDxfInput(e.target.files?.[0] || null); clearDxf(); }} /></label>
+      <button style={button} disabled={!dxfInput || !!busy} onClick={() => run("dxf", async () => saveDxf(await dxfToSvg(dxfInput), (dxfInput.name.replace(/\.dxf$/i, "") || "drawing") + ".svg"))}>{busy === "dxf" ? "Converting…" : "Convert to SVG"}</button>
+      <Download result={dxfResult} />
+    </section>
+    <section style={box} id="video-to-gif">
+      <h2>Video to GIF</h2>
+      <p>Sample a few seconds of a video and encode them as an animated GIF. Output is small and low quality.</p>
+      <label style={field}>Video file <input type="file" accept="video/*" onChange={e => { setGifInput(e.target.files?.[0] || null); clearGif(); }} /></label>
+      <button style={button} disabled={!gifInput || !!busy} onClick={() => run("gif", async () => saveGif(await videoToGif(gifInput), (gifInput.name.replace(/\.[^.]+$/, "") || "clip") + ".gif"))}>{busy === "gif" ? "Encoding…" : "Convert to GIF"}</button>
+      <Download result={gifResult} />
+    </section>
+    <section style={box} id="mp4-converter">
+      <h2>MP4 Converter</h2>
+      <p>Re-encode a video to MP4 when the browser supports MP4 recording (Chrome 126+). Otherwise an error is shown.</p>
+      <label style={field}>Video file <input type="file" accept="video/*" onChange={e => { setMp4Input(e.target.files?.[0] || null); clearMp4(); }} /></label>
+      <button style={button} disabled={!mp4Input || !!busy} onClick={() => run("mp4", async () => saveMp4(await mp4Converter(mp4Input), (mp4Input.name.replace(/\.[^.]+$/, "") || "video") + ".mp4"))}>{busy === "mp4" ? "Encoding…" : "Convert to MP4"}</button>
+      <Download result={mp4Result} />
     </section>
     {error && <p role="alert" style={{ color: "#fca5a5", marginTop: 14 }}>{error}</p>}
   </div>;
