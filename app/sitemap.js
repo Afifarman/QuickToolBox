@@ -1,4 +1,4 @@
-import { SITE_URL } from '../lib/site-config';
+import { SITE_URL } from '../lib/site-config.js';
 
 const studentToolSlugs = [
   'grade-calculator',
