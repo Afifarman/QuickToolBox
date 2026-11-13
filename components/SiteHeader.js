@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const links = [
   { href: '/', label: 'Home' },
-  { href: '/ai-platform', label: 'AI Platform' },
+  { href: '/student-tools', label: 'Student Tools' },
   { href: '/file-converter', label: 'File Converter' },
   { href: '/photo-studio', label: 'Photo Studio' },
 ];
@@ -23,7 +23,7 @@ export default function SiteHeader() {
           const active = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
           return <Link key={href} href={href} aria-current={active ? 'page' : undefined} className={active ? 'is-active' : ''}>{label}</Link>;
         })}
-        <Link className="qt-site-register" href="/login?mode=register">Get started <span aria-hidden="true">↗</span></Link>
+        <Link className="qt-site-register" href="/ai">Open AI <span aria-hidden="true">→</span></Link>
       </nav>
     </header>
   );

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { AI_SYSTEM_PROMPT, extractModelText } from '../../../lib/ai';
+import { SITE_HOST } from '../../../lib/site-config';
 import { selectGeminiModels } from '../../../lib/ai/gemini-models';
 import { getClientKey, rateLimit } from '../../../lib/security/rate-limit';
 import { classifyProviderError, logProviderFailure as logSafeProviderFailure } from '../../../lib/ai/provider-diagnostics';
@@ -278,27 +279,73 @@ async function openrouterChat(prompt, { paid = false } = {}) {
 
 export async function GET() {
   const providers = configuredProviders();
-  return NextResponse.json({
-    ok: true,
-    available: Object.values(providers).some(Boolean),
-    providers,
-    statusMeaning: 'Configured keys only; this endpoint does not perform live provider health checks.',
-  });
+  const available = Object.values(providers).filter(Boolean).length;
+  return NextResponse.json(
+    {
+      ok: true,
+      available: available > 0,
+      providersConfigured: available,
+      statusMeaning: 'Configured keys only; this endpoint does not perform live provider health checks.',
+    },
+    { headers: { 'Cache-Control': 'no-store, max-age=0' } },
+  );
+}
+
+/**
+ * Block browser requests coming from unrelated third-party sites. Requests
+ * without an Origin header (server-to-server, curl) are still rate limited by
+ * POST but are not used to embed this proxy inside another website.
+ */
+function isAllowedOrigin(request) {
+  const origin = request.headers.get('origin');
+  if (!origin) return true;
+  try {
+    const { host, protocol } = new URL(origin);
+    if (!['http:', 'https:'].includes(protocol)) return false;
+    if (host === 'localhost:3000' || host === '127.0.0.1:3000') return true;
+    if (host === SITE_HOST) return true;
+    // Vercel preview deployments for this project.
+    return host.endsWith('.vercel.app');
+  } catch {
+    return false;
+  }
+}
+
+function rateHeaders(limit) {
+  return {
+    'X-RateLimit-Limit': String(20),
+    'X-RateLimit-Remaining': String(limit.remaining ?? 0),
+    'Cache-Control': 'no-store, max-age=0',
+  };
 }
 
 export async function POST(request) {
+  if (!isAllowedOrigin(request)) {
+    return NextResponse.json(
+      { error: 'This AI endpoint cannot be called from another website.' },
+      { status: 403, headers: { 'Cache-Control': 'no-store, max-age=0' } },
+    );
+  }
+
   const limit = rateLimit(getClientKey(request, 'ai'), { limit: 20, windowMs: 10 * 60 * 1000 });
   if (!limit.allowed) {
     return NextResponse.json(
       { error: 'Too many AI requests. Please try again later.' },
-      { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } },
+      {
+        status: 429,
+        headers: {
+          ...rateHeaders(limit),
+          'Retry-After': String(limit.retryAfter),
+        },
+      },
     );
   }
 
   try {
     const body = await request.json().catch(() => ({}));
     const prompt = String(body?.prompt || '').trim();
-    if (!prompt) return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
+    if (!prompt) return NextResponse.json({ error: 'Prompt is required.' }, { status: 400, headers: rateHeaders(limit) });
+
 
     const clipped = prompt.slice(0, PROMPT_LIMIT);
     // Free-first order. OpenRouter's free router only selects free models.
@@ -320,7 +367,7 @@ export async function POST(request) {
     for (const [provider, run] of runners) {
       try {
         const result = await run(clipped);
-        if (result?.text) return NextResponse.json(result);
+        if (result?.text) return NextResponse.json(result, { headers: rateHeaders(limit) });
       } catch (error) {
         const details = errorDetails(error);
         logProviderFailure(provider, details);
@@ -335,10 +382,13 @@ export async function POST(request) {
       : 'AI providers rejected the request or are unavailable. Verify the key, model access, and quota in the provider dashboard.';
     return NextResponse.json(
       { error: available.length ? failureHint : 'No AI provider is configured. Add a valid provider API key in Vercel Environment Variables.' },
-      { status: available.length ? 502 : 503 },
+      { status: available.length ? 502 : 503, headers: rateHeaders(limit) },
     );
   } catch (error) {
     logProviderFailure('request', errorDetails(error));
-    return NextResponse.json({ error: 'The AI request could not be completed. Please try again later.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'The AI request could not be completed. Please try again later.' },
+      { status: 500, headers: rateHeaders(limit) },
+    );
   }
 }

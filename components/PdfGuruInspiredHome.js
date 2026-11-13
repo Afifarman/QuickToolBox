@@ -65,7 +65,7 @@ export default function PdfGuruInspiredHome() {
           <h1>Every tool you need.<br /><span>One quick workspace.</span></h1>
           <p>Discover AI, file, image and productivity tools in one place. Search the directory, choose a workflow and get started.</p>
           <div className="pg-hero-actions">
-            <a className="pg-primary" href="#tool-directory">Explore all tools <span>↗</span></a>
+            <a className="pg-primary" href="#tool-directory">Explore all tools <span>→</span></a>
             <Link className="pg-secondary" href="/file-converter">Open file workspace <span>→</span></Link>
           </div>
           <div className="pg-trust"><span>✓ Free-first tools</span><span>✓ No installation</span><span>✓ Mobile friendly</span></div>
@@ -98,7 +98,7 @@ export default function PdfGuruInspiredHome() {
           {visibleTools.map((tool, index) => <Link href={tool.href} className="pg-tool-card" key={tool.href}>
             <div className="pg-tool-top"><span className="pg-tool-icon">{tool.icon}</span><span className="pg-tool-category">{tool.category}</span></div>
             <div className="pg-tool-copy"><h3>{tool.name}</h3><p>{tool.description}</p></div>
-            <span className="pg-tool-arrow" aria-hidden="true">↗</span><span className="pg-tool-number">{String(index + 1).padStart(2, "0")}</span>
+            <span className="pg-tool-arrow" aria-hidden="true">→</span><span className="pg-tool-number">{String(index + 1).padStart(2, "0")}</span>
           </Link>)}
         </div> : <div className="pg-empty"><b>No matching tools found</b><p>Try another keyword or clear the category filter.</p><button type="button" onClick={() => { setQuery(""); setActive("All tools"); }}>Clear filters</button></div>}
       </section>
@@ -107,7 +107,7 @@ export default function PdfGuruInspiredHome() {
         <div className="pg-benefit-intro"><span className="pg-kicker">MADE FOR EVERYDAY WORK</span><h2>Less friction.<br /><span>More focus.</span></h2><p>A clear, practical home for your digital workflows.</p></div>
         <div className="pg-benefit-grid">{benefits.map(([icon, title, copy]) => <article className="pg-benefit" key={title}><span>{icon}</span><div><h3>{title}</h3><p>{copy}</p></div></article>)}</div>
       </section>
-      <section className="pg-bottom-cta"><div><span className="pg-kicker">READY WHEN YOU ARE</span><h2>Pick a tool. Make progress.</h2><p>Open a workspace and see its supported features and limitations clearly.</p></div><Link href="/file-converter">Start with files <span>↗</span></Link></section>
+      <section className="pg-bottom-cta"><div><span className="pg-kicker">READY WHEN YOU ARE</span><h2>Pick a tool. Make progress.</h2><p>Open a workspace and see its supported features and limitations clearly.</p></div><Link href="/file-converter">Start with files <span>→</span></Link></section>
       <footer className="pg-footer"><Link href="/" className="pg-brand"><span>Q</span> QuickToolBox</Link><p>Useful tools. Clear workflows. One place.</p><span>© {new Date().getFullYear()} QuickToolBox</span></footer>
     </main>
   );

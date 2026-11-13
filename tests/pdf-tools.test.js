@@ -18,7 +18,7 @@ test("mergePdfBuffers combines all pages in input order", async () => {
 });
 
 test("mergePdfBuffers rejects fewer than two input files", async () => {
-  await assert.rejects(async () => mergePdfBuffers([await makePdf(1)]), /কমপক্ষে ২টি PDF/);
+  await assert.rejects(async () => mergePdfBuffers([await makePdf(1)]), /at least 2 PDF files/);
 });
 
 test("splitPdfBuffer returns one valid PDF per source page", async () => {

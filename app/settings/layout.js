@@ -2,7 +2,7 @@ import { buildMetadata } from '../../lib/metadata';
 
 export const metadata = buildMetadata({
   title: 'Settings',
-  description: 'Theme, language and notification preferences for QuickToolBox.',
+  description: 'Choose the colour theme for QuickToolBox. Preferences are stored in this browser.',
   path: '/settings',
   noindex: true,
 });

@@ -10,6 +10,11 @@ function getErrorMessage(error) {
   const text = typeof message === 'string' ? message : 'Authentication failed. Please try again.';
   const lower = text.toLowerCase();
 
+  // The Supabase project currently rejects auth calls when CAPTCHA is enabled
+  // but the client sends no token. Never show that raw message to visitors.
+  if (lower.includes('captcha')) {
+    return 'Sign-in is temporarily unavailable. Every QuickToolBox tool still works without an account — you can close this page and keep using them.';
+  }
   if (lower.includes('redirect') || lower.includes('allowlist') || lower.includes('not allowed') || lower.includes('redirect_uri')) {
     return 'Google login is blocked by the Supabase redirect URL settings. Add this exact URL to Authentication → URL Configuration → Redirect URLs: ' + getAuthCallbackUrl();
   }
@@ -103,6 +108,9 @@ export default function LoginPage() {
         <a className="auth-brand" href="/"><span className="auth-brand-mark" aria-hidden="true" />QuickToolBox</a>
         <h1>{mode === 'login' ? 'Welcome back' : 'Create account'}</h1>
         <p>{mode === 'login' ? 'Login to save tools, history and AI results.' : 'Create your free QuickToolBox account.'}</p>
+        <p className="auth-guest-note">
+          No account needed — <a href="/">every tool works without signing in</a>.
+        </p>
 
         <button className="google-btn" onClick={google} disabled={busy} type="button">
           <span aria-hidden="true">G</span> {busy ? 'Connecting…' : 'Continue with Google'}

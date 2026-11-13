@@ -3,7 +3,7 @@ import './premium.css';
 import SiteProviders from './providers';
 import QuickToolboxAssistant from '../components/QuickToolboxAssistant';
 import SiteHeader from '../components/SiteHeader';
-import Script from 'next/script';
+import ConsentAndAds from '../components/ConsentAndAds';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
 // Currently working production Vercel domain.
@@ -31,15 +31,15 @@ export const metadata = {
   },
   keywords: [
     'free online tools',
-    'PDF tools',
-    'calculator',
+    'free file converter',
+    'CV maker',
+    'student tools',
     'AI tools',
-    'SEO tools',
     'image tools',
     'QuickToolBox',
   ],
   alternates: {
-    canonical: siteUrl,
+    canonical: '/',
   },
   openGraph: {
     type: 'website',
@@ -84,13 +84,8 @@ export default function RootLayout({ children }) {
       <body>
         <SiteProviders><SiteHeader />{children}</SiteProviders>
         <QuickToolboxAssistant />
+        <ConsentAndAds />
         <SpeedInsights />
-        <Script
-          async
-          strategy="afterInteractive"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4690893675414003"
-          crossOrigin="anonymous"
-        />
       </body>
     </html>
   );

@@ -208,7 +208,7 @@
 .cv-paper-stage{min-height:650px;margin:14px 0 18px;padding:30px 20px;display:flex;justify-content:center;align-items:flex-start;overflow:auto;border:1px solid #e2e8f0;border-radius:16px;background-color:#e9edf5;background-image:radial-gradient(#cbd5e1 1px,transparent 1px);background-size:16px 16px}
 .cv-paper-scale{width:210mm;min-width:210mm;transform:scale(var(--cv-zoom));transform-origin:top center;margin-bottom:-110px}
 .cv-paper{width:210mm;min-height:297mm;margin:0 auto;background:white;color:#1f2937;padding:17mm 16mm;box-shadow:0 8px 35px #0f172a20;font-family:var(--cv-font,Arial,sans-serif);--cv-accent:#2563eb}
-.cv-paper h1{font-size:28px;letter-spacing:-.04em;margin:0 0 5px;color:#111827;overflow-wrap:anywhere}
+.cv-paper h1,.cv-paper .cv-name{font-size:28px;letter-spacing:-.04em;margin:0 0 5px;color:#111827;overflow-wrap:anywhere}
 .cv-paper h2{font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--cv-accent);margin:0 0 9px}
 .cv-paper .cv-top{display:flex;align-items:center;gap:18px;padding-bottom:20px;border-bottom:2px solid var(--cv-accent)}
 .cv-paper .cv-top p{font-size:9px;color:#64748b;margin:0;overflow-wrap:anywhere}
@@ -223,12 +223,12 @@
 .cv-paper.cv-executive .cv-top{border-bottom:5px solid var(--cv-accent)}.cv-paper.cv-executive .cv-body{grid-template-columns:1fr}
 .cv-paper.cv-creative .cv-top{border-left:7px solid var(--cv-accent);padding-left:15px}.cv-paper.cv-creative .cv-body{grid-template-columns:25% 1fr}
 .cv-paper.cv-classic .cv-top{justify-content:center;text-align:center}.cv-paper.cv-classic .cv-body{grid-template-columns:1fr}.cv-paper.cv-classic .cv-body aside{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.cv-paper.cv-elegant h1{font-family:Georgia,serif;font-weight:500}.cv-paper.cv-elegant .cv-top{border-bottom:1px solid #cbd5e1}
+.cv-paper.cv-elegant h1,.cv-paper.cv-elegant .cv-name{font-family:Georgia,serif;font-weight:500}.cv-paper.cv-elegant .cv-top{border-bottom:1px solid #cbd5e1}
 .cv-paper.cv-compact{padding:12mm}.cv-paper.cv-compact .cv-top{padding-bottom:12px}.cv-paper.cv-compact .cv-body{padding-top:12px;gap:16px}.cv-paper.cv-compact .cv-section{padding-bottom:8px;margin-bottom:7px}
 .cv-paper.cv-academic .cv-body{grid-template-columns:1fr}.cv-paper.cv-academic .cv-body aside{display:grid;grid-template-columns:1fr 1fr;gap:12px;order:2}.cv-paper.cv-academic .cv-main{order:1}
 .cv-paper.cv-corporate .cv-top{border-bottom:1px solid var(--cv-accent)}.cv-paper.cv-corporate .cv-body{grid-template-columns:26% 1fr}
 .cv-paper.cv-timeline .cv-main .cv-section{border-left:2px solid color-mix(in srgb,var(--cv-accent) 40%,white);padding-left:13px}
-.cv-paper.cv-bold .cv-top{background:var(--cv-accent);color:white;margin:-17mm -16mm 0;padding:17mm 16mm 20px}.cv-paper.cv-bold .cv-top h1,.cv-paper.cv-bold .cv-top h2,.cv-paper.cv-bold .cv-top p{color:white}
+.cv-paper.cv-bold .cv-top{background:var(--cv-accent);color:white;margin:-17mm -16mm 0;padding:17mm 16mm 20px}.cv-paper.cv-bold .cv-top h1,.cv-paper.cv-bold .cv-top .cv-name,.cv-paper.cv-bold .cv-top h2,.cv-paper.cv-bold .cv-top p{color:white}
 .cv-paper.cv-bold .cv-section h3{background:color-mix(in srgb,var(--cv-accent) 9%,white);padding:7px;border:0}
 .cv-template-drawer{background:white;border:1px solid #e2e8f0;border-radius:15px;padding:17px}
 .cv-drawer-heading{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:14px}

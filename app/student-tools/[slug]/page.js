@@ -2,40 +2,25 @@
 import { use, useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
 import { evaluateSafeMath } from '../../../lib/safe-math.js';
-
-const TOOLS = {
-'grade-calculator':['📊','Grade & Percentage Calculator','Calculate percentage and grade from obtained marks.'],
-'gpa-cgpa-calculator':['🎓','GPA / CGPA Calculator','Calculate credit-weighted GPA from course results.'],
-'semester-result-calculator':['📈','Semester Result Calculator','Calculate your weighted semester GPA.'],
-'study-timetable':['📅','Study Timetable Generator','Create a simple weekly plan from your subjects.'],
-'study-time-calculator':['⏰','Study Time Calculator','Divide total study hours into a daily target.'],
-'scientific-calculator':['🔢','Scientific Calculator','Evaluate arithmetic and supported scientific expressions.'],
-'math-problem-solver':['📐','Math Problem Solver','Solve percentages and basic linear equations.'],
-'word-character-counter':['🔤','Word & Character Counter','Count words, characters, lines and reading time.'],
-'citation-generator':['📚','Citation Generator','Format a basic reference in APA, MLA and Chicago styles.'],
-'essay-outline-generator':['✍️','Essay Outline Generator','Build a clear outline around your essay topic.'],
-'quiz-generator':['❓','Quiz Generator','Turn notes into revision questions.'],
-'notes-summarizer':['📄','Notes Summarizer','Create a short extractive summary from your notes.'],
-'grammar-checker':['📝','Grammar Checker','Clean common spacing, capitalization and punctuation issues.'],
-'student-translator':['🌐','Student Translator','Translate text using the configured AI service, when available.'],
-'pdf-notes-extractor':['📑','PDF Study Notes Extractor','Extract selectable text from a PDF in your browser.'],
-'exam-countdown':['🎯','Exam Countdown','Calculate the time remaining until your exam.'],
-'student-budget-calculator':['💰','Student Budget Calculator','Calculate monthly expenses and remaining balance.'],
-'assignment-checklist':['☑️','Assignment Checklist','Save assignments, due dates and completion status on this device.'],
-'study-notes-organizer':['🗂️','Study Notes Organizer','Save and organize notes by subject.']
-};
+import { getStudentTool } from '../../../lib/student-tools.js';
 const field={width:'100%',minWidth:0,padding:'13px 14px',border:'1px solid #34415f',borderRadius:12,background:'#0b1224',color:'#f5f7ff',font:'inherit'};
 const button={border:0,borderRadius:12,padding:'12px 18px',background:'linear-gradient(110deg,#7655ef,#287fca)',color:'#fff',fontWeight:750,cursor:'pointer'};
 function Field({label,children}){return <label className="qt-st-field"><span>{label}</span>{children}</label>}
 function Text({value,onChange,placeholder,rows=6}){return <textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows} style={{...field,resize:'vertical'}}/>}
 function In({value,onChange,placeholder,type='text'}){return <input value={value} onChange={onChange} placeholder={placeholder} type={type} style={field}/>}
 export default function StudentTool({params}){
- const {slug}=use(params); const meta=TOOLS[slug]; if(!meta)notFound();
+ const {slug}=use(params); const meta=getStudentTool(slug); if(!meta)notFound();
  const [v,setV]=useState({obtained:'',total:'',text:'',hours:'',days:'7',expression:'',income:'',expenses:'',date:'',author:'',title:'',year:'',publisher:'',topic:'',target:'Bengali',subject:'',noteTitle:'',task:'',due:''});
- const [result,setResult]=useState(''),[error,setError]=useState(''),[items,setItems]=useState([]),[busy,setBusy]=useState(false),[pdfBusy,setPdfBusy]=useState(false);
+ const [result,setResult]=useState(''),[error,setError]=useState(''),[items,setItems]=useState([]),[busy,setBusy]=useState(false),[pdfBusy,setPdfBusy]=useState(false),[notice,setNotice]=useState('');
  const change=k=>e=>setV(s=>({...s,[k]:e.target.value}));
- const out=s=>{setError('');setResult(s)}, bad=s=>{setResult('');setError(s)};
+ const out=s=>{setError('');setNotice('');setResult(s)}, bad=s=>{setResult('');setNotice('');setError(s)};
  useEffect(()=>{if(!['assignment-checklist','study-notes-organizer'].includes(slug))return;try{const x=JSON.parse(localStorage.getItem('qt-'+slug)||'[]');if(Array.isArray(x))setItems(x)}catch{}},[slug]);
+ // Record the visit so /history shows something real, and read the favourite flag.
+ useEffect(()=>{try{const h=JSON.parse(localStorage.getItem('qtb_history')||'[]');const next=[{slug,title:meta.title},...(Array.isArray(h)?h:[]).filter(x=>x&&x.slug!==slug)].slice(0,20);localStorage.setItem('qtb_history',JSON.stringify(next))}catch{}},[slug,meta.title]);
+ const [fav,setFav]=useState(false);
+ useEffect(()=>{try{const f=JSON.parse(localStorage.getItem('qtb_favorites')||'[]');setFav(Array.isArray(f)&&f.includes(slug))}catch{}},[slug]);
+ function toggleFav(){try{const f=JSON.parse(localStorage.getItem('qtb_favorites')||'[]');const list=Array.isArray(f)?f:[];const next=list.includes(slug)?list.filter(x=>x!==slug):[...list,slug];localStorage.setItem('qtb_favorites',JSON.stringify(next));setFav(next.includes(slug))}catch{bad('Browser storage is unavailable, so favourites cannot be saved.')}}
+ function saveResult(){try{const s=JSON.parse(localStorage.getItem('qtb_saved')||'[]');const list=Array.isArray(s)?s:[];localStorage.setItem('qtb_saved',JSON.stringify([{title:meta.title,slug,text:result,at:Date.now()},...list].slice(0,50)));setNotice('Saved. Find it under Saved results.')}catch{setNotice('Browser storage is unavailable, so this result cannot be saved.')}}
  const save=next=>{setItems(next);try{localStorage.setItem('qt-'+slug,JSON.stringify(next))}catch{bad('Browser storage unavailable or full. Export your notes before clearing browser data.')}};
  const lines=v.text.split(/\n|,/).map(x=>x.trim()).filter(Boolean);
  function run(){try{
@@ -60,8 +45,8 @@ export default function StudentTool({params}){
  const inp=(k,p,t)=> <In value={v[k]} onChange={change(k)} placeholder={p} type={t||'text'}/>;
  const txt=(p,r)=> <Text value={v.text} onChange={change('text')} placeholder={p} rows={r||6}/>;
  return <main className="qt-student-tool">
- <nav className="qt-student-breadcrumb"><a href="/student-tools">Student Tools</a><span>/</span><span>{meta[1]}</span></nav>
- <section className="qt-student-heading"><span className="qt-student-icon">{meta[0]}</span><div><p className="qt-student-kicker">QUICKTOOLBOX / STUDENT STUDIO</p><h1>{meta[1]}</h1><p className="qt-student-description">{meta[2]}</p></div></section>
+ <nav className="qt-student-breadcrumb"><a href="/student-tools">Student Tools</a><span>/</span><span>{meta.title}</span></nav>
+ <section className="qt-student-heading"><span className="qt-student-icon">{meta.icon}</span><div><p className="qt-student-kicker">QUICKTOOLBOX / STUDENT STUDIO</p><h1>{meta.title}</h1><p className="qt-student-description">{meta.summary}</p></div><button type="button" className="qt-student-fav" onClick={toggleFav} aria-pressed={fav}>{fav?'★ Saved':'☆ Save'}</button></section>
  <section className="qt-student-panel">
  {slug==='grade-calculator'&&<div className="qt-student-fields two"><Field label="Obtained marks">{inp('obtained','e.g. 425','number')}</Field><Field label="Full marks">{inp('total','e.g. 500','number')}</Field></div>}
  {['gpa-cgpa-calculator','semester-result-calculator'].includes(slug)&&<Field label="Course credits and grade points (one per line, credit:point)">{txt('3:3.75\n3:3.50\n4:4.00')}<small>Weighted GPA uses a 4.00 scale. Confirm your institution’s grading rules.</small></Field>}
@@ -85,7 +70,8 @@ export default function StudentTool({params}){
  {slug==='student-translator'&&<button style={button} disabled={busy} onClick={translate}>{busy?'Translating…':'Translate'}</button>}
  {slug==='pdf-notes-extractor'&&pdfBusy&&<p className="qt-student-muted">Extracting PDF text…</p>}
  {error&&<div className="qt-student-error" role="alert">{error}</div>}
- {result&&<div className="qt-student-result" aria-live="polite"><strong>Result</strong><pre>{result}</pre><button onClick={()=>navigator.clipboard?.writeText(result)}>Copy result</button></div>}
+ {notice&&<p className="qt-student-muted" role="status">{notice}</p>}
+ {result&&<div className="qt-student-result" aria-live="polite"><strong>Result</strong><pre>{result}</pre><div className="qt-student-result-actions"><button onClick={()=>navigator.clipboard?.writeText(result)}>Copy result</button><button onClick={saveResult}>Save result</button><a href="/saved">Saved results</a></div></div>}
  </section><p className="qt-student-privacy">Lists and notes are stored in this browser. Translation needs a configured AI provider. Check official institutional rules before relying on grade calculations.</p>
  </main>;
 }

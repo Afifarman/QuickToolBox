@@ -1,2 +1,50 @@
-'use client';import{useEffect,useState}from'react';
-export default function Settings(){const[dark,setDark]=useState(false);const[lang,setLang]=useState('en');const[notify,setNotify]=useState(true);useEffect(()=>{setDark(localStorage.getItem('qtb_theme')==='dark');setLang(localStorage.getItem('qtb_lang')||'en');setNotify(localStorage.getItem('qtb_notify')!=='off')},[]);function theme(v){setDark(v);localStorage.setItem('qtb_theme',v?'dark':'light');document.documentElement.dataset.theme=v?'dark':'light'}function language(v){setLang(v);localStorage.setItem('qtb_lang',v)}function notifications(v){setNotify(v);localStorage.setItem('qtb_notify',v?'on':'off')}return <main style={{maxWidth:760,margin:'0 auto',padding:40}}><a href="/dashboard">← Dashboard</a><h1>⚙️ Settings</h1><section><h2>🎨 Theme</h2><button onClick={()=>theme(!dark)}>{dark?'☀️ Light Mode':'🌙 Dark Mode'}</button></section><section><h2>🌐 Language</h2><button onClick={()=>language('en')} disabled={lang==='en'}>English</button>{' '}<button onClick={()=>language('bn')} disabled={lang==='bn'}>বাংলা</button><p>Selected: {lang==='bn'?'বাংলা':'English'}</p></section><section><h2>🔔 Notifications</h2><button onClick={()=>notifications(!notify)}>{notify?'🔔 Notifications ON':'🔕 Notifications OFF'}</button></section></main>}
+'use client';
+
+import { useSiteTheme } from '../providers';
+
+const sectionStyle = { border: '1px solid rgba(148,163,184,.18)', borderRadius: 16, padding: '18px 20px', marginTop: 16 };
+const buttonStyle = { border: '1px solid #334155', background: 'transparent', color: 'inherit', borderRadius: 10, padding: '9px 14px', fontWeight: 700, cursor: 'pointer' };
+
+export default function Settings() {
+  const { mode, accent, themes, setAccent, toggleMode, ready } = useSiteTheme();
+
+  return (
+    <main style={{ maxWidth: 760, margin: '0 auto', padding: 40 }}>
+      <a href="/">← Home</a>
+      <h1>Settings</h1>
+
+      <section style={sectionStyle}>
+        <h2>Appearance</h2>
+        <p>Theme is currently <strong>{mode}</strong>.</p>
+        <button type="button" style={buttonStyle} onClick={toggleMode}>
+          Switch to {mode === 'dark' ? 'light' : 'dark'} mode
+        </button>
+        <label style={{ display: 'block', marginTop: 16 }}>
+          Accent colour
+          <select
+            value={accent}
+            onChange={(event) => setAccent(event.target.value)}
+            disabled={!ready}
+            aria-label="Accent colour"
+            style={{ display: 'block', marginTop: 8, padding: '9px 12px', borderRadius: 10, border: '1px solid #334155', background: 'transparent', color: 'inherit' }}
+          >
+            {Object.entries(themes).map(([key, theme]) => (
+              <option key={key} value={key}>{theme.label}</option>
+            ))}
+          </select>
+        </label>
+      </section>
+
+      <section style={sectionStyle}>
+        <h2>Language</h2>
+        <p>The interface is currently English only. Bengali and other translations are not available yet.</p>
+      </section>
+
+      <section style={sectionStyle}>
+        <h2>Saved data</h2>
+        <p>Notes, checklists and favourites are stored in this browser, not on a server. Clearing site data removes them.</p>
+        <a href="/saved" style={{ color: '#a78bfa', fontWeight: 700 }}>Review saved results →</a>
+      </section>
+    </main>
+  );
+}

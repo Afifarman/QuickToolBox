@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { SUPABASE_URL } from './lib/supabase/config';
 
-const PROTECTED_PREFIXES = ['/dashboard', '/profile', '/settings', '/favorites', '/history', '/saved', '/api/ai-agent'];
+// Only pages that genuinely need an account are gated. /settings, /favorites,
+// /history and /saved read and write localStorage only, so guests can use them.
+const PROTECTED_PREFIXES = ['/dashboard', '/profile', '/api/ai-agent'];
 const ADMIN_PREFIX = '/admin';
 
 export async function proxy(request) {
@@ -45,5 +47,5 @@ export async function proxy(request) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/profile/:path*', '/settings/:path*', '/favorites/:path*', '/history/:path*', '/saved/:path*', '/api/ai-agent/:path*', '/admin/:path*'],
+  matcher: ['/dashboard/:path*', '/profile/:path*', '/api/ai-agent/:path*', '/admin/:path*'],
 };
