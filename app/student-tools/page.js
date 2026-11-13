@@ -1,4 +1,17 @@
 import Link from 'next/link';
+import { SITE_URL } from '../../lib/site-config.js';
+
+export const metadata = {
+  title: 'Student Tools & Calculators',
+  description: 'Free student calculators, study planning, revision, notes and exam tools in one place.',
+  alternates: { canonical: `${SITE_URL}/student-tools` },
+  openGraph: {
+    type: 'website',
+    url: `${SITE_URL}/student-tools`,
+    title: 'Student Tools & Calculators | QuickToolBox',
+    description: 'Free student calculators, study planning, revision, notes and exam tools in one place.',
+  },
+};
 
 const studentTools = [
   ['grade-calculator', '📊', 'Grade & Percentage Calculator', 'Calculate your percentage and grade from obtained and total marks.'],
