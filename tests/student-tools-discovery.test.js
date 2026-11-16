@@ -9,7 +9,7 @@ test("implemented GPA and Word Counter tools are listed in the Student Tools dir
     assert.ok(slugs.has(slug), `Student Tools directory is missing ${slug}`);
   }
   const sitemap = await readFile(new URL("../app/sitemap.js", import.meta.url), "utf8");
-  assert.match(sitemap, /LISTED_STUDENT_TOOLS\\.map/);
+  assert.match(sitemap, /LISTED_STUDENT_TOOLS\.map/);
 });
 
 test("homepage directory links to GPA/CGPA Calculator and Word Counter", async () => {
