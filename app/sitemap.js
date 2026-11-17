@@ -6,6 +6,8 @@ import { LISTED_STUDENT_TOOLS } from '../lib/student-tools';
 const corePages = [
   { path: '/', changeFrequency: 'daily', priority: 1 },
   { path: '/file-converter', changeFrequency: 'weekly', priority: 0.9 },
+  { path: '/qr-generator', changeFrequency: 'monthly', priority: 0.7 },
+  { path: '/qr-scanner', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/photo-studio', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/cv-maker', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/student-tools', changeFrequency: 'weekly', priority: 0.9 },
