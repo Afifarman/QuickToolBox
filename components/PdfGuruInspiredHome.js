@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 
 const tools = [
   { name: "File Converter", description: "Open the file workspace and convert supported formats.", href: "/file-converter", category: "PDF & Files", icon: "⇄", tags: "convert files pdf document image" },
+  { name: "QR Code Generator", description: "Create a downloadable QR code from text or a link.", href: "/qr-generator", category: "Productivity", icon: "▦", tags: "qr code generate barcode link" },
+  { name: "QR Scanner", description: "Scan QR codes with a camera or image in supported browsers.", href: "/qr-scanner", category: "Productivity", icon: "⌗", tags: "qr scan camera barcode image" },
   { name: "AI Assistant", description: "Ask questions, draft, explain and summarize.", href: "/ai", category: "AI & Writing", icon: "✦", tags: "chat write summarize explain ai" },
   { name: "AI Platform", description: "Explore the available AI workspace and tools.", href: "/ai-platform", category: "AI & Writing", icon: "✧", tags: "ai platform models tools" },
   { name: "AI Photo Editor", description: "Open image editing workflows and supported actions.", href: "/ai-photo-editor", category: "Image Tools", icon: "◈", tags: "image photo edit ai" },
