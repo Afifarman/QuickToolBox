@@ -24,12 +24,8 @@ const studentToolSlugs = [
 
 const paths = [
   '/',
-  '/ai',
-  '/ai-platform',
-  '/ai-agent',
   '/ai-photo-editor',
   '/ai-prompts',
-  '/ai/local',
   '/cv-maker',
   '/file-converter',
   '/photo-studio',
@@ -47,8 +43,10 @@ export default function sitemap() {
         ? 0.85
         : path.startsWith('/student-tools/')
           ? 0.7
-          : path === '/ai' || path === '/ai-platform' || path === '/cv-maker'
+          : path === '/cv-maker' || path === '/file-converter' || path === '/photo-studio'
             ? 0.9
-            : 0.7,
+            : path === '/ai-photo-editor' || path === '/ai-prompts'
+              ? 0.8
+              : 0.7,
   }));
 }
