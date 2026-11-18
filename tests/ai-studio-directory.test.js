@@ -20,7 +20,7 @@ test('AI Studio provides direct links to official services in safe new tabs', ()
 test('AI Studio exposes existing QuickToolBox workspaces without claiming third-party API integration', () => {
   for (const route of ['/ai', '/ai/local', '/ai-photo-editor']) assert.ok(component.includes(route));
   assert.match(component, /No verified free image API tier/);
-  assert.match(component, /API use may be paid\/unavailable/);
+  assert.match(component, /not automatically mean a free API/);
 });
 
 test('AI Studio supports search, category filtering and saved items', () => {
