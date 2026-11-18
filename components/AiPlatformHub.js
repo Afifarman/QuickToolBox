@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import styles from './AiPlatformHub.module.css';
 
@@ -23,6 +23,10 @@ export default function AiPlatformHub() {
   const [category, setCategory] = useState('All categories');
   const [saved, setSaved] = useState([]);
   const [showSaved, setShowSaved] = useState(false);
+
+  useEffect(() => {
+    try { const stored = JSON.parse(localStorage.getItem('qtb_ai_studio_saved') || '[]'); if (Array.isArray(stored)) setSaved(stored); } catch { setSaved([]); }
+  }, []);
 
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
