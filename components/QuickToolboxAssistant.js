@@ -83,8 +83,8 @@ export default function QuickToolboxAssistant() {
           <div className="qtb-float-foot"><span>AI can make mistakes.</span><Link href="/ai" onClick={() => setOpen(false)}>Full workspace</Link></div>
         </section>
       )}
-      <button className="qtb-float-launcher" type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} aria-label={open ? 'Close AI assistant' : 'Open AI assistant'}>
-        <span>{open ? '×' : '✦'}</span><b>{open ? 'Close' : 'Ask AI'}</b>
+      <button className="qtb-float-launcher" type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} aria-label={open ? 'Close AI assistant' : 'Open AI assistant (Ask AI)'}>
+        <span aria-hidden="true">{open ? '×' : '✦'}</span><b>{open ? 'Close' : 'Ask AI'}</b>
       </button>
     </div>
   );

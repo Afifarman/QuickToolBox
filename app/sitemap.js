@@ -11,6 +11,10 @@ const corePages = [
   { path: '/student-tools', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/ai-photo-editor', changeFrequency: 'weekly', priority: 0.8 },
   { path: '/ai-prompts', changeFrequency: 'weekly', priority: 0.8 },
+  { path: '/unit-converter', changeFrequency: 'weekly', priority: 0.8 },
+  { path: '/password-generator', changeFrequency: 'weekly', priority: 0.8 },
+  { path: '/qr-code', changeFrequency: 'weekly', priority: 0.8 },
+  { path: '/json-formatter', changeFrequency: 'weekly', priority: 0.8 },
 ];
 
 export default function sitemap() {

@@ -5,6 +5,10 @@ import { useMemo, useState } from "react";
 
 const tools = [
   { name: "File Converter", description: "Open the file workspace and convert supported formats.", href: "/file-converter", category: "PDF & Files", icon: "⇄", tags: "convert files pdf document image" },
+  { name: "Unit Converter", description: "Convert length, weight, temperature, volume and more.", href: "/unit-converter", category: "Utilities", icon: "📏", tags: "unit converter length weight temperature" },
+  { name: "Password Generator", description: "Generate strong, random passwords locally.", href: "/password-generator", category: "Utilities", icon: "🔐", tags: "password generator secure random" },
+  { name: "QR Code Generator", description: "Create QR codes for text, URLs and more.", href: "/qr-code", category: "Utilities", icon: "⬛", tags: "qr code generator barcode" },
+  { name: "JSON Formatter", description: "Format, validate and minify JSON.", href: "/json-formatter", category: "Utilities", icon: "{ }", tags: "json formatter validator pretty print" },
   { name: "AI Assistant", description: "Ask questions, draft, explain and summarize.", href: "/ai", category: "AI & Writing", icon: "✦", tags: "chat write summarize explain ai" },
   { name: "AI Platform", description: "Explore the available AI workspace and tools.", href: "/ai-platform", category: "AI & Writing", icon: "✧", tags: "ai platform models tools" },
   { name: "AI Photo Editor", description: "Open image editing workflows and supported actions.", href: "/ai-photo-editor", category: "Image Tools", icon: "◈", tags: "image photo edit ai" },
@@ -39,6 +43,7 @@ const categories = [
   { name: "AI & Writing", icon: "✦", note: "AI assistance and writing" },
   { name: "Productivity", icon: "◷", note: "Everyday work utilities" },
   { name: "Student Tools", icon: "🎓", note: "Calculators, study planning and revision utilities" },
+  { name: "Utilities", icon: "🔧", note: "Everyday converters and generators" },
 ];
 
 const benefits = [
