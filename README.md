@@ -1,78 +1,62 @@
-# QuickToolBox Production
+# QuickToolBox
 
 ## Deploy
-1. Extract this ZIP.
-2. Upload the contents to a new GitHub repository.
-3. In Vercel, import that repository.
-4. Framework preset: Next.js.
-5. Build command: `npm run build`.
-6. Deploy.
 
-Set these Vercel environment variables (Production + Preview):
+1. Import `Afifarman/QuickToolBox` into Vercel.
+2. Framework preset: Next.js.
+3. Build command: `npm run build`.
+4. Set the Vercel Project Node.js Version to **22.x**. The repository also pins `engines.node` to `22.x` in `package.json`.
+5. Configure the Supabase environment variables below for **Production + Preview + Development**.
 
+### Supabase environment variables
+
+Use the active QuickToolBox Supabase project only:
+
+- Project ref: `cfwjmfaqtsuffemcltyd`
+- Project URL: `https://cfwjmfaqtsuffemcltyd.supabase.co`
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`)
-- `NEXT_PUBLIC_SITE_URL` — **optional**. The canonical public domain, e.g. `https://your-domain.com`.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (legacy compatibility fallback; use the anon key from the same project)
+- `NEXT_PUBLIC_SITE_URL=https://quicktoolbox-bd.vercel.app`
 
-`NEXT_PUBLIC_SITE_URL` is the single source of truth for canonical tags, Open Graph URLs, `robots.txt` and `sitemap.xml` (see `lib/site-config.js`). When it is not set, the app derives the domain from the deployment itself, in this order:
+Do not connect the app to a different or paused Supabase project. Never put a Supabase secret/service-role key in a `NEXT_PUBLIC_*` variable.
 
-1. `VERCEL_PROJECT_PRODUCTION_URL` — the production domain of the Vercel project (its custom domain, or its `<project>.vercel.app` alias)
-2. `VERCEL_URL` — the URL of the current deployment
-3. `https://quicktoolbox-bd.vercel.app` — last-resort fallback
+`NEXT_PUBLIC_SITE_URL` is the canonical origin for metadata, Open Graph URLs, `robots.txt`, and `sitemap.xml` (see `lib/site-config.js`). The OAuth callback helper uses the current browser origin and returns to `/auth/callback`.
 
-So leaving it unset is safe: the generated URLs always match the host that actually serves the site.
+## Google login
 
-### ⚠️ `quick-tool-box-vercel.app` does not exist
+Google OAuth requires both the app callback URL in Supabase's redirect allowlist and the Supabase callback URL in Google Cloud.
 
-`quick-tool-box-vercel.app` and `www.quick-tool-box-vercel.app` are **not registered** — DNS answers with NXDOMAIN, so browsers show "site can't be reached". The domain must never be used as the site URL, and `lib/site-config.js` rejects it even if it is passed through the environment.
+In [Supabase Dashboard → Authentication → URL Configuration](https://supabase.com/dashboard/project/cfwjmfaqtsuffemcltyd/auth/url-configuration):
 
-If a custom domain is wanted, first register it and point it at the Vercel project (Vercel → Project → Settings → Domains → Add, then create the DNS records Vercel shows), and only afterwards set `NEXT_PUBLIC_SITE_URL` to it. Live hosts today:
-
-- `https://quicktoolbox-bd.vercel.app` (configured production canonical URL)
-- `https://quick-tool-box-gamma.vercel.app` (older project, still serving; confirm before using for auth)
-
-Optional AI provider keys. The `/ai` assistant always returns an answer. If one of these is set, that cloud model is used first:
-
-- `OPENAI_API_KEY`
-- `GROQ_API_KEY`
-- `GEMINI_API_KEY`
-- `OPENROUTER_API_KEY`
-
-## Google login (production)
-
-Google OAuth only works if the **app callback URL** is on the Supabase Redirect URLs allowlist. The app always sends users back to `/auth/callback` with **no extra query string**, so the allowlist can match exactly.
-
-In [Supabase Dashboard → Authentication → URL Configuration](https://supabase.com/dashboard/project/_/auth/url-configuration):
-
-1. Set **Site URL** to the live production host:
-   `https://quick-tool-box-gfr1.vercel.app`
+1. Set **Site URL** to `https://quicktoolbox-bd.vercel.app`.
 2. Add these **Redirect URLs**:
-   - `https://quick-tool-box-gfr1.vercel.app/auth/callback`
-   - `https://quick-tool-box-gfr1.vercel.app/reset-password`
-   - `https://quick-tool-box-gamma.vercel.app/auth/callback`
-   - `https://quick-tool-box-gamma.vercel.app/reset-password`
-   - `https://*-armanarif852-2879s-projects.vercel.app/**`
+   - `https://quicktoolbox-bd.vercel.app/auth/callback`
+   - `https://quicktoolbox-bd.vercel.app/reset-password`
+   - `https://*-armanarif852-2879s-projects.vercel.app/**` (Vercel Preview deployments)
    - `http://localhost:3000/auth/callback`
    - `http://localhost:3000/reset-password`
-   - your custom domain's `/auth/callback` and `/reset-password`, once that domain is registered and live
 
-In [Authentication → Providers → Google](https://supabase.com/dashboard/project/_/auth/providers?provider=Google):
+In [Authentication → Providers → Google](https://supabase.com/dashboard/project/cfwjmfaqtsuffemcltyd/auth/providers?provider=Google):
 
-1. Enable Google.
-2. Paste the Google Cloud OAuth Client ID and Client Secret.
+1. Confirm Google is enabled.
+2. Confirm the Google OAuth Client ID and Client Secret belong to the intended Google Cloud OAuth client.
 
 In Google Cloud → Auth Platform → Clients (Web application):
 
-- Authorized JavaScript origins: `https://quick-tool-box-gfr1.vercel.app`, `https://quick-tool-box-gamma.vercel.app` (and your custom domain once it is live)
-- Authorized redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback` (copy this from the Supabase Google provider page)
+- Authorized JavaScript origin: `https://quicktoolbox-bd.vercel.app`
+- Authorized redirect URI: `https://cfwjmfaqtsuffemcltyd.supabase.co/auth/v1/callback`
 
-Without the production `/auth/callback` URL on the Supabase allowlist, Google login silently falls back to Site URL or fails with a redirect error.
+The Google provider's client secret must remain in Supabase Auth settings; never add it to browser-visible Vercel variables.
+
+## Canonical domain
+
+The production canonical URL is `https://quicktoolbox-bd.vercel.app`. Do not advertise unregistered domains such as `quick-tool-box-vercel.app` or retired preview aliases as production URLs.
 
 ## Included
+
 Age Calculator, Date Calculator, Currency Converter, Unit Converter, PDF Tools, Word Counter, Password Generator, QR Code Generator, Image Compressor, Percentage Calculator.
 
-## Production deployment
-Latest production source is the `main` branch. This line intentionally triggers the connected Vercel deployment after production source fixes.
+## Production release policy
 
-## Production sync
-Production deployment must match the latest `main` commit before release verification.
+Make changes on a feature branch and verify the Vercel Preview deployment first. Do not merge to `main` or promote a Production deployment until the release checks have passed and approval is given.
