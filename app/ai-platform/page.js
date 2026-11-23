@@ -1,10 +1,10 @@
 import AiPlatformHub from '../../components/AiPlatformHub';
 
 export const metadata = {
-  title: 'AI Platform',
-  description: 'Explore AI tools and model options in the QuickToolBox AI platform without signing in.',
+  title: 'AI Studio & Free AI Tools Directory',
+  description: 'Discover Nano Banana, Consensus, Hedra, Cursor, Stable Diffusion, PhotoRoom, Hailuo, Publer and Udio, plus QuickToolBox AI workspaces.',
   alternates: { canonical: '/ai-platform' },
-  robots: { index: false, follow: true },
+  robots: { index: true, follow: true },
 };
 
 export default function AiPlatformPage() {

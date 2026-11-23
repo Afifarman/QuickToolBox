@@ -1,101 +1,92 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { aiTools, aiModels } from '../lib/ai-directory';
+import Link from 'next/link';
 import styles from './AiPlatformHub.module.css';
 
-const categories = ['All categories', ...new Set(aiTools.map((tool) => tool.category))];
-const pricingOptions = ['All pricing', 'Free', 'Freemium', 'Paid'];
+const tools = [
+  { id: 'nano-banana', name: 'Nano Banana', company: 'Google', category: 'Image', summary: 'Generate and edit images with Google Gemini image models.', url: 'https://gemini.google.com/', access: 'Gemini app access; availability varies', api: 'No verified free image API tier', tags: ['image generation', 'image editing', 'google', 'gemini'] },
+  { id: 'consensus', name: 'Consensus', company: 'Consensus', category: 'Research', summary: 'Search scientific papers and get evidence-focused research answers.', url: 'https://consensus.app/', access: 'Free searches with limits; check current plan', api: 'No public free API confirmed', tags: ['research', 'papers', 'academic', 'citations'] },
+  { id: 'hedra', name: 'Hedra', company: 'Hedra', category: 'Video & Avatar', summary: 'Create expressive AI characters, avatars and generated media.', url: 'https://www.hedra.com/', access: 'Limited trial or credits may apply', api: 'Developer API is pay-per-use; not $0', tags: ['avatar', 'character', 'video', 'image'] },
+  { id: 'cursor', name: 'Cursor', company: 'Anysphere', category: 'Coding', summary: 'AI-powered code editor for writing, understanding and refactoring code.', url: 'https://cursor.com/', access: 'Free plan with usage limits', api: 'Editor product; not a free hosted generation API', tags: ['coding', 'editor', 'developer', 'agent'] },
+  { id: 'stable-diffusion', name: 'Stable Diffusion', company: 'Stability AI / open source', category: 'Image', summary: 'Open image-generation model family that can be self-hosted or run through compatible services.', url: 'https://github.com/CompVis/stable-diffusion', access: 'Open model code/weights subject to license; compute required', api: 'Self-hosting can be $0 if you provide suitable hardware', tags: ['image generation', 'open source', 'local', 'diffusion'] },
+  { id: 'photoroom', name: 'PhotoRoom', company: 'PhotoRoom', category: 'Image', summary: 'Remove backgrounds and prepare product photos and marketing images.', url: 'https://www.photoroom.com/', access: 'Free app features may be limited', api: 'API access is not confirmed as free', tags: ['background remover', 'product photo', 'image editing'] },
+  { id: 'hailuo', name: 'Hailuo AI', company: 'MiniMax', category: 'Video & Avatar', summary: 'Generate short AI videos from text and image prompts.', url: 'https://hailuoai.video/', access: 'Promotional credits or limits may vary by region', api: 'API usage is not guaranteed free', tags: ['text to video', 'image to video', 'video'] },
+  { id: 'publer', name: 'Publer', company: 'Publer', category: 'Social', summary: 'Plan, schedule and manage social-media publishing workflows.', url: 'https://publer.com/', access: 'Free plan with account and channel limits', api: 'API availability and access depend on plan', tags: ['social media', 'scheduler', 'publishing', 'marketing'] },
+  { id: 'udio', name: 'Udio', company: 'Udio', category: 'Music', summary: 'Create music and songs from text prompts and creative direction.', url: 'https://www.udio.com/', access: 'Free access/credits may be limited or change', api: 'No public free generation API confirmed', tags: ['music', 'song', 'audio', 'generation'] },
+];
+
+const categories = ['All categories', ...new Set(tools.map((tool) => tool.category))];
 
 export default function AiPlatformHub() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All categories');
-  const [pricing, setPricing] = useState('All pricing');
-  const [sort, setSort] = useState('featured');
-  const [favorites, setFavorites] = useState([]);
-  const [favoritesOnly, setFavoritesOnly] = useState(false);
-  const [activeTab, setActiveTab] = useState('tools');
+  const [saved, setSaved] = useState([]);
+  const [showSaved, setShowSaved] = useState(false);
 
   useEffect(() => {
-    try { setFavorites(JSON.parse(localStorage.getItem('qtb_ai_directory_favorites') || '[]')); } catch { setFavorites([]); }
+    try { const stored = JSON.parse(localStorage.getItem('qtb_ai_studio_saved') || '[]'); if (Array.isArray(stored)) setSaved(stored); } catch { setSaved([]); }
   }, []);
 
-  function toggleFavorite(id) {
-    setFavorites((current) => {
+  const visible = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return tools.filter((tool) => {
+      const matchesText = !term || [tool.name, tool.company, tool.category, tool.summary, ...tool.tags].join(' ').toLowerCase().includes(term);
+      return matchesText && (category === 'All categories' || tool.category === category) && (!showSaved || saved.includes(tool.id));
+    });
+  }, [query, category, showSaved, saved]);
+
+  function toggleSaved(id) {
+    setSaved((current) => {
       const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
-      try { localStorage.setItem('qtb_ai_directory_favorites', JSON.stringify(next)); } catch {}
+      try { localStorage.setItem('qtb_ai_studio_saved', JSON.stringify(next)); } catch {}
       return next;
     });
   }
 
-  const visibleTools = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    const result = aiTools.filter((tool) => {
-      const searchable = [tool.name, tool.company, tool.category, tool.summary, ...tool.tags].join(' ').toLowerCase();
-      return (!term || searchable.includes(term))
-        && (category === 'All categories' || tool.category === category)
-        && (pricing === 'All pricing' || tool.pricing === pricing)
-        && (!favoritesOnly || favorites.includes(tool.id));
-    });
-    if (sort === 'az') result.sort((a, b) => a.name.localeCompare(b.name));
-    if (sort === 'za') result.sort((a, b) => b.name.localeCompare(a.name));
-    if (sort === 'featured') result.sort((a, b) => Number(b.featured) - Number(a.featured) || a.name.localeCompare(b.name));
-    return result;
-  }, [query, category, pricing, sort, favoritesOnly, favorites]);
-
-  const featured = aiTools.filter((tool) => tool.featured).slice(0, 6);
-
   return <main className={styles.page}>
-
     <section className={styles.hero}>
-      <div className={styles.heroCopy}>
-        <span className={styles.kicker}>THE AI DISCOVERY PLATFORM</span>
-        <h1>Find the right AI tool<br/><em>for your next idea.</em></h1>
-        <p>Explore AI products from independent companies and leading technology providers. Compare what they do, check their pricing type, and visit the official website.</p>
-        <div className={styles.heroActions}><a href="#directory" className={styles.primaryButton}>Explore directory <span>↘</span></a><a href="#models" className={styles.textButton}>Browse AI models ↗</a></div>
-        <div className={styles.trustLine}><span>✓ Curated listings</span><span>✓ Official links</span><span>✓ Free & paid filters</span></div>
+      <span className={styles.kicker}>QUICKTOOLBOX · AI STUDIO</span>
+      <h1>One place for your next <em>AI workflow.</em></h1>
+      <p className={styles.lead}>Discover the AI tools you asked for, open their official services, and use QuickToolBox's own free-first AI workspaces. Third-party products open on their own websites; they are not falsely presented as built-in APIs.</p>
+      <div className={styles.heroStats}><span>9 curated AI services</span><span>Free-first discovery</span><span>No API key required to browse</span></div>
+    </section>
+
+    <section className={styles.section}>
+      <div className={styles.sectionHeading}><div><span className={styles.kicker}>BUILT INTO QUICKTOOLBOX</span><h2>Use AI here</h2></div><span className={styles.subtle}>Existing QuickToolBox workspaces</span></div>
+      <div className={styles.nativeGrid}>
+        <Link href="/ai" className={styles.nativeCard}><span>✦</span><div><h3>QuickToolBox AI Assistant</h3><p>Chat and ask questions in Bangla or English using configured free-first providers.</p><b>Open AI Assistant ↗</b></div></Link>
+        <Link href="/ai/local" className={styles.nativeCard}><span>◉</span><div><h3>Free Local AI</h3><p>Run a supported language model in your browser when your device supports WebGPU.</p><b>Open Local AI ↗</b></div></Link>
+        <Link href="/ai-photo-editor" className={styles.nativeCard}><span>◈</span><div><h3>AI Photo Editor</h3><p>Open the existing photo-editing workspace. AI actions depend on available provider configuration.</p><b>Open Photo Editor ↗</b></div></Link>
       </div>
-      <div className={styles.heroVisual} aria-hidden="true">
-        <div className={`${styles.orbit} ${styles.orbitOne}`}></div><div className={`${styles.orbit} ${styles.orbitTwo}`}></div>
-        <div className={styles.orbitCore}><span>✳</span><b>AI</b><small>DISCOVER</small></div>
-        <div className={styles.floatCard + ' ' + styles.floatTop}><span>✦</span><div><b>40+ tools</b><small>Across 10 categories</small></div></div>
-        <div className={styles.floatCard + ' ' + styles.floatBottom}><span>⌘</span><div><b>Many providers</b><small>One place to explore</small></div></div>
+      <p className={styles.disclaimer}>These are links to existing QuickToolBox routes, not a claim that every third-party model is connected to our backend.</p>
+    </section>
+
+    <section id="directory" className={styles.section}>
+      <div className={styles.sectionHeading}><div><span className={styles.kicker}>DISCOVER & LAUNCH</span><h2>AI tools directory</h2></div><span className={styles.subtle}>{visible.length} of {tools.length} tools</span></div>
+      <div className={styles.directoryControls}>
+        <input className={styles.search} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search image, video, research, coding…" aria-label="Search AI tools" />
+        <select value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filter AI tools by category">{categories.map((item) => <option key={item}>{item}</option>)}</select>
+        <button type="button" className={showSaved ? styles.filterActive : styles.filterButton} onClick={() => setShowSaved((value) => !value)}>♥ Saved ({saved.length})</button>
+      </div>
+      <div className={styles.categoryPills}>{categories.map((item) => <button key={item} type="button" className={category === item ? styles.pillActive : ''} onClick={() => setCategory(item)}>{item}</button>)}</div>
+      {visible.length ? <div className={styles.toolGrid}>{visible.map((tool) => <article className={styles.toolCard} key={tool.id}>
+        <div className={styles.cardTop}><span className={styles.toolCategory}>{tool.category}</span><button type="button" className={saved.includes(tool.id) ? styles.saved : styles.save} onClick={() => toggleSaved(tool.id)} aria-label={saved.includes(tool.id) ? 'Remove saved tool' : 'Save tool'}>{saved.includes(tool.id) ? '♥' : '♡'}</button></div>
+        <h3>{tool.name}</h3><p className={styles.company}>{tool.company}</p><p>{tool.summary}</p>
+        <div className={styles.accessBlock}><b>Free access</b><span>{tool.access}</span></div>
+        <div className={styles.accessBlock}><b>API / integration</b><span>{tool.api}</span></div>
+        <a className={styles.openLink} href={tool.url} target="_blank" rel="noopener noreferrer">Open official service <span>↗</span></a>
+      </article>)}</div> : <div className={styles.empty}><b>No matching tools</b><p>Change your search or category filter.</p><button type="button" onClick={() => { setQuery(''); setCategory('All categories'); setShowSaved(false); }}>Clear filters</button></div>}
+    </section>
+
+    <section className={styles.section}>
+      <div className={styles.sectionHeading}><div><span className={styles.kicker}>IMPORTANT FOR A $0 PROJECT</span><h2>What “free” really means</h2></div></div>
+      <div className={styles.freeNotes}>
+        <p><b>Directory access:</b> QuickToolBox can link to official free plans and open-source projects without charging users or storing provider credentials.</p>
+        <p><b>In-app API integration:</b> A free website plan does not automatically mean a free API. Several services above do not publish a free API tier. We will only enable an in-app connector after its free quota, terms and endpoint are verified.</p>
+        <p><b>Privacy:</b> Third-party links leave QuickToolBox. Their own accounts, terms, data handling and usage limits apply.</p>
       </div>
     </section>
-
-    <section className={styles.featuredSection}>
-      <div className={styles.sectionIntro}><div><span className={styles.kicker}>START HERE</span><h2>Featured discoveries</h2></div><span>Curated picks · not a popularity ranking</span></div>
-      <div className={styles.featuredGrid}>{featured.map((tool) => <a key={tool.id} className={styles.featuredCard} href={tool.url} target="_blank" rel="noopener noreferrer"><span className={styles.featuredIcon}>{tool.name.slice(0,1)}</span><span><b>{tool.name}</b><small>{tool.category} · {tool.pricing}</small></span><i>↗</i></a>)}</div>
-    </section>
-
-    <section id="directory" className={styles.directorySection}>
-      <div className={styles.sectionIntro}><div><span className={styles.kicker}>EXPLORE THE ECOSYSTEM</span><h2>AI tools directory</h2></div><span>{aiTools.length} curated listings</span></div>
-      <div className={styles.tabs}><button className={activeTab === 'tools' ? styles.activeTab : ''} onClick={() => setActiveTab('tools')}>AI tools</button><button className={activeTab === 'models' ? styles.activeTab : ''} onClick={() => { setActiveTab('models'); document.getElementById('models')?.scrollIntoView({behavior:'smooth'}); }}>AI models</button></div>
-      <div className={styles.filters}>
-        <label className={styles.searchBox}><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by tool, company, task or tag…" aria-label="Search AI tools"/></label>
-        <select value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filter by category">{categories.map((item) => <option key={item}>{item}</option>)}</select>
-        <select value={pricing} onChange={(event) => setPricing(event.target.value)} aria-label="Filter by pricing">{pricingOptions.map((item) => <option key={item}>{item}</option>)}</select>
-        <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort tools"><option value="featured">Featured first</option><option value="az">Name A–Z</option><option value="za">Name Z–A</option></select>
-        <button className={favoritesOnly ? styles.favoritesActive : styles.favoritesButton} onClick={() => setFavoritesOnly((value) => !value)}>♥ Favorites ({favorites.length})</button>
-      </div>
-      <div className={styles.resultLine}><span>{visibleTools.length} results</span><button onClick={() => {setQuery('');setCategory('All categories');setPricing('All pricing');setSort('featured');setFavoritesOnly(false);}}>Reset filters</button></div>
-      {visibleTools.length ? <div className={styles.toolGrid}>{visibleTools.map((tool) => <article className={styles.toolCard} key={tool.id}>
-        <div className={styles.cardTop}><span className={styles.toolGlyph}>{tool.name.slice(0,1)}</span><button className={favorites.includes(tool.id) ? styles.saved : styles.save} aria-label={favorites.includes(tool.id) ? 'Remove from favorites' : 'Add to favorites'} onClick={() => toggleFavorite(tool.id)}>{favorites.includes(tool.id) ? '♥' : '♡'}</button></div>
-        <div className={styles.toolMeta}><span>{tool.category}</span><span className={styles.pricing}>{tool.pricing}</span></div>
-        <h3>{tool.name}</h3><p className={styles.company}>by {tool.company}</p><p className={styles.summary}>{tool.summary}</p>
-        <div className={styles.tags}>{tool.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-        <a className={styles.openLink} href={tool.url} target="_blank" rel="noopener noreferrer">Visit official website <span>↗</span></a>
-      </article>)}</div> : <div className={styles.empty}><b>No tools found</b><p>Try a different search term or clear some filters.</p><button onClick={() => {setQuery('');setCategory('All categories');setPricing('All pricing');setFavoritesOnly(false);}}>Clear filters</button></div>}
-      <p className={styles.note}>Pricing labels are broad directory classifications, not price quotes. Features, free quotas and availability can change by region and over time. Always confirm current terms on the provider’s official website.</p>
-    </section>
-
-    <section id="models" className={styles.modelsSection}>
-      <div className={styles.sectionIntro}><div><span className={styles.kicker}>MODELS & PROVIDERS</span><h2>AI model hub</h2></div><span>Model families · not standalone apps</span></div>
-      <p className={styles.modelsLead}>An AI model is the underlying technology. An AI tool is the product people use. The same model family may power multiple products.</p>
-      <div className={styles.modelGrid}>{aiModels.map((model) => <article className={styles.modelCard} key={model.name}><div className={styles.modelTop}><span className={styles.modelGlyph}>{model.company.slice(0,1)}</span><span>{model.kind}</span></div><h3>{model.name}</h3><p className={styles.company}>{model.company}</p><p>{model.modalities}</p><a href={model.url} target="_blank" rel="noopener noreferrer">Provider website ↗</a></article>)}</div>
-    </section>
-
-    <section className={styles.disclaimerSection}><b>Independent directory</b><p>QuickToolBox is an independent discovery directory. Listed products belong to their respective companies. Listing a product does not mean it is built by QuickToolBox, endorsed by us, or integrated into this website. We do not claim live availability or rank tools by popularity without verified data.</p></section>
-    <footer className={styles.footer}><a href="/">QuickToolBox</a><span>Discover better ways to work with AI.</span><a href="#directory">Back to directory ↑</a></footer>
+    <footer className={styles.footer}><Link href="/">QuickToolBox</Link><span>Free-first AI discovery · transparent limitations</span><Link href="#directory">Back to directory ↑</Link></footer>
   </main>;
 }
